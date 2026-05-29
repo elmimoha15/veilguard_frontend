@@ -2,16 +2,18 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Docs — Install, Setup & Scanner Reference',
-  description: 'Install Veilguard in Claude Code, Cursor, Windsurf, VS Code, JetBrains. Full scanner docs.',
+  title: 'Veilguard Documentation — Setup, Scanners, and IDE Integration',
+  description: 'Complete documentation for Veilguard security scanner. Installation guide, all 13 scanners explained, VS Code extension setup, MCP server configuration for Cursor, Claude Code, Windsurf, and more.',
+  keywords: ['veilguard docs', 'veilguard documentation', 'MCP security scanner setup', 'VS Code security extension', 'Cursor security scanner', 'vibe coding security tool documentation'],
+  openGraph: { url: 'https://veilguard.dev/docs' },
 };
 
 export default function DocsOverviewPage() {
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">Documentation Hub</h1>
-      <p className="text-xl text-text-body mb-12">
-        Learn how to install Veilguard, configure your scanners, and understand the secure-by-default features of the platform.
+      <h1 className="text-2xl font-semibold mb-3">Documentation</h1>
+      <p className="text-sm text-text-body mb-10">
+        Everything you need to set up and use Veilguard.
       </p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 not-prose">

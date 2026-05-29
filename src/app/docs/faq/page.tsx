@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 export default function DocsFaqPage() {
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">FAQ & Troubleshooting</h1>
-      <p className="text-xl text-text-body mb-10">
+      <h1 className="text-2xl font-semibold mb-3">FAQ & Troubleshooting</h1>
+      <p className="text-sm text-text-body mb-8">
         Solutions for common issues and answers to technical questions.
       </p>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Troubleshooting Setup</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">Troubleshooting Setup</h2>
       <div className="overflow-x-auto not-prose mb-12">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
@@ -39,10 +39,10 @@ export default function DocsFaqPage() {
         </table>
       </div>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Scanners & Audits</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">Scanners & Audits</h2>
       <div className="space-y-6">
         <div>
-          <h3 className="text-xl font-medium text-text-heading mb-2">How do I ignore false positives?</h3>
+          <h3 className="text-sm font-semibold text-text-heading mb-2">How do I ignore false positives?</h3>
           <p className="text-text-body text-sm mb-4">
             If Veilguard identifies a mock secret, you can add a <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded text-sm">.veilguardignore</code> file in the root of your project:
           </p>
@@ -56,7 +56,7 @@ src/tests/mocks.ts
         </div>
 
         <div>
-          <h3 className="text-xl font-medium text-text-heading mb-2">When do my Pro audits reset?</h3>
+          <h3 className="text-sm font-semibold text-text-heading mb-2">When do my Pro audits reset?</h3>
           <p className="text-text-body text-sm">
             Pro accounts get 3 Full Audits per month. The quota resets on the 1st day of the calendar month (UTC).
           </p>

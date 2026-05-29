@@ -28,7 +28,7 @@ function CheckoutContent() {
 {`"env": { "VEILGUARD_KEY": "vg_live_..." }`}
           </pre>
         </div>
-        <a href="/docs/install" className="inline-block px-8 py-3 rounded-xl bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
+        <a href="/docs/install" className="inline-block px-8 py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
           View installation guide
         </a>
       </FadeIn>
@@ -40,7 +40,7 @@ function CheckoutContent() {
       <FadeIn className="text-center mb-16">
         <h1 className="text-5xl md:text-6xl mb-6 max-w-3xl mx-auto">See everything.<br/>Fix everything.</h1>
         <p className="text-lg text-text-body max-w-2xl mx-auto">
-          Free users see 3 findings per scan. Pro users see all of them — plus fixes, full audit, and breach context.
+          Veilguard Pro unlocks full scan depth, Supabase RLS deep audit, Firebase rules analysis, and a security grade for your entire project.
         </p>
       </FadeIn>
 
@@ -64,7 +64,7 @@ function CheckoutContent() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-32">
         <FadeIn delay={0.1}>
-          <div className="bg-background-card border border-border rounded-2xl p-10 flex flex-col h-full hover:border-border-hover transition-colors">
+          <div className="bg-background-card border border-border rounded-xl p-10 flex flex-col h-full hover:border-border-hover transition-colors">
             <h3 className="text-2xl font-medium text-text-heading mb-2">Monthly</h3>
             <div className="text-4xl font-semibold text-text-heading mb-2">$19<span className="text-lg text-text-muted font-normal">/mo</span></div>
             <div className="text-sm text-text-muted mb-8">Billed monthly</div>
@@ -78,14 +78,14 @@ function CheckoutContent() {
               <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report (3/month)</span></li>
             </ul>
             
-            <a href="https://polar.sh/checkout/veilguard-pro-monthly" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
+            <a href="https://polar.sh/checkout/veilguard-pro-monthly" className="block text-center w-full py-3 rounded-full border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
               Subscribe — $19/mo
             </a>
           </div>
         </FadeIn>
 
         <FadeIn delay={0.2}>
-          <div className={`bg-background-code border ${isAnnual ? 'border-border-active shadow-[0_0_40px_rgba(52,211,153,0.1)]' : 'border-border'} rounded-2xl p-10 flex flex-col h-full relative overflow-hidden transition-all duration-300`}>
+          <div className={`bg-background-code border ${isAnnual ? 'border-border-active shadow-[0_0_40px_rgba(52,211,153,0.1)]' : 'border-border'} rounded-xl p-10 flex flex-col h-full relative overflow-hidden transition-all duration-300`}>
             {isAnnual && (
               <>
                 <div className="absolute top-0 right-0 bg-accent text-[#080E12] text-xs font-bold px-4 py-1 rounded-bl-lg z-10">RECOMMENDED</div>
@@ -108,7 +108,7 @@ function CheckoutContent() {
               <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report (3/month)</span></li>
             </ul>
             
-            <a href="https://polar.sh/checkout/veilguard-pro-annual" className={`block text-center w-full py-3 rounded-xl font-semibold transition-transform ${isAnnual ? 'bg-accent text-[#080E12] hover:scale-[1.02]' : 'border border-border text-text-heading hover:bg-background-card-hover'}`}>
+            <a href="https://polar.sh/checkout/veilguard-pro-annual" className={`block text-center w-full py-3 rounded-full font-semibold transition-transform ${isAnnual ? 'bg-accent text-[#080E12] hover:scale-[1.02]' : 'border border-border text-text-heading hover:bg-background-card-hover'}`}>
               Subscribe — $149/yr
             </a>
           </div>
@@ -129,15 +129,18 @@ function CheckoutContent() {
             </thead>
             <tbody className="divide-y divide-border">
               {[
-                { name: 'Number of scanners', free: '10', pro: '13' },
-                { name: 'Findings per scan', free: 'First 3', pro: 'Unlimited' },
-                { name: 'Severity covered', free: 'Critical only', pro: 'All severities' },
-                { name: 'Dependency checks', free: 'Top 20 deps', pro: 'Unlimited deps' },
-                { name: 'AI-ready fix prompts', free: 'Hidden', pro: 'Included' },
-                { name: 'Breach context', free: 'Hidden', pro: 'Included' },
-                { name: 'Supabase RLS Deep Audit', free: 'No', pro: 'Yes' },
-                { name: 'Firebase Rules Audit', free: 'No', pro: 'Yes' },
-                { name: 'Full scored audit report', free: 'None', pro: '3 per month' },
+                { name: 'All 13 scanners', free: 'Yes', pro: 'Yes' },
+                { name: 'VS Code extension', free: 'Yes', pro: 'Yes' },
+                { name: 'MCP server (all IDEs)', free: 'Yes', pro: 'Yes' },
+                { name: 'Findings per scan', free: 'First 3', pro: 'All' },
+                { name: 'Fix suggestions', free: 'Hidden on critical', pro: 'All shown' },
+                { name: 'Dependency scanning', free: 'Critical CVEs only', pro: 'All severities' },
+                { name: 'Supply chain check', free: 'Top 20 packages', pro: 'All packages' },
+                { name: 'Git history scan', free: 'Current files only', pro: 'Full history' },
+                { name: 'Supabase RLS deep audit', free: 'No', pro: 'Yes' },
+                { name: 'Firebase rules audit', free: 'No', pro: 'Yes' },
+                { name: 'Full audit with grade', free: 'No', pro: '3/month' },
+                { name: 'Breach context', free: 'No', pro: 'Yes' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-background-card/50 transition-colors">
                   <td className="py-4 px-6 text-text-body">{row.name}</td>

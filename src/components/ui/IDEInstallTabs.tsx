@@ -42,7 +42,7 @@ export default function IDEInstallTabs() {
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto mt-12 bg-background-card border border-border rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.5)]">
+    <div className="w-full max-w-3xl mx-auto mt-12 bg-background-card border border-border rounded-xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.5)]">
       <div className="flex overflow-x-auto hide-scrollbar border-b border-border">
         {IDE_TABS.map((tab) => (
           <button

@@ -1,0 +1,79 @@
+# Quick Start
+
+Get Veilguard running in your IDE in under a minute. Two steps: add the MCP config, restart.
+
+---
+
+## Prerequisite
+
+**Node.js 18 or later** is required. Verify with:
+
+```bash
+node --version
+```
+
+---
+
+## Step 1 — Add the MCP config to your IDE
+
+Copy this JSON and paste it into your IDE's MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "veilguard": {
+      "command": "npx",
+      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "env": {
+        "VEILGUARD_KEY": ""
+      }
+    }
+  }
+}
+```
+
+**Where to paste it:**
+
+| IDE | Where to add the config |
+|-----|------------------------|
+| **Cursor** | Create `.cursor/mcp.json` in your project folder |
+| **Windsurf** | Add to `~/.windsurf/mcp.json` (global config) |
+| **VS Code** | Open Settings → search "MCP" → Edit in settings.json |
+| **Claude Code** | Run: `claude mcp add veilguard -- npx -y --package=veilguard-cli veilguard-mcp` |
+| **Antigravity** | Create `.gemini/mcp.json` in your project folder |
+
+For detailed step-by-step instructions, see the per-IDE guides:
+[Cursor](/docs/installation/cursor) · [Windsurf](/docs/installation/windsurf) · [VS Code](/docs/installation/vscode) · [Claude Code](/docs/installation/claude-code) · [Antigravity](/docs/installation/antigravity)
+
+---
+
+## Step 2 — Restart your IDE
+
+Close and reopen your IDE completely. Veilguard starts automatically on launch.
+
+---
+
+## Verify it's working
+
+Ask your AI agent: *"What Veilguard tools do you have access to?"*
+
+It should list 14 security tools. If it does, you're set.
+
+---
+
+## What happens next
+
+From this point, your AI agent will:
+- **Scan files automatically** as you code (using MCP tools)
+- **Stay silent** when scans are clean — you won't even know it ran
+- **Alert you in plain English** if something risky is found, with a fix
+
+No commands to run. No dashboard to check. You just code.
+
+---
+
+## Add your Pro key (optional)
+
+If you have a Pro license, add your key to the `VEILGUARD_KEY` field in the MCP config above, then restart your IDE.
+
+Get a key at [veilguard.dev/pro](https://veilguard.dev/pro).

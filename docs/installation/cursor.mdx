@@ -1,0 +1,68 @@
+# Install on Cursor
+
+---
+
+## Step 1 — Add the MCP config
+
+Create `.cursor/mcp.json` in your project folder:
+
+```json
+{
+  "mcpServers": {
+    "veilguard": {
+      "command": "npx",
+      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "env": {
+        "VEILGUARD_KEY": ""
+      }
+    }
+  }
+}
+```
+
+If `.cursor/mcp.json` already exists with other servers, add the `veilguard` block inside `mcpServers`.
+
+---
+
+## Step 2 — Add the rules file (recommended)
+
+Download [`.cursorrules`](https://raw.githubusercontent.com/elmimoha15/veilguard/main/templates/cursorrules.txt) and save it to your project root.
+
+This file tells Cursor's AI agent exactly when to call each Veilguard tool. Without it, the tools still work but won't fire automatically.
+
+---
+
+## Step 3 — Restart Cursor
+
+Close and reopen Cursor completely.
+
+---
+
+## Verify
+
+1. Open **Cursor Settings** → **MCP**
+2. **Veilguard** should appear with a green status
+
+Or ask the agent: *"What Veilguard tools do you have access to?"*
+
+---
+
+## Pro key
+
+To activate Pro, add your license key to `.cursor/mcp.json`:
+
+```json
+"env": {
+  "VEILGUARD_KEY": "vg_live_xxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Restart Cursor after saving. Get a key at [veilguard.dev/pro](https://veilguard.dev/pro).
+
+---
+
+## Notes
+
+- `.cursor/mcp.json` is **project-level** — add it to each project you want protected
+- `.cursorrules` is also project-level
+- Node.js 18 or later is required

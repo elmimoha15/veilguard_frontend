@@ -1,8 +1,10 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Scanner Reference — 13 Security Tools',
-  description: 'All 13 Veilguard scanners: secrets, RLS, webhooks, injection, CORS, supply chain, and more.',
+  title: 'Veilguard Scanners — 13 Security Checks for AI-Generated Code',
+  description: 'Detailed documentation for all 13 Veilguard security scanners. Secret detection, SQL injection, Supabase RLS audit, webhook verification, supply chain checks, CORS, environment security, and more.',
+  keywords: ['API key scanner', 'secret detection tool', 'SQL injection scanner', 'Supabase RLS audit tool', 'webhook security scanner', 'supply chain attack detection', 'CORS scanner', 'vibe coding security scanners'],
+  openGraph: { url: 'https://veilguard.dev/docs/scanners' },
 };
 
 export default function DocsScannersPage() {
@@ -67,8 +69,8 @@ export default function DocsScannersPage() {
 
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">Scanner Reference</h1>
-      <p className="text-xl text-text-body mb-10">
+      <h1 className="text-2xl font-semibold mb-3">Scanner Reference</h1>
+      <p className="text-sm text-text-body mb-8">
         Review all 13 security constraints enforced by the engine. Pro scanners are marked.
       </p>
 
@@ -76,7 +78,7 @@ export default function DocsScannersPage() {
         {scanners.map((s) => (
           <div key={s.id} className={`p-6 rounded-xl border bg-background-card ${s.pro ? 'border-accent/40 shadow-[0_0_20px_rgba(52,211,153,0.05)]' : 'border-border'}`}>
             <div className="flex items-center gap-3 mb-2">
-              <h3 className="text-xl font-mono text-text-heading">{s.id}</h3>
+              <h3 className="text-sm font-mono text-text-heading">{s.id}</h3>
               {s.pro && <span className="bg-accent-muted text-accent border border-accent/20 px-2 py-0.5 rounded text-xs font-semibold uppercase tracking-wider">Pro</span>}
             </div>
             <p className="text-sm font-medium text-text-body mb-4">{s.name}</p>

@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 export default function DocsAutoscanPage() {
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">Auto-Scan Triggers</h1>
-      <p className="text-xl text-text-body mb-10">
+      <h1 className="text-2xl font-semibold mb-3">Auto-Scan Triggers</h1>
+      <p className="text-sm text-text-body mb-8">
         You never run a scan manually. The AI triggers the right scanner exactly when context demands it.
       </p>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Trigger Moments</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">Trigger Moments</h2>
       <ul className="space-y-4 not-prose mb-12">
         <li className="flex items-start gap-4 p-4 rounded-lg bg-background-code border border-border text-sm">
           <div className="w-1/3 font-medium text-text-heading">File Created/Modified</div>
@@ -37,7 +37,7 @@ export default function DocsAutoscanPage() {
         </li>
       </ul>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">How it works per IDE</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">How it works per IDE</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 not-prose">
         <div className="p-6 bg-background-card border border-border rounded-xl">
           <h3 className="text-lg font-medium text-text-heading mb-2">Claude Code</h3>

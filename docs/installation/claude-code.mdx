@@ -1,0 +1,101 @@
+# Install on Claude Code
+
+Claude Code gets the most complete Veilguard integration — MCP tools, a rules file, **and** post-save hooks that scan every file save.
+
+---
+
+## Step 1 — Add the MCP server
+
+Run this in your terminal:
+
+```bash
+claude mcp add veilguard -- npx -y --package=veilguard-cli veilguard-mcp
+```
+
+**Alternative:** Create `.claude/mcp.json` in your project root:
+
+```json
+{
+  "mcpServers": {
+    "veilguard": {
+      "command": "npx",
+      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "env": {
+        "VEILGUARD_KEY": ""
+      }
+    }
+  }
+}
+```
+
+---
+
+## Step 2 — Add the rules file (recommended)
+
+Download [`CLAUDE.md`](https://raw.githubusercontent.com/elmimoha15/veilguard/main/templates/claude-md.txt) and save it to your project root.
+
+If you already have a `CLAUDE.md`, append the Veilguard rules to the end of it.
+
+---
+
+## Step 3 — Add post-save hooks (recommended)
+
+Create `.claude/hooks.json` in your project:
+
+```json
+{
+  "hooks": {
+    "postSave": [
+      {
+        "pattern": "**/*.{ts,tsx,js,jsx,json,sql,env,toml,yaml,yml}",
+        "command": "npx veilguard-cli quick-scan --file $FILE",
+        "description": "Veilguard: scan saved file for security issues"
+      }
+    ],
+    "preDeploy": [
+      {
+        "command": "npx veilguard-cli quick-scan --dir .",
+        "description": "Veilguard: pre-deploy security check"
+      }
+    ]
+  }
+}
+```
+
+These hooks fire on **every file save** — not just AI writes, but your manual edits too. Clean scans are silent.
+
+---
+
+## Step 4 — Restart Claude Code
+
+Close and reopen Claude Code.
+
+---
+
+## Verify
+
+```bash
+claude mcp list
+```
+
+You should see `veilguard` in the output. Or ask Claude: *"What Veilguard tools do you have access to?"*
+
+---
+
+## Pro key
+
+To activate Pro, add your license key:
+
+```bash
+claude mcp add veilguard --env VEILGUARD_KEY=vg_live_xxxxxxxxxxxxxxxxxxxx -- npx -y --package=veilguard-cli veilguard-mcp
+```
+
+Or add it to the `env` block in `.claude/mcp.json`. Get a key at [veilguard.dev/pro](https://veilguard.dev/pro).
+
+---
+
+## Notes
+
+- `.claude/mcp.json` is project-level — add it to each project you want protected
+- The hooks scan uses the lightweight `quick-scan` command, not the full MCP server
+- Node.js 18 or later is required

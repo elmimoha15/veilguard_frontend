@@ -1,0 +1,70 @@
+# Install on Windsurf
+
+---
+
+## Step 1 — Add the MCP config
+
+Windsurf uses a **global** config at `~/.windsurf/mcp.json`. This applies to all projects.
+
+Create or edit `~/.windsurf/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "veilguard": {
+      "command": "npx",
+      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "env": {
+        "VEILGUARD_KEY": ""
+      }
+    }
+  }
+}
+```
+
+If the file already exists with other servers, add the `veilguard` block inside `mcpServers`.
+
+---
+
+## Step 2 — Add the rules file (recommended)
+
+Download [`.windsurfrules`](https://raw.githubusercontent.com/elmimoha15/veilguard/main/templates/windsurfrules.txt) and save it to your project root.
+
+This file tells Cascade exactly when to call each Veilguard tool. Without it, the tools still work but won't fire automatically.
+
+---
+
+## Step 3 — Restart Windsurf
+
+Close and reopen Windsurf completely.
+
+---
+
+## Verify
+
+1. Open the **Tools** panel → **MCP** section
+2. **Veilguard** should appear with a green status indicator
+
+Or ask Cascade: *"What Veilguard tools do you have access to?"*
+
+---
+
+## Pro key
+
+To activate Pro, add your license key to `~/.windsurf/mcp.json`:
+
+```json
+"env": {
+  "VEILGUARD_KEY": "vg_live_xxxxxxxxxxxxxxxxxxxx"
+}
+```
+
+Restart Windsurf after saving. Get a key at [veilguard.dev/pro](https://veilguard.dev/pro).
+
+---
+
+## Notes
+
+- `~/.windsurf/mcp.json` is **global** — applies to every project you open in Windsurf
+- `.windsurfrules` is **project-level** — add it to each project you want protected
+- Node.js 18 or later is required

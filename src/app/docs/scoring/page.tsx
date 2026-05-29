@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 export default function DocsScoringPage() {
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">Security Scoring</h1>
-      <p className="text-xl text-text-body mb-10">
-        When triggering a <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded ml-1 text-base">full_audit</code> (Pro users), Veilguard evaluates your codebase and applies a strict penalty-based scoring model.
+      <h1 className="text-2xl font-semibold mb-3">Security Scoring</h1>
+      <p className="text-sm text-text-body mb-8">
+        When triggering a <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded ml-1 text-xs font-mono">full_audit</code> (Pro users), Veilguard evaluates your codebase and applies a strict penalty-based scoring model.
       </p>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Calculation Model</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">Calculation Model</h2>
       <p className="text-text-body mb-4">
         Every project begins with a perfect score of <strong>100</strong>. Penalties are deducted based on severity:
       </p>
@@ -36,7 +36,7 @@ export default function DocsScoringPage() {
         </div>
       </div>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Grades Overview</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">Grades Overview</h2>
       <div className="overflow-x-auto not-prose">
         <table className="w-full text-left text-sm border-collapse">
           <thead>

@@ -1,64 +1,103 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Installation Guide — Every IDE',
-  description: 'Set up Veilguard in Claude Code, Cursor, Windsurf, VS Code, JetBrains, Antigravity. One command.',
+  title: 'Install Veilguard — Step-by-Step Guides for Every IDE',
+  description: 'Step-by-step installation guides for Veilguard. Choose your IDE: Cursor, Windsurf, VS Code, or Claude Code. Get 14 security tools running in under a minute.',
+  keywords: ['install veilguard', 'MCP server install', 'Cursor security setup', 'Claude Code MCP server', 'VS Code security extension install', 'Windsurf MCP server', 'npx veilguard'],
+  openGraph: { url: 'https://veilguard.dev/docs/install' },
 };
+
+const ides = [
+  {
+    name: 'Cursor',
+    href: '/docs/install/cursor',
+    config: '.cursor/mcp.json',
+    method: 'Create one JSON file, restart',
+    badge: 'Best experience',
+    badgeColor: 'text-accent bg-accent-muted border-accent/20',
+  },
+  {
+    name: 'Windsurf',
+    href: '/docs/install/windsurf',
+    config: '~/.windsurf/mcp_config.json',
+    method: 'Edit global config, restart',
+    badge: null,
+    badgeColor: '',
+  },
+  {
+    name: 'VS Code',
+    href: '/docs/install/vscode',
+    config: '~/.config/Code/User/mcp.json',
+    method: 'Command Palette wizard — no JSON editing',
+    badge: 'Easiest setup',
+    badgeColor: 'text-[#60A5FA] bg-[#60A5FA]/10 border-[#60A5FA]/20',
+  },
+  {
+    name: 'Claude Code',
+    href: '/docs/install/claude-code',
+    config: '.claude/mcp.json',
+    method: 'One terminal command',
+    badge: 'Most coverage',
+    badgeColor: 'text-[#F59E0B] bg-[#F59E0B]/10 border-[#F59E0B]/20',
+  },
+  {
+    name: 'Antigravity',
+    href: '/docs/install/antigravity',
+    config: '~/.gemini/antigravity/mcp_config.json',
+    method: 'Edit global config, click Refresh',
+    badge: null,
+    badgeColor: '',
+  },
+];
 
 export default function DocsInstallPage() {
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">Installation Guide</h1>
-      <p className="text-xl text-text-body mb-10">
-        Veilguard installs directly into your AI coding tool using the Model Context Protocol (MCP). It requires Node.js v18+.
+      <h1 className="text-2xl font-semibold mb-3">Installation</h1>
+      <p className="text-sm text-text-body mb-8">
+        Pick your IDE below for a step-by-step guide with screenshots. Requires Node.js 18 or later.
       </p>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Global Configuration</h2>
-      <p className="text-text-body mb-4">
-        The base MCP configuration is identical across all tools. Only the configuration file location changes.
-      </p>
-      <div className="bg-background-code border border-border rounded-xl p-6 mb-8 not-prose">
-        <pre className="text-sm font-mono text-text-body overflow-x-auto">
-{`{
+      <div className="not-prose grid grid-cols-1 sm:grid-cols-2 gap-5 mb-14">
+        {ides.map((ide) => (
+          <Link
+            key={ide.name}
+            href={ide.href}
+            className="group flex flex-col p-6 bg-background-card border border-border rounded-xl hover:border-border-hover hover:-translate-y-0.5 transition-all"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-text-heading group-hover:text-accent transition-colors">{ide.name}</h2>
+              {ide.badge && (
+                <span className={`text-xs font-semibold border px-2 py-0.5 rounded-full ${ide.badgeColor}`}>{ide.badge}</span>
+              )}
+            </div>
+            <p className="text-sm text-text-muted mb-4 font-mono">{ide.config}</p>
+            <p className="text-sm text-text-body flex-grow">{ide.method}</p>
+            <div className="mt-5 flex items-center gap-1 text-accent text-sm font-medium">
+              View guide <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      <div className="not-prose border-t border-border pt-8">
+        <h3 className="text-base font-medium text-text-heading mb-4">The MCP config (same for all IDEs)</h3>
+        <p className="text-sm text-text-body mb-4">Only the file path and how you add it differs per IDE. The JSON config block is identical:</p>
+        <div className="bg-background-code border border-border rounded-xl p-6 font-mono text-sm text-text-body overflow-x-auto">
+          <pre>{`{
   "mcpServers": {
     "veilguard": {
       "command": "npx",
-      "args": ["-y", "@veilguard/cli"],
-      "env": { "VEILGUARD_KEY": "your_key_here" }
+      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "env": {
+        "VEILGUARD_KEY": ""
+      }
     }
   }
-}`}
-        </pre>
-      </div>
-
-      <div className="space-y-12 not-prose">
-        <div>
-          <h3 className="text-xl font-medium text-text-heading mb-2">Claude Code</h3>
-          <p className="text-sm text-text-muted mb-4">File: <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded">.claude/mcp.json</code></p>
-          <p className="text-text-body text-sm mb-2">You can configure this manually, or run the following command directly in your repo:</p>
-          <code className="block w-full p-4 bg-background-code border border-border rounded-lg text-sm font-mono text-text-body">
-            claude mcp add veilguard -- npx -y @veilguard/cli
-          </code>
-          <p className="text-text-body text-sm mt-2"><strong>Note:</strong> Claude Code uses custom hooks that we inject automatically on setup.</p>
+}`}</pre>
         </div>
-
-        <div>
-          <h3 className="text-xl font-medium text-text-heading mb-2">Cursor</h3>
-          <p className="text-sm text-text-muted mb-4">File: <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded">.cursor/mcp.json</code></p>
-          <p className="text-text-body text-sm">Add the JSON snippet above to your workspace MCP file. Once added, Cursor will prompt you to restart the extension host. Veilguard will generate a customized <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded">.cursorrules</code> file specifically for Cursor's Composer.</p>
-        </div>
-
-        <div>
-          <h3 className="text-xl font-medium text-text-heading mb-2">Windsurf</h3>
-          <p className="text-sm text-text-muted mb-4">File: <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded">~/.windsurf/mcp.json</code> (Global) or Workspace config</p>
-          <p className="text-text-body text-sm">Add the JSON snippet above. We automatically inject a <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded">.windsurfrules</code> configuration to optimize Cascade's behavior.</p>
-        </div>
-
-        <div>
-          <h3 className="text-xl font-medium text-text-heading mb-2">VS Code (via Cline/Roo)</h3>
-          <p className="text-sm text-text-muted mb-4">File: <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded">.vscode/mcp.json</code></p>
-          <p className="text-text-body text-sm">Depends on your specific AI extension. If using Roo Code or Cline, supply the MCP config in their settings panel or settings file.</p>
-        </div>
+        <p className="text-sm text-text-muted mt-3">Leave <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">VEILGUARD_KEY</code> empty for free tier. Add your key for Pro.</p>
       </div>
     </>
   );

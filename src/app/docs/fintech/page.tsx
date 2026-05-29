@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 export default function DocsFintechPage() {
   return (
     <>
-      <h1 className="text-4xl font-semibold mb-4">African Fintech Security</h1>
-      <p className="text-xl text-text-body mb-10">
+      <h1 className="text-2xl font-semibold mb-3">African Fintech Security</h1>
+      <p className="text-sm text-text-body mb-8">
         AI coding tools often generate invalid or insecure boilerplate for African payment providers. Veilguard natively prevents these oversights.
       </p>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">The Context</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">The Context</h2>
       <div className="bg-background-code border-l-4 border-status-warning p-6 rounded-r-xl mb-8 not-prose">
         <p className="text-text-body text-sm mb-4">
           In 2024, unauthorized transfers resulting from an unverified webhook vulnerability led to the loss of <strong>₦11B</strong> from a major Nigerian payment processor integrations.
@@ -23,7 +23,7 @@ export default function DocsFintechPage() {
         </p>
       </div>
 
-      <h2 className="text-2xl font-medium mt-10 mb-4 border-b border-border pb-2">Protected Providers</h2>
+      <h2 className="text-base font-semibold mt-8 mb-3 border-b border-border pb-2">Protected Providers</h2>
       
       <div className="space-y-8 not-prose">
         <div className="p-6 rounded-xl border border-border bg-background-card">

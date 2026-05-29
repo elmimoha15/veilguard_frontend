@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Navbar() {
@@ -12,12 +13,7 @@ export default function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#080E12]/85 backdrop-blur-xl border-b border-[#94A3B8]/10 transition-all">
         <nav className="max-w-[1200px] mx-auto px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 relative z-50">
-            {/* Custom Minimal Shield SVG */}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#34D399]">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              <path d="M12 8v4" />
-              <path d="M12 16h.01" />
-            </svg>
+            <Image src="/logos/logo-icon.png" width={28} height={28} alt="Veilguard" className="w-7 h-7 object-contain" />
             <span className="font-semibold text-[#F1F5F9] text-lg tracking-tight">veilguard</span>
           </Link>
 
@@ -30,10 +26,10 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors flex items-center gap-1">
+            <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors flex items-center gap-1">
               GitHub <span className="text-[10px]">↗</span>
             </a>
-            <Link href="/#install" className="text-sm font-medium bg-[#34D399] text-[#080E12] px-5 py-2 rounded-xl hover:scale-[1.02] transition-transform duration-150">
+            <Link href="/#install" className="text-sm font-medium bg-[#34D399] text-[#080E12] px-5 py-2 rounded-full hover:scale-[1.02] transition-transform duration-150">
               Get started
             </Link>
           </div>
@@ -76,10 +72,10 @@ export default function Navbar() {
               <Link href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Features</Link>
               <Link href="/#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Pricing</Link>
               <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Docs</Link>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">GitHub ↗</a>
+              <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">GitHub ↗</a>
             </div>
             <div className="mt-auto">
-              <Link href="/#install" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-[#34D399] text-[#080E12] px-6 py-4 rounded-xl font-medium tracking-wide">
+              <Link href="/#install" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-[#34D399] text-[#080E12] px-6 py-4 rounded-full font-medium tracking-wide">
                 Get started
               </Link>
             </div>
