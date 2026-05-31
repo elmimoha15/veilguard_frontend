@@ -186,7 +186,7 @@ Firebase Rules Audit
 Analyzes your Firestore/Storage security rules for open access, missing auth checks, and client-controlled queries.
 full_audit
 Full Security Audit
-Runs all 13 scanners. Gives you a grade (A+ to F). Generates an AI-ready fix prompt to patch everything at once. 3 audits per month.
+Runs all 13 codebase scanners. Gives you a grade (A+ to F). Generates an AI-ready fix prompt to patch everything at once. Pro-only and unlimited — free users get an upgrade prompt instead.
 
 Breach data:
 name
@@ -248,15 +248,15 @@ Pricing comparison:
 feature
 free
 pro
-All 13 scanner tools
+All 14 scanner tools
 Available
 Available
-Findings per scan
-First 3 shown
-All shown
-Fix suggestions
-Hidden on critical
-All shown
+Vulnerability alerts
+Every finding
+Every finding
+Fix / solution per finding
+Locked
+Shown
 Dependency scanning
 Critical CVEs only
 All severities
@@ -270,14 +270,14 @@ Breach precedent context
 No
 Yes
 Supabase RLS deep audit
-No
-Unlimited
+Alert only
+Alert + fix
 Firebase rules audit
+Alert only
+Alert + fix
+Full security audit with grade
 No
 Unlimited
-Full audit with grade
-No
-3/month
 AI-ready fix prompt
 No
 Yes
@@ -325,7 +325,7 @@ Free users: leave VEILGUARD_KEY empty or remove the env line. Pro users: paste k
 Auto-scanning explanation:
 Rules file instructs AI agent to auto-call scans at key moments
 Triggers: file create/modify → secrets, API routes → webhooks + injection, DB schemas → RLS, package.json → supply chain, deploy → full check
-Claude Code: additional post-save hooks for true auto-scan
+Claude Code: a real PostToolUse hook (on Edit/Write) for deterministic auto-scan of each changed file
 Clean = silence. Issue = calm nudge. Never nags twice.
 Footer:
 Product: Veilguard — Silent security for vibe coders
@@ -350,13 +350,12 @@ $12.42/month
 "Save 35%"
 
 Pro features list:
-All findings shown (no caps)
-Full fix suggestions for every issue
-Supabase RLS deep audit (unlimited)
-Firebase rules audit (unlimited)
-Full security audit with grade (3/month)
+The exact fix / solution for every finding (free only alerts)
+Breach precedent context on every finding
+Full security audit with grade — unlimited (Pro only)
+AI-ready fix prompt (paste to fix everything at once)
+Full dependency CVE severities + all packages
 Full git history secret scanning
-Breach precedent context
 All dependencies checked
 AI-ready combined fix prompt
 Checkout URLs (replace with actual Polar links):
@@ -393,7 +392,7 @@ What init does: detects IDE, installs security rules file, adds MCP server confi
 2. IDE Setup
 Universal MCP config JSON (see above)
 Per-IDE config paths table (see above)
-Claude Code hooks: post-save hooks for auto-scanning on every file save
+Claude Code hooks: a PostToolUse hook (Edit/Write/MultiEdit) in .claude/settings.local.json that scans each file the agent changes
 Adding Pro key: paste into env.VEILGUARD_KEY, restart IDE
 3. Free vs Pro
 Comparison table (see above)
@@ -453,14 +452,14 @@ Firebase security rules analysis
 CRITICAL: allow read, write: if true — completely open
 After rules file changes
 full_audit [PRO]
-All 13 scanners, score 0-100, grade A+ to F, 3/month
+All 13 codebase scanners, score 0-100, grade A+ to F, Pro-only & unlimited
 Grade: C (68/100) — 4 critical, 3 warnings, 2 info
 Before deploy
 
 5. Auto-Scan Triggers
 Trigger moments: file create/modify, DB schema changes, API route changes, dependency changes, env/config changes, before deploy, project start
 Rules file approach: Cursor, Windsurf, VS Code, JetBrains, Antigravity
-Hooks approach: Claude Code (post-save)
+Hooks approach: Claude Code (PostToolUse hook on Edit/Write, in .claude/settings.local.json)
 Behavior: clean = silence, issue = calm nudge, never nags twice
 6. Scoring System
 Base: 100 points
@@ -482,8 +481,8 @@ Pro key not working
 Restart IDE. Check key format. Check internet (first validation needs network).
 False positives
 Add file/pattern to .veilguardignore (same format as .gitignore).
-3/3 audits used
-Resets 1st of each month. Individual scanners still unlimited.
+full_audit says "Pro feature"
+The full audit is Pro-only. Add a valid VEILGUARD_KEY (Pro) to run it. Free users run the individual scanners for unlimited vulnerability alerts.
 Command not found
 Check Node.js >= 18. Try: npx @veilguard/cli@latest init
 
@@ -502,7 +501,7 @@ title: "Veilguard Pro — See Everything. Fix Everything."
 description: "Full security scanning for vibe coders. All findings, all fixes, Supabase RLS audit, Firebase audit, security grade. $19/month."
 Docs page:
 title: "Veilguard Docs — Install, Setup, Scanner Reference"
-description: "How to install Veilguard, set up in any IDE, and use all 13 security scanners."
+description: "How to install Veilguard, set up in any IDE, and use all 14 security scanners."
 Target keywords: vibe coding security, MCP security scanner, Supabase RLS checker, AI code security, vibe coder vulnerabilities, cursor security scanner, claude code security
 
 Deployment Checklist

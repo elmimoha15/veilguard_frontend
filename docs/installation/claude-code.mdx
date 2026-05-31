@@ -9,7 +9,7 @@ Claude Code gets the most complete Veilguard integration — MCP tools, a rules 
 Run this in your terminal:
 
 ```bash
-claude mcp add veilguard -- npx -y --package=veilguard-cli veilguard-mcp
+claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp
 ```
 
 **Alternative:** Create `.claude/mcp.json` in your project root:
@@ -19,7 +19,7 @@ claude mcp add veilguard -- npx -y --package=veilguard-cli veilguard-mcp
   "mcpServers": {
     "veilguard": {
       "command": "npx",
-      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "args": ["-y", "--package=veilguard", "veilguard-mcp"],
       "env": {
         "VEILGUARD_KEY": ""
       }
@@ -38,31 +38,29 @@ If you already have a `CLAUDE.md`, append the Veilguard rules to the end of it.
 
 ---
 
-## Step 3 — Add post-save hooks (recommended)
+## Step 3 — Add the post-edit hook (recommended)
 
-Create `.claude/hooks.json` in your project:
+Add a `PostToolUse` hook to `.claude/settings.local.json` in your project (`veilguard init` does this for you):
 
 ```json
 {
   "hooks": {
-    "postSave": [
+    "PostToolUse": [
       {
-        "pattern": "**/*.{ts,tsx,js,jsx,json,sql,env,toml,yaml,yml}",
-        "command": "npx veilguard-cli quick-scan --file $FILE",
-        "description": "Veilguard: scan saved file for security issues"
-      }
-    ],
-    "preDeploy": [
-      {
-        "command": "npx veilguard-cli quick-scan --dir .",
-        "description": "Veilguard: pre-deploy security check"
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx -y --package=veilguard veilguard-cli scan-hook"
+          }
+        ]
       }
     ]
   }
 }
 ```
 
-These hooks fire on **every file save** — not just AI writes, but your manual edits too. Clean scans are silent.
+This fires every time the AI edits or writes a file: `scan-hook` scans just that file, stays silent if it's clean, and surfaces any finding back into the conversation. Hooks live under the `hooks` key in a settings file — Claude Code has no `.claude/hooks.json` and no `postSave`/`preDeploy` events.
 
 ---
 
@@ -87,7 +85,7 @@ You should see `veilguard` in the output. Or ask Claude: *"What Veilguard tools 
 To activate Pro, add your license key:
 
 ```bash
-claude mcp add veilguard --env VEILGUARD_KEY=vg_live_xxxxxxxxxxxxxxxxxxxx -- npx -y --package=veilguard-cli veilguard-mcp
+claude mcp add veilguard --env VEILGUARD_KEY=vg_live_xxxxxxxxxxxxxxxxxxxx -- npx -y --package=veilguard veilguard-mcp
 ```
 
 Or add it to the `env` block in `.claude/mcp.json`. Get a key at [veilguard.dev/pro](https://veilguard.dev/pro).

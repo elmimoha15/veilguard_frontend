@@ -5,19 +5,77 @@ import IDEInstallTabs from '@/components/ui/IDEInstallTabs';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Veilguard — Silent Security Scanner for Vibe Coders | Catch AI Code Vulnerabilities',
-  description: 'Free security scanner that catches vulnerabilities in AI-generated code. Detects leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks. Works in Cursor, Claude Code, VS Code, and Windsurf.',
-  keywords: ['vibe coding security', 'AI code scanner', 'secret detection', 'Supabase RLS audit', 'MCP security server', 'Cursor security', 'Claude Code security'],
+  title: 'Veilguard — Free Security Scanner for Vibe Coders | Catch AI Code Vulnerabilities',
+  description: 'Free security scanner for vibe coders. Catches leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks in AI-generated code. Works in Cursor, Claude Code, Windsurf, and VS Code. 14 scanners. Free forever.',
+  keywords: [
+    'vibe coding security', 'vibe coder security scanner', 'vibe coding vulnerabilities',
+    'secure vibe coded app', 'vibe coding hacked', 'is vibe coding safe',
+    'AI code scanner', 'AI generated code security', 'AI agent security',
+    'MCP security server', 'Cursor security scanner', 'Claude Code security',
+    'Windsurf security', 'VS Code security extension',
+    'secret detection', 'Supabase RLS audit', 'SQL injection scanner',
+    'supply chain attack detection', 'vibe coding security 2026',
+    'how to secure vibe coded app', 'AI coding vulnerabilities',
+  ],
   openGraph: {
-    title: 'Veilguard — Silent Security for Vibe Coders',
-    description: 'Free security scanner for AI-generated code. 13 scanners. Works in every IDE. Catches what AI gets wrong.',
+    title: 'Veilguard — Free Security Scanner for Vibe Coders',
+    description: 'Catches leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks in AI-generated code. 14 scanners. Free forever. Works in Cursor, Claude Code, Windsurf, and VS Code.',
     url: 'https://veilguard.dev',
   },
+};
+
+const faqItems = [
+  {
+    q: 'What is vibe coding?',
+    a: 'Vibe coding is a software development approach where developers describe what they want in plain English and an AI agent — such as Cursor, Claude Code, or Windsurf — writes the entire application. It lets anyone build production-ready apps in hours without writing most of the code manually. Over 92% of developers now use AI coding assistants, and 41% of all code written globally is AI-generated.',
+  },
+  {
+    q: 'Is vibe coding safe?',
+    a: 'Vibe coding produces working code fast, but 45% of AI-generated code contains security vulnerabilities according to Veracode (2025). AI tools do not check for hardcoded secrets, SQL injection, or broken database policies. Vibe-coded apps need a dedicated security scanner to catch what the AI misses before those vulnerabilities reach production.',
+  },
+  {
+    q: 'What security vulnerabilities does AI-generated code typically introduce?',
+    a: 'The most common vulnerabilities are: hardcoded API keys embedded as fallback values (process.env.KEY || \'sk_live_...\'), SQL injection via template literals, missing Supabase Row Level Security, unverified webhook handlers that accept fake payment events, wildcard CORS on authenticated apps, and typosquatted npm packages. AI tools prioritize making code work quickly over making it secure.',
+  },
+  {
+    q: 'How do I secure a vibe-coded app?',
+    a: 'Scan every file for hardcoded secrets before git commits, audit your Supabase RLS policies to confirm row-level access is enforced per user, verify all payment webhooks validate signatures cryptographically, check npm dependencies for known CVEs, and review your CORS configuration. Veilguard automates all of these checks through your AI coding IDE using 14 security scanners.',
+  },
+  {
+    q: 'What is an MCP security server?',
+    a: 'An MCP (Model Context Protocol) security server is a tool that integrates directly into AI coding IDEs like Cursor, Claude Code, and Windsurf. It exposes security scanning functions the AI agent can call while writing code. Veilguard\'s MCP server adds 14 security scanners — covering secrets, SQL injection, Supabase RLS, webhook verification, supply chain attacks, and more — to any supported AI coding IDE.',
+  },
+  {
+    q: 'Can using Cursor or Claude Code result in my app being hacked?',
+    a: 'AI coding tools like Cursor, Claude Code, and Windsurf routinely generate insecure patterns without warning. The Moltbook breach (January 2026) leaked 1.5 million API keys from a fully AI-coded app. Lovable\'s CVE-2025-48757 exposed 170 apps through AI-generated RLS logic errors. AI writes fast code — without a security layer, that speed ships vulnerabilities directly to production.',
+  },
+  {
+    q: 'Is Veilguard free?',
+    a: 'Yes. Veilguard\'s free tier runs all 14 security scanners and the MCP server in Cursor, Claude Code, Windsurf, VS Code, and Antigravity, and alerts you to every vulnerability it finds. Free tells you exactly what\'s wrong; the fixes, breach context, and the full security audit (letter grade A+ to F plus an AI-ready fix prompt you can paste to fix everything at once) are Veilguard Pro — $19/month or $149/year.',
+  },
+  {
+    q: 'Does Veilguard send my code to the cloud?',
+    a: 'No. Veilguard runs entirely on your local machine. It reads files locally, matches patterns locally, and returns results locally. The only external calls are package names (never source code) to Google\'s OSV.dev for CVE lookups, and your license key to veilguard.dev for Pro validation once every 24 hours.',
+  },
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
 };
 
 export default function Home() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
       {/* Hero Section */}
       <section className="relative pt-[140px] pb-[100px] px-6 md:px-12 lg:px-16 max-w-[1200px] mx-auto text-center flex flex-col items-center justify-center">
         {/* Radial Glow */}
@@ -52,7 +110,7 @@ export default function Home() {
             </Link>
           </div>
           <div className="text-xs text-text-muted font-mono tracking-wide mt-1">
-            Works in Cursor · Claude Code · VS Code · Windsurf · JetBrains · Antigravity
+            Works in Cursor · Claude Code · VS Code · Windsurf · Antigravity
           </div>
         </FadeIn>
 
@@ -114,9 +172,9 @@ export default function Home() {
             <div className="mb-6 inline-block px-3 py-1 rounded-full bg-background text-text-muted text-xs font-medium border border-border">STEP 1</div>
             <h3 className="text-xl font-medium text-text-heading mb-4">Install in 30 seconds</h3>
             <p className="text-text-body text-base flex-grow mb-8">
-              One command. Auto-detects your IDE. Sets up security rules and the MCP server config.
+              Add one MCP config block to your IDE — the same JSON everywhere, only the file path changes. Claude Code installs with a single command.
             </p>
-            <div className="text-xs text-text-muted tracking-wider uppercase font-mono">npx @veilguard/cli init</div>
+            <div className="text-xs text-text-muted font-mono break-all">claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp</div>
           </FadeInStaggerItem>
 
           <FadeInStaggerItem className="bg-background-card-hover border border-border-active rounded-xl p-8 flex flex-col h-full -translate-y-4 shadow-[0_20px_40px_rgba(0,0,0,0.4)] relative">
@@ -126,18 +184,18 @@ export default function Home() {
             <div className="mb-6 inline-block px-3 py-1 rounded-full bg-accent-muted text-accent border border-accent/20 text-xs font-medium">STEP 2</div>
             <h3 className="text-xl font-medium text-text-heading mb-4 relative z-10">Code like you always do</h3>
             <p className="text-text-body text-base flex-grow mb-8 relative z-10">
-              Veilguard runs silently while you and your AI agent write code. It scans every file your AI creates or modifies. If everything is clean — total silence. You never know it&apos;s there.
+              Your AI agent calls Veilguard&apos;s tools as it writes code — automatically once you add the rules file, or any time you ask. If everything is clean, total silence. You never know it&apos;s there.
             </p>
-            <div className="text-xs text-text-muted tracking-wider uppercase relative z-10">SILENT · AUTOMATIC · ZERO CONFIG</div>
+            <div className="text-xs text-text-muted tracking-wider uppercase relative z-10">SILENT · IN YOUR IDE</div>
           </FadeInStaggerItem>
 
           <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 flex flex-col h-full hover:-translate-y-1 transition-transform duration-300">
             <div className="mb-6 inline-block px-3 py-1 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20 text-xs font-medium">STEP 3</div>
             <h3 className="text-xl font-medium text-text-heading mb-4">Get a nudge when something&apos;s wrong</h3>
             <p className="text-text-body text-base flex-grow mb-8">
-              Found a leaked Stripe key on line 7? A red underline appears. SQL injection in your API route? Yellow warning in the Problems panel. Your AI agent can auto-fix the issue in one click.
+              Found a leaked Stripe key? Your AI agent flags it right in the chat — in plain English, with the real-world consequence — then offers you the exact fix with Pro. SQL injection in an API route? Same thing. Clean code stays silent.
             </p>
-            <div className="text-xs text-text-muted tracking-wider uppercase">RED UNDERLINES · AUTO-FIX</div>
+            <div className="text-xs text-text-muted tracking-wider uppercase">PLAIN ENGLISH · FIX WITH PRO</div>
           </FadeInStaggerItem>
         </FadeInStagger>
       </section>
@@ -150,9 +208,9 @@ export default function Home() {
           <div className="flex flex-col lg:flex-row items-center gap-16 mb-[160px]">
             <FadeIn direction="right" className="lg:w-1/2 order-2 lg:order-1">
               <div className="mb-4 caption text-accent font-mono">SECRET SCANNING</div>
-              <h3 className="mb-6 text-3xl tracking-tight">50+ patterns. Zero leaks.</h3>
+              <h3 className="mb-6 text-3xl tracking-tight">60+ patterns. Zero leaks.</h3>
               <p className="text-lg text-text-body mb-6">
-                Catches 50+ API key patterns: Stripe, OpenAI, Supabase, Paystack, Flutterwave, M-Pesa, AWS, and more. Detects the #1 vibe coding mistake: AI adding live keys as fallback values.
+                Catches 60+ API key patterns: Stripe, OpenAI, Supabase, Paystack, Flutterwave, M-Pesa, AWS, and more. Detects the #1 vibe coding mistake: AI adding live keys as fallback values.
               </p>
               <p className="text-text-muted">
                 Every file modification is checked in milliseconds. Before the commit even happens.
@@ -241,7 +299,7 @@ export default function Home() {
       <section className="py-[140px] px-6 md:px-12 lg:px-16 max-w-[1200px] mx-auto border-t border-border">
         <FadeIn>
           <div className="mb-4 caption text-accent font-mono">WHAT VEILGUARD CATCHES</div>
-          <h2 className="mb-16 max-w-2xl">14 security tools. Every vulnerability AI introduces.</h2>
+          <h2 className="mb-16 max-w-2xl">14 scanners. Every vulnerability AI introduces.</h2>
         </FadeIn>
         
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -259,7 +317,8 @@ export default function Home() {
             { name: "Supabase RLS Audit", desc: "Deep analysis of Row Level Security policies. Catches USING(true), auth.uid() IS NOT NULL bypass, and missing policies.", pro: false },
             { name: "Firebase Rules Audit", desc: "Analyzes Firebase security rules for allow if true, client-controlled userId, and auth-only policies without ownership checks.", pro: false },
             { name: "App Security", desc: "Rate limiting, IDOR, password storage, file uploads, error exposure, sensitive logging, open redirects, mass assignment.", pro: false },
-            { name: "Full Security Audit", desc: "Runs all 13 scanners, scores your project 0-100, assigns a grade A+ to F, generates an AI-ready fix prompt.", pro: true },
+            { name: "AI Rules File Scanner", desc: "Scans .cursorrules, .windsurfrules, and CLAUDE.md for hidden Unicode backdoors, base64 payloads, and malicious instructions that hijack your AI agent.", pro: false },
+            { name: "Full Security Audit", desc: "Runs all scanners, scores your project 0-100, assigns a grade A+ to F, and generates an AI-ready fix prompt. Pro only — unlimited.", pro: true },
           ].map((scanner, i) => (
             <FadeInStaggerItem key={i} className={`p-6 rounded-xl border bg-background-card flex flex-col h-full hover:-translate-y-1 transition-transform ${scanner.pro ? 'border-accent/50 shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 'border-border'}`}>
               <div className="flex items-center gap-3 mb-3">
@@ -329,11 +388,11 @@ export default function Home() {
               <div className="text-4xl font-semibold text-text-heading mb-8">$0<span className="text-lg text-text-muted font-normal">/mo</span></div>
               
               <ul className="space-y-4 mb-10 flex-grow text-text-body text-sm">
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>All 13 scanners (including RLS &amp; Firebase)</span></li>
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>All findings shown</span></li>
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Fix suggestions included</span></li>
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>MCP server + VS Code extension</span></li>
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-[#475569] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg><span className="text-[#475569]">Full audit grade locked (findings still shown)</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>All 14 scanners (including RLS &amp; Firebase)</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Every vulnerability flagged — plain-English alerts</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>MCP server — works in Cursor, Claude Code, Windsurf, VS Code &amp; Antigravity</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-[#475569] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg><span className="text-[#475569]">Fixes &amp; solutions — upgrade to unlock</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-[#475569] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg><span className="text-[#475569]">Full security audit &amp; letter grade (Pro only)</span></li>
               </ul>
               
               <Link href="#install" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
@@ -352,47 +411,15 @@ export default function Home() {
               
               <ul className="space-y-4 mb-10 flex-grow text-text-body text-sm">
                 <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Everything in Free</span></li>
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span className="text-[#F1F5F9] font-medium">Full audit with letter grade (A+ to F)</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span className="text-[#F1F5F9] font-medium">The exact fix for every vulnerability</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit with letter grade (A+ to F)</span></li>
                 <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>AI-ready fix prompt (paste to fix everything at once)</span></li>
-                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Unlimited full audits per month</span></li>
+                <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full security audit — unlimited</span></li>
                 <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Breach context on every finding</span></li>
               </ul>
               
               <Link href="/pro" className="block text-center w-full py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
                 Go Pro
-              </Link>
-            </div>
-          </FadeIn>
-        </div>
-      </section>
-
-      {/* Two Ways to Use */}
-      <section className="py-[140px] px-6 md:px-12 lg:px-16 max-w-[1200px] mx-auto border-t border-border">
-        <FadeIn className="text-center">
-          <div className="mb-4 caption text-accent font-mono">TWO WAYS TO USE</div>
-          <h2 className="mb-16 max-w-2xl mx-auto">VS Code extension + MCP server. Choose your fighter.</h2>
-        </FadeIn>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <FadeIn direction="up" delay={0.1}>
-            <div className="bg-background-card border border-border rounded-xl p-10 flex flex-col h-full hover:border-border-hover transition-colors">
-              <h3 className="text-2xl font-medium text-text-heading mb-4">VS Code Extension</h3>
-              <p className="text-text-body text-base flex-grow mb-8">
-                Real-time security lint. Red underlines on leaked secrets, yellow warnings on SQL injection &mdash; just like ESLint but for security. Works on every file save. No AI chat needed.
-              </p>
-              <Link href="/docs/install" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
-                Install VS Code Extension
-              </Link>
-            </div>
-          </FadeIn>
-          <FadeIn direction="up" delay={0.2}>
-            <div className="bg-background-card border border-border rounded-xl p-10 flex flex-col h-full hover:border-border-hover transition-colors">
-              <h3 className="text-2xl font-medium text-text-heading mb-4">MCP Server</h3>
-              <p className="text-text-body text-base flex-grow mb-8">
-                Your AI agent becomes security-aware. In Cursor, Claude Code, and Windsurf, Veilguard auto-scans every file your AI writes. Clean code = total silence.
-              </p>
-              <Link href="/docs/install" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
-                Set Up MCP Server
               </Link>
             </div>
           </FadeIn>
@@ -408,12 +435,11 @@ export default function Home() {
 
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { name: "Cursor", desc: "Auto-scans via .cursorrules. Best experience." },
-            { name: "Claude Code", desc: "Auto-scans + post-save hooks via CLAUDE.md" },
-            { name: "Windsurf", desc: "Auto-scans via .windsurfrules" },
-            { name: "VS Code", desc: "Real-time lint via extension + MCP via Copilot Chat" },
-            { name: "JetBrains", desc: "MCP server via Settings \u2192 Tools \u2192 MCP Server" },
-            { name: "Antigravity", desc: "MCP server via MCP Settings Panel" },
+            { name: "Cursor", desc: "Add the MCP config, ask it to scan \u2014 it just works." },
+            { name: "Claude Code", desc: "One command to connect. Then just ask Claude to check your code." },
+            { name: "Windsurf", desc: "Drop in the config file, restart, and you're good." },
+            { name: "VS Code", desc: "MCP server connects via Copilot Chat in one config file." },
+            { name: "Antigravity", desc: "Add via the MCP Settings Panel, no extra setup." },
           ].map((ide, i) => (
             <FadeInStaggerItem key={i} className="p-6 rounded-xl border border-border bg-background-card hover:-translate-y-1 transition-transform">
               <h3 className="font-medium text-text-heading mb-2">{ide.name}</h3>
@@ -437,14 +463,45 @@ export default function Home() {
         </FadeIn>
       </section>
 
+      {/* FAQ */}
+      <section id="faq" className="py-[140px] px-6 md:px-12 lg:px-16 max-w-[1200px] mx-auto border-t border-border">
+        <FadeIn>
+          <div className="mb-4 caption text-accent font-mono">FAQ</div>
+          <h2 className="mb-4 max-w-2xl">Questions vibe coders ask before installing</h2>
+          <p className="text-text-body text-lg mb-16 max-w-2xl">
+            Everything you need to know about securing AI-generated code, vibe coding security risks, and how Veilguard works.
+          </p>
+        </FadeIn>
+
+        <FadeInStagger className="max-w-3xl space-y-3">
+          {faqItems.map((item, i) => (
+            <FadeInStaggerItem key={i}>
+              <details className="group bg-background-card border border-border rounded-xl overflow-hidden [&_summary::-webkit-details-marker]:hidden">
+                <summary className="px-6 py-5 font-medium text-text-heading cursor-pointer flex justify-between items-center outline-none text-base">
+                  {item.q}
+                  <span className="transition-transform group-open:rotate-180 shrink-0 ml-4 text-text-muted">
+                    <svg fill="none" height="20" viewBox="0 0 24 24" width="20" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+                      <path d="M6 9l6 6 6-6" />
+                    </svg>
+                  </span>
+                </summary>
+                <div className="px-6 pb-5 pt-3 text-text-body text-sm leading-relaxed border-t border-border/50">
+                  {item.a}
+                </div>
+              </details>
+            </FadeInStaggerItem>
+          ))}
+        </FadeInStagger>
+      </section>
+
       {/* Final CTA */}
       <section className="relative py-[200px] px-6 text-center border-t border-border overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-glow rounded-full blur-[100px] pointer-events-none -z-10"></div>
         <FadeIn>
           <h2 className="mb-4">Ship fast. Ship secure.</h2>
           <p className="text-lg text-text-body mb-10 max-w-xl mx-auto">Install Veilguard in 30 seconds. Free forever for indie developers.</p>
-          <div className="inline-block bg-background-code border border-border px-6 py-4 rounded-xl font-mono text-sm mb-10 shadow-2xl relative group">
-            <span className="text-accent mr-2">npx</span>@veilguard/cli init
+          <div className="inline-block bg-background-code border border-border px-6 py-4 rounded-xl font-mono text-xs sm:text-sm mb-10 shadow-2xl relative group max-w-full overflow-x-auto break-all">
+            <span className="text-accent mr-2">claude</span>mcp add veilguard -- npx -y --package=veilguard veilguard-mcp
             <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none"></div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

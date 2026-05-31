@@ -89,7 +89,7 @@ export default function DocsInstallPage() {
   "mcpServers": {
     "veilguard": {
       "command": "npx",
-      "args": ["-y", "--package=veilguard-cli", "veilguard-mcp"],
+      "args": ["-y", "--package=veilguard", "veilguard-mcp"],
       "env": {
         "VEILGUARD_KEY": ""
       }

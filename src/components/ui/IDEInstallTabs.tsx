@@ -8,16 +8,14 @@ const IDE_TABS = [
   { id: 'cursor', label: 'Cursor' },
   { id: 'windsurf', label: 'Windsurf' },
   { id: 'vscode', label: 'VS Code' },
-  { id: 'jetbrains', label: 'JetBrains' },
   { id: 'antigravity', label: 'Antigravity' }
 ];
 
 const IDE_PATHS: Record<string, string> = {
-  claude: '.claude/mcp.json (also: claude mcp add veilguard -- npx -y @veilguard/cli)',
+  claude: '.claude/mcp.json (also: claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp)',
   cursor: '.cursor/mcp.json',
   windsurf: '~/.windsurf/mcp.json',
   vscode: '.vscode/mcp.json',
-  jetbrains: 'Settings → Tools → MCP Server',
   antigravity: 'MCP Settings Panel'
 };
 
@@ -25,7 +23,7 @@ const JSON_CONFIG = `{
   "mcpServers": {
     "veilguard": {
       "command": "npx",
-      "args": ["-y", "@veilguard/cli"],
+      "args": ["-y", "--package=veilguard", "veilguard-mcp"],
       "env": { "VEILGUARD_KEY": "your_key_here" }
     }
   }
@@ -84,8 +82,8 @@ export default function IDEInstallTabs() {
         
         <div className="mt-8 pt-6 border-t border-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="text-sm text-text-body">
-            Or auto-detect everything:
-            <code className="ml-2 font-mono text-accent bg-accent-muted px-2 py-1 rounded">npx @veilguard/cli init</code>
+            One command in Claude Code:
+            <code className="ml-2 font-mono text-accent bg-accent-muted px-2 py-1 rounded break-all">claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp</code>
           </div>
           <div className="text-[12px] text-text-muted">
             Free: leave VEILGUARD_KEY empty. Pro: paste key from email.

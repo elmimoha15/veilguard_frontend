@@ -38,9 +38,9 @@ function CheckoutContent() {
   return (
     <>
       <FadeIn className="text-center mb-16">
-        <h1 className="text-5xl md:text-6xl mb-6 max-w-3xl mx-auto">See everything.<br/>Fix everything.</h1>
+        <h1 className="text-5xl md:text-6xl mb-6 max-w-3xl mx-auto">Free finds it.<br/>Pro fixes it.</h1>
         <p className="text-lg text-text-body max-w-2xl mx-auto">
-          Veilguard Pro unlocks full scan depth, Supabase RLS deep audit, Firebase rules analysis, and a security grade for your entire project.
+          Every scanner runs free and flags every vulnerability it finds. Veilguard Pro unlocks the exact fixes, breach context, your full security grade (A+ to F), and the AI-ready fix prompt that patches everything in a single paste.
         </p>
       </FadeIn>
 
@@ -70,14 +70,13 @@ function CheckoutContent() {
             <div className="text-sm text-text-muted mb-8">Billed monthly</div>
             
             <ul className="space-y-4 mb-10 flex-grow text-text-body text-sm">
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Everything in Free</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>All findings revealed</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full AI-ready fix prompts</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Supabase RLS & Firebase audits</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>All severities & breach context</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report (3/month)</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Everything in Free — plus the exact fix for every finding</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full security audit with letter grade (A+ to F)</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>AI-ready fix prompt — paste to fix everything at once</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Breach context on every finding + full scan depth</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report — unlimited</span></li>
             </ul>
-            
+
             <a href="https://polar.sh/checkout/veilguard-pro-monthly" className="block text-center w-full py-3 rounded-full border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
               Subscribe — $19/mo
             </a>
@@ -100,12 +99,11 @@ function CheckoutContent() {
             <div className="text-sm text-text-muted mb-8">Works out to $12.42/mo (billed annually)</div>
             
             <ul className="space-y-4 mb-10 flex-grow text-text-body text-sm">
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Everything in Free</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span className="text-[#F1F5F9] font-medium">All findings revealed</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full AI-ready fix prompts</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Supabase RLS & Firebase audits</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>All severities & breach context</span></li>
-              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report (3/month)</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Everything in Free — plus the exact fix for every finding</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span className="text-[#F1F5F9] font-medium">Full security audit with letter grade (A+ to F)</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>AI-ready fix prompt — paste to fix everything at once</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Breach context on every finding</span></li>
+              <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report — unlimited</span></li>
             </ul>
             
             <a href="https://polar.sh/checkout/veilguard-pro-annual" className={`block text-center w-full py-3 rounded-full font-semibold transition-transform ${isAnnual ? 'bg-accent text-[#080E12] hover:scale-[1.02]' : 'border border-border text-text-heading hover:bg-background-card-hover'}`}>
@@ -129,18 +127,19 @@ function CheckoutContent() {
             </thead>
             <tbody className="divide-y divide-border">
               {[
-                { name: 'All 13 scanners', free: 'Yes', pro: 'Yes' },
-                { name: 'VS Code extension', free: 'Yes', pro: 'Yes' },
-                { name: 'MCP server (all IDEs)', free: 'Yes', pro: 'Yes' },
-                { name: 'Findings per scan', free: 'First 3', pro: 'All' },
-                { name: 'Fix suggestions', free: 'Hidden on critical', pro: 'All shown' },
-                { name: 'Dependency scanning', free: 'Critical CVEs only', pro: 'All severities' },
-                { name: 'Supply chain check', free: 'Top 20 packages', pro: 'All packages' },
-                { name: 'Git history scan', free: 'Current files only', pro: 'Full history' },
-                { name: 'Supabase RLS deep audit', free: 'No', pro: 'Yes' },
-                { name: 'Firebase rules audit', free: 'No', pro: 'Yes' },
-                { name: 'Full audit with grade', free: 'No', pro: '3/month' },
+                { name: 'All 14 scanners', free: 'Yes', pro: 'Yes' },
+                { name: 'MCP server (all IDEs, incl. VS Code)', free: 'Yes', pro: 'Yes' },
+                { name: 'Vulnerability alerts', free: 'Yes', pro: 'Yes' },
+                { name: 'Fix / solution for each finding', free: 'Locked', pro: 'Yes' },
                 { name: 'Breach context', free: 'No', pro: 'Yes' },
+                { name: 'Dependency CVE scan', free: 'Critical only', pro: 'All severities' },
+                { name: 'Supply chain check', free: 'Top 20 deps', pro: 'All packages' },
+                { name: 'Git history scan', free: 'Current files', pro: 'Full history' },
+                { name: 'Supabase RLS deep audit', free: 'Alert only', pro: 'Yes' },
+                { name: 'Firebase rules audit', free: 'Alert only', pro: 'Yes' },
+                { name: 'Full security audit', free: 'No', pro: 'Unlimited' },
+                { name: 'Full audit — letter grade (A+ to F)', free: 'No', pro: 'Yes' },
+                { name: 'AI-ready fix prompt', free: 'No', pro: 'Yes' },
               ].map((row, i) => (
                 <tr key={i} className="hover:bg-background-card/50 transition-colors">
                   <td className="py-4 px-6 text-text-body">{row.name}</td>
@@ -161,7 +160,7 @@ function CheckoutContent() {
             { q: "How does the license key work?", a: "After subscribing, you'll receive a VEILGUARD_KEY via email. Simply add this to your MCP configuration's env mapping as detailed in the installation docs." },
             { q: "What if I cancel?", a: "You will retain your Pro license until the end of your billing cycle. Afterwards, Veilguard will automatically downgrade to the Free tier functionality." },
             { q: "Can I use it on multiple projects?", a: "Yes, currently the license is per user rather per project. One license covers your personal projects on a single machine." },
-            { q: "What happens if I exceed 3 audits/month?", a: "The Full Audit scanner is limited to 3 runs per month to save computational cost. All other scanners continue to run unlimited." },
+            { q: "Is there a limit on how many full audits I can run?", a: "No. Pro includes unlimited full audits, and all other scanners run unlimited too." },
             { q: "Are you open source?", a: "The Veilguard CLI and core scanners are source-available, allowing you to verify what runs on your machine. The backend grading and telemetry parsing are proprietary." }
           ].map((faq, i) => (
             <details key={i} className="group bg-background-card border border-border rounded-xl mb-4 overflow-hidden [&_summary::-webkit-details-marker]:hidden">

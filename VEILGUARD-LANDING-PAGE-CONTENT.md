@@ -192,7 +192,7 @@ FREE SCANNERS:
 PRO SCANNERS ($19/month):
 - Supabase RLS Audit — "Deep analysis of Row Level Security policies. Catches the exact patterns behind the Moltbook breach (1.5M leaked keys) and the Lovable CVE-2025-48757 (170 apps exposed). Detects USING(true), auth.uid() IS NOT NULL bypass, missing RLS on tables, and select(*) without ownership filters."
 - Firebase Rules Audit — "Analyzes Firebase security rules for allow read, write: if true, client-controlled userId checks, and authentication-only policies without ownership verification."
-- Full Security Audit — "Runs all 13 scanners, calculates a security score (0-100), assigns a grade (A+ to F), and generates an AI-ready fix prompt you can paste into your coding agent to fix every issue at once. 3 audits per month."
+- Full Security Audit — "Runs all the codebase scanners, calculates a security score (0-100), assigns a grade (A+ to F), and generates an AI-ready fix prompt you can paste into your coding agent to fix every issue at once. Pro-only and unlimited — free users get an upgrade prompt instead."
 
 ### SECTION 5: Two Ways to Use Veilguard
 
@@ -214,18 +214,17 @@ Table:
 
 | Feature | Free | Pro ($19/mo) |
 |---------|------|-------------|
-| All 13 scanners | ✓ | ✓ |
-| VS Code extension | ✓ | ✓ |
+| All 14 scanners | ✓ | ✓ |
 | MCP server (all IDEs) | ✓ | ✓ |
-| Findings per scan | First 3 | All |
-| Fix suggestions | Hidden on critical | All shown |
+| Vulnerability alerts | All findings | All findings |
+| Fix / solution per finding | 🔒 Locked | ✓ |
+| Breach context | 🔒 Locked | ✓ (which real breach each pattern caused) |
 | Dependency scanning | Critical CVEs only | All severities |
 | Supply chain check | Top 20 packages | All packages |
 | Git history scan | Current files only | Full history |
-| Supabase RLS deep audit | — | ✓ |
-| Firebase rules audit | — | ✓ |
-| Full audit with grade | — | 3/month |
-| Breach context | — | ✓ (which real breach each pattern caused) |
+| Supabase RLS deep audit | Alert only | ✓ + fix |
+| Firebase rules audit | Alert only | ✓ + fix |
+| Full security audit (grade + fix prompt) | — | ✓ Unlimited |
 
 CTA: "Start Free" / "Go Pro — $19/month"
 
@@ -287,18 +286,16 @@ Links: Docs, GitHub, Pro, Blog, Privacy, Terms
 
 ### Content
 
-Headline: "See everything. Fix everything."
-Subheadline: "Veilguard Pro unlocks full scan depth, Supabase RLS deep audit, Firebase rules analysis, and a security grade for your entire project."
+Headline: "Free finds it. Pro fixes it."
+Subheadline: "Free alerts you to every vulnerability. Veilguard Pro unlocks the exact fix for each one, full scan depth, breach context, and a graded security audit for your entire project."
 
 What Pro adds:
-- "All findings shown — free tier shows first 3, Pro shows every vulnerability in every file"
-- "Fix suggestions on every finding — including critical issues"
-- "Supabase RLS deep audit — catches USING(true), auth.uid() IS NOT NULL bypass, missing policies on tables, service_role key exposure. The patterns behind Moltbook and Lovable breaches."
-- "Firebase security rules audit — detects allow if true, client-controlled userId, and auth-only policies without ownership checks"
-- "Full security audit with grade — runs all 13 scanners, scores your project 0-100, assigns a grade A+ to F, generates an AI-ready fix prompt. 3 per month."
+- "The exact fix for every finding — free alerts you to what's wrong, Pro gives you the solution"
+- "Breach context — every finding tells you which real-world breach this pattern caused"
+- "Full security audit with grade — runs all the codebase scanners, scores your project 0-100, assigns a grade A+ to F, generates an AI-ready fix prompt. Pro-only and unlimited (free gets an upgrade prompt)."
 - "Full git history scan — finds secrets that were committed and 'deleted' but still exist in git history"
 - "All dependency severities — free shows critical CVEs only, Pro shows all"
-- "Breach context — every finding tells you which real-world breach this pattern caused"
+- "All dependencies & supply-chain — free checks the first 20 packages, Pro checks them all"
 
 Pricing:
 - $19/month

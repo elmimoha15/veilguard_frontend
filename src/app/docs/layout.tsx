@@ -31,11 +31,6 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
             </Link>
           </li>
           <li>
-            <Link href="/docs/autoscan" className="text-text-muted hover:text-text-heading transition-colors block">
-              Auto-Scan Triggers
-            </Link>
-          </li>
-          <li>
             <Link href="/docs/scoring" className="text-text-muted hover:text-text-heading transition-colors block">
               Security Scoring
             </Link>

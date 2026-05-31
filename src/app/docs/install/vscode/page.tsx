@@ -65,10 +65,10 @@ export default function VSCodeInstallPage() {
       <div className="not-prose mb-14">
         <div className="flex items-center gap-3 mb-4">
           <span className="w-8 h-8 rounded-full bg-accent text-[#080E12] font-bold flex items-center justify-center text-sm shrink-0">3</span>
-          <h2 className="text-base font-semibold text-text-heading">Enter the package name: <code className="text-lg">veilguard-cli</code></h2>
+          <h2 className="text-base font-semibold text-text-heading">Enter the package name: <code className="text-lg">veilguard</code></h2>
         </div>
         <p className="text-text-body mb-5 ml-11">
-          VS Code prompts <strong className="text-text-heading">Enter NPM Package Name</strong>. Type <code className="bg-background-code px-2 py-0.5 rounded text-sm font-mono">veilguard-cli</code> and press <kbd className="bg-background-code border border-border rounded px-2 py-0.5 text-xs font-mono">Enter</kbd>.
+          VS Code prompts <strong className="text-text-heading">Enter NPM Package Name</strong>. Type <code className="bg-background-code px-2 py-0.5 rounded text-sm font-mono">veilguard</code> and press <kbd className="bg-background-code border border-border rounded px-2 py-0.5 text-xs font-mono">Enter</kbd>.
         </p>
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image
@@ -88,7 +88,7 @@ export default function VSCodeInstallPage() {
           <h2 className="text-base font-semibold text-text-heading">Click <strong>Allow</strong> to confirm the install</h2>
         </div>
         <p className="text-text-body mb-5 ml-11">
-          VS Code shows a confirmation prompt: <em>&quot;Install veilguard-cli@x.x.x from elmimoha15?&quot;</em>. Click <strong className="text-text-heading">Allow</strong>.
+          VS Code shows a confirmation prompt: <em>&quot;Install veilguard@x.x.x from elmimoha15?&quot;</em>. Click <strong className="text-text-heading">Allow</strong>.
         </p>
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image

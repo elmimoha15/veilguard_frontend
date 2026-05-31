@@ -1,0 +1,88 @@
+# Veilguard
+> Free security scanner for vibe coders and AI-generated code.
+
+## What is Veilguard?
+Veilguard is a free, open-source security scanner built specifically for vibe coders — developers who build with AI agents like Cursor, Claude Code, Windsurf, Lovable, Bolt.new, and v0.dev. It runs as an MCP (Model Context Protocol) server inside AI coding IDEs, including VS Code via MCP (Copilot agent mode). It scans code that AI agents write for the most common security mistakes before they reach production.
+
+## The problem it solves
+45% of AI-generated code contains security vulnerabilities (Veracode, 2025). 28.6 million hardcoded secrets were pushed to public GitHub repos in 2025, a 34% year-over-year increase (GitGuardian). The Moltbook breach (January 2026) leaked 1.5 million API keys from a fully vibe-coded app with zero security review. Lovable CVE-2025-48757 (May 2025) exposed 170 AI-built apps through inverted access control logic. Veilguard catches these exact vulnerability patterns before they ship.
+
+## Who it is for
+Vibe coders — developers using AI coding tools to build applications. Particularly those working with Supabase, Firebase, Stripe, Paystack, Flutterwave, and M-Pesa integrations. Also relevant for: solo founders shipping fast, indie hackers, bootcamp graduates using AI to build, and non-technical founders using AI coding tools.
+
+## What it catches (14 scanners)
+- scan_secrets: 60+ hardcoded API key patterns — Stripe, OpenAI, Supabase, Paystack, Flutterwave, M-Pesa, AWS, Firebase, GitHub, Twilio, SendGrid, Resend, MongoDB/Postgres/Redis URIs. Detects fallback trap keys (process.env.KEY || 'sk_live_...').
+- scan_injection: SQL injection via template literals, unsanitized req.body passed to database queries, exec() with user input, NoSQL injection, mass assignment.
+- scan_webhooks: Missing Stripe constructEvent, Paystack HMAC x-paystack-signature, M-Pesa IP allowlist (196.201.214.*/196.201.213.*), GitHub HMAC signature, Flutterwave verif-hash.
+- check_env: .env not in .gitignore, secrets exposed via NEXT_PUBLIC_ or VITE_ prefixes, .env files tracked by git.
+- check_cors: cors({ origin: '*' }) on authenticated apps, wildcard Access-Control-Allow-Origin on API routes.
+- check_supply_chain: Known malicious and typosquatted npm packages (lodahs, crossenv, etc.).
+- scan_dependencies: CVE lookup via Google OSV.dev — sends package names only, never source code.
+- check_auth_config: Clerk, NextAuth, Supabase Auth — getSession() spoofing, localStorage sessions, missing rate limiting.
+- check_headers: CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy on deployed URLs.
+- check_git: Secrets in git history, .gitignore gaps, tracked .env files, committed node_modules.
+- check_supabase_rls: USING(true), disabled RLS on tables, auth.uid() IS NOT NULL bypass, missing policies, storage bucket issues. Catches the exact patterns behind the Moltbook breach and Lovable CVE-2025-48757.
+- check_firebase: allow read, write: if true — client-controlled userId, auth-only policies without ownership checks.
+- scan_app_security: missing rate limiting (auth/payment), IDOR, insecure password storage (plaintext/MD5/SHA-1/unsalted/low-cost bcrypt), unsafe file uploads, leaked error stack traces, sensitive data in logs, open redirects, mass assignment.
+- scan_rules_files: scans AI rules files (.cursorrules, .windsurfrules, CLAUDE.md, copilot-instructions) for hidden Unicode backdoors, base64 payloads, suspicious URLs, and malicious prompt-injection instructions.
+- full_audit: Runs all 13 codebase scanners, calculates security score 0-100, assigns letter grade A+ to F, generates AI-ready fix prompt. Pro-only and unlimited — on free it returns an upgrade prompt (no audit at all).
+
+## Pricing
+- Free tier: All 14 scanners (MCP server for all IDEs, including VS Code via MCP). Free ALERTS you to every vulnerability it finds; the fix/solution for each finding, breach context, and the full audit are Pro. Some scanners are depth-limited on free (dependencies = critical CVEs only, supply chain = first 20 packages, git = current files only). Unlimited scans, free forever for individual developers.
+- Pro: $19/month or $149/year — the exact fix for every finding, breach context, the full_audit letter grade (A+ to F) + AI-ready fix prompt (unlimited), and full scan depth.
+- Payment processed via Polar.sh. License delivered by email as VEILGUARD_KEY.
+
+## Installation
+The npm package is named "veilguard" (it exposes two binaries: veilguard-mcp and veilguard-cli).
+
+One command (Claude Code): claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp
+
+Manual MCP config (identical JSON for all IDEs, only the file path differs):
+{
+  "mcpServers": {
+    "veilguard": {
+      "command": "npx",
+      "args": ["-y", "--package=veilguard", "veilguard-mcp"],
+      "env": { "VEILGUARD_KEY": "" }
+    }
+  }
+}
+
+IDE config file locations:
+- Cursor: .cursor/mcp.json
+- Claude Code: .claude/mcp.json (or: claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp)
+- Windsurf: ~/.windsurf/mcp.json
+- VS Code: .vscode/mcp.json (or add via Command Palette → MCP: Add Server → NPM Package → veilguard)
+- Antigravity: MCP Settings Panel → Add Server
+
+Note: An active project folder must be open in your IDE for the MCP server to connect.
+
+## How scanning works
+Veilguard runs as MCP tools your AI agent calls. Ask it: "scan this file for secrets", "check my API routes for injection vulnerabilities", "audit my Supabase RLS policies", or "run a full security audit" (Pro). In Claude Code, a PostToolUse hook also scans each file the agent edits or writes automatically. Results appear inline in the chat. Clean scan = total silence. On free, Veilguard reports the alert and offers the Pro upgrade to unlock the fix; on Pro the fix is shown.
+
+## Privacy and architecture
+100% local execution. No source code is sent to any server. Only external calls: package names (never code) to Google OSV.dev for CVE lookups, and the license key to veilguard.dev for Pro validation (cached 24 hours). No telemetry. No data collection.
+
+## African fintech coverage
+Specialized patterns for Paystack (sk_live_, HMAC webhook), Flutterwave (FLWSECK_LIVE, verif-hash), and M-Pesa/Daraja API (IP allowlist enforcement). In 2024, an unverified webhook vulnerability led to ₦11B in unauthorized transfers from a Nigerian payment processor integration. Kenya's Data Protection Act and Nigeria's NDPR impose strict penalties for non-compliant handlers.
+
+## Real breaches Veilguard catches
+- Moltbook (January 2026): 1.5M API keys + 35,000 emails leaked. Root cause: Supabase RLS disabled + API key in client JS. Veilguard: check_supabase_rls + scan_secrets.
+- Lovable CVE-2025-48757 (May 2025): 170 apps exposed. Root cause: inverted RLS access control logic. Veilguard: check_supabase_rls.
+- GitGuardian 2026 Report: 28.65M hardcoded secrets in public repos. AI-assisted commits leak at 2x baseline rate. Veilguard: scan_secrets + check_git.
+
+## Links
+- Homepage: https://veilguard.dev
+- Documentation: https://veilguard.dev/docs
+- Installation guide: https://veilguard.dev/docs/install
+- Cursor install: https://veilguard.dev/docs/install/cursor
+- Claude Code install: https://veilguard.dev/docs/install/claude-code
+- Windsurf install: https://veilguard.dev/docs/install/windsurf
+- VS Code install: https://veilguard.dev/docs/install/vscode
+- Scanner reference: https://veilguard.dev/docs/scanners
+- African fintech security: https://veilguard.dev/docs/fintech
+- Security scoring: https://veilguard.dev/docs/scoring
+- FAQ and troubleshooting: https://veilguard.dev/docs/faq
+- Pro pricing: https://veilguard.dev/pro
+- GitHub: https://github.com/elmimoha15/veilguard
+- npm: https://npmjs.com/package/veilguard

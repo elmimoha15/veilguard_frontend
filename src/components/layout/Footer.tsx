@@ -5,8 +5,8 @@ export default function Footer() {
   return (
     <footer className="bg-[#060C10] border-t border-[#94A3B8]/10 pt-20 pb-10">
       <div className="max-w-[1200px] mx-auto px-6 md:px-12 lg:px-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          <div className="col-span-1 md:col-span-1">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-10 mb-16">
+          <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <Image src="/logos/logo-icon.png" width={26} height={26} alt="Veilguard" className="w-6 h-6 object-contain" />
               <span className="font-semibold text-[#F1F5F9] text-lg tracking-tight">veilguard</span>
@@ -19,10 +19,22 @@ export default function Footer() {
           <div>
             <h4 className="text-[#F1F5F9] font-semibold mb-4 text-xs tracking-widest uppercase font-mono">Product</h4>
             <ul className="space-y-3">
-              <li><Link href="/docs" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Docs</Link></li>
-              <li><Link href="/pro" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Pro</Link></li>
-              <li><Link href="/#pricing" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Pricing</Link></li>
-              <li><Link href="/docs/install" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Install</Link></li>
+              <li><Link href="/docs" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Documentation</Link></li>
+              <li><Link href="/pro" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Pro — $19/month</Link></li>
+              <li><Link href="/docs/scanners" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Scanner Reference</Link></li>
+              <li><Link href="/docs/scoring" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Security Scoring</Link></li>
+              <li><Link href="/docs/fintech" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">African Fintech Security</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h4 className="text-[#F1F5F9] font-semibold mb-4 text-xs tracking-widest uppercase font-mono">Install</h4>
+            <ul className="space-y-3">
+              <li><Link href="/docs/install/cursor" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Cursor</Link></li>
+              <li><Link href="/docs/install/claude-code" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Claude Code</Link></li>
+              <li><Link href="/docs/install/windsurf" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Windsurf</Link></li>
+              <li><Link href="/docs/install/vscode" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">VS Code</Link></li>
+              <li><Link href="/docs/install/antigravity" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Antigravity</Link></li>
             </ul>
           </div>
 
@@ -30,17 +42,10 @@ export default function Footer() {
             <h4 className="text-[#F1F5F9] font-semibold mb-4 text-xs tracking-widest uppercase font-mono">Resources</h4>
             <ul className="space-y-3">
               <li><a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">GitHub</a></li>
-              <li><a href="https://npmjs.com/package/@veilguard/cli" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">npm</a></li>
-              <li><Link href="/docs/scanners" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Scanners</Link></li>
-              <li><Link href="/docs/install" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Installation</Link></li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-[#F1F5F9] font-semibold mb-4 text-xs tracking-widest uppercase font-mono">Legal</h4>
-            <ul className="space-y-3">
-              <li><span className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors cursor-pointer">Privacy</span></li>
-              <li><span className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors cursor-pointer">Terms</span></li>
+              <li><a href="https://npmjs.com/package/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">npm package</a></li>
+              <li><Link href="/docs/faq" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">FAQ &amp; Troubleshooting</Link></li>
+              <li><span className="text-[#94A3B8] text-sm cursor-pointer hover:text-[#F1F5F9] transition-colors">Privacy</span></li>
+              <li><span className="text-[#94A3B8] text-sm cursor-pointer hover:text-[#F1F5F9] transition-colors">Terms</span></li>
             </ul>
           </div>
         </div>

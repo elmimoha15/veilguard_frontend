@@ -31,7 +31,7 @@ export default function ClaudeCodeInstallPage() {
           Open your terminal (inside Claude Code or externally) and run:
         </p>
         <div className="ml-11 bg-background-code border border-border rounded-xl px-6 py-4 mb-5 font-mono text-sm overflow-x-auto">
-          <span className="text-accent">claude</span> mcp add veilguard -- npx -y --package=veilguard-cli veilguard-mcp
+          <span className="text-accent">claude</span> mcp add veilguard -- npx -y --package=veilguard veilguard-mcp
         </div>
         <p className="text-text-body mb-5 ml-11">
           This registers Veilguard as an MCP server in Claude Code. The screenshot below shows the command being typed in the Claude Code terminal.
@@ -39,7 +39,7 @@ export default function ClaudeCodeInstallPage() {
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image
             src="/docs/claude/step1-command.png"
-            alt="Claude Code terminal showing the claude mcp add veilguard -- npx -y veilguard-cli command being typed"
+            alt="Claude Code terminal showing the claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp command being typed"
             width={1024}
             height={616}
             className="w-full"
@@ -85,32 +85,30 @@ export default function ClaudeCodeInstallPage() {
       <div className="not-prose mb-14">
         <div className="flex items-center gap-3 mb-4">
           <span className="w-8 h-8 rounded-full bg-[#F59E0B]/20 border border-[#F59E0B]/30 text-[#F59E0B] font-bold flex items-center justify-center text-xs shrink-0">opt</span>
-          <h2 className="text-base font-semibold text-text-heading">Add post-save hooks for maximum coverage</h2>
+          <h2 className="text-base font-semibold text-text-heading">Add the post-edit hook for deterministic coverage</h2>
         </div>
         <p className="text-text-body mb-4 ml-11">
-          Claude Code supports file-save hooks that run a command on every save — not just AI writes, but your manual edits too. Create <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">.claude/hooks.json</code> in your project:
+          Claude Code runs a real <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">PostToolUse</code> hook after the agent edits or writes a file. Add it to <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">.claude/settings.local.json</code> (<code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">veilguard init</code> does this for you):
         </p>
         <div className="ml-11 bg-background-code border border-border rounded-xl p-6 mb-4 font-mono text-sm text-text-body overflow-x-auto">
           <pre>{`{
   "hooks": {
-    "postSave": [
+    "PostToolUse": [
       {
-        "pattern": "**/*.{ts,tsx,js,jsx,json,sql,env,toml,yaml,yml}",
-        "command": "npx veilguard-cli quick-scan --file $FILE",
-        "description": "Veilguard: scan saved file for security issues"
-      }
-    ],
-    "preDeploy": [
-      {
-        "command": "npx veilguard-cli quick-scan --dir .",
-        "description": "Veilguard: pre-deploy security check"
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx -y --package=veilguard veilguard-cli scan-hook"
+          }
+        ]
       }
     ]
   }
 }`}</pre>
         </div>
         <p className="text-text-body ml-11 text-sm text-text-muted">
-          Clean scans are completely silent — you&apos;ll only hear from Veilguard when something is wrong.
+          <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">scan-hook</code> scans just the changed file and stays completely silent unless it finds something — then it surfaces the alert in your chat. Claude Code has no <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">.claude/hooks.json</code> or <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">postSave</code> events.
         </p>
       </div>
 
@@ -124,7 +122,7 @@ export default function ClaudeCodeInstallPage() {
           Re-register with your Pro key:
         </p>
         <div className="ml-11 bg-background-code border border-border rounded-xl px-6 py-4 mb-4 font-mono text-sm overflow-x-auto">
-          <pre>{`claude mcp add veilguard --env VEILGUARD_KEY=vg_live_xxxxxxxxxxxxxxxxxxxx -- npx -y --package=veilguard-cli veilguard-mcp`}</pre>
+          <pre>{`claude mcp add veilguard --env VEILGUARD_KEY=vg_live_xxxxxxxxxxxxxxxxxxxx -- npx -y --package=veilguard veilguard-mcp`}</pre>
         </div>
         <p className="text-text-body ml-11">
           Or open <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">.claude/mcp.json</code> and add <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">VEILGUARD_KEY</code> to the <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">env</code> block manually. Get a key at <a href="https://veilguard.dev/pro" className="text-accent hover:underline">veilguard.dev/pro</a>.

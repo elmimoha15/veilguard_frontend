@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Veilguard Documentation — Setup, Scanners, and IDE Integration',
-  description: 'Complete documentation for Veilguard security scanner. Installation guide, all 13 scanners explained, VS Code extension setup, MCP server configuration for Cursor, Claude Code, Windsurf, and more.',
+  description: 'Complete documentation for Veilguard security scanner. Installation guide, all 14 scanners explained, MCP server configuration for Cursor, Claude Code, Windsurf, VS Code, and more.',
   keywords: ['veilguard docs', 'veilguard documentation', 'MCP security scanner setup', 'VS Code security extension', 'Cursor security scanner', 'vibe coding security tool documentation'],
   openGraph: { url: 'https://veilguard.dev/docs' },
 };
@@ -19,15 +19,11 @@ export default function DocsOverviewPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 not-prose">
         <Link href="/docs/install" className="block p-6 bg-background-card border border-border rounded-xl hover:border-border-hover transition-colors">
           <h3 className="text-lg font-medium text-text-heading mb-2">Installation</h3>
-          <p className="text-sm text-text-muted">Per-IDE setup for Claude Code, Cursor, Windsurf, VS Code, and JetBrains.</p>
+          <p className="text-sm text-text-muted">Per-IDE setup for Claude Code, Cursor, Windsurf, VS Code, and Antigravity.</p>
         </Link>
         <Link href="/docs/scanners" className="block p-6 bg-background-card border border-border rounded-xl hover:border-border-hover transition-colors">
           <h3 className="text-lg font-medium text-text-heading mb-2">Scanner Reference</h3>
-          <p className="text-sm text-text-muted">All 13 scanners explained, including Secret Scanning, Webhook Verification, and RLS.</p>
-        </Link>
-        <Link href="/docs/autoscan" className="block p-6 bg-background-card border border-border rounded-xl hover:border-border-hover transition-colors">
-          <h3 className="text-lg font-medium text-text-heading mb-2">Auto-Scan Triggers</h3>
-          <p className="text-sm text-text-muted">How Veilguard knows exactly when to scan your changes automatically.</p>
+          <p className="text-sm text-text-muted">All 14 scanners explained, including Secret Scanning, Webhook Verification, and RLS.</p>
         </Link>
         <Link href="/docs/scoring" className="block p-6 bg-background-card border border-border rounded-xl hover:border-border-hover transition-colors">
           <h3 className="text-lg font-medium text-text-heading mb-2">Security Scoring</h3>

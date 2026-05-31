@@ -35,30 +35,35 @@ Veilguard intercepts them at the moment they're written.
 2. The IDE talks to Veilguard using the MCP protocol over stdio
 3. Your AI agent calls Veilguard tools at the right moments (after writing a file, before deploying, etc.)
 4. Veilguard scans your local files, matches patterns, returns findings
-5. Your AI presents findings in plain English and offers to fix them
+5. Your AI presents findings in plain English. On free it tells you what's wrong and offers the fix as a Pro upgrade; on Pro it gives you the exact fix
 
 **Everything runs locally.** Veilguard reads files on your machine. It never uploads your code, never sends file contents anywhere, never modifies your database.
 
 ---
 
-## The 14 tools at a glance
+## The 15 tools at a glance
+
+Every scanner runs free and **alerts** you to what it finds; the **fix/solution** for each finding is unlocked with Pro. The combined `full_audit` is Pro-only.
 
 | Tool | What it catches | Available |
 |------|----------------|-----------|
-| `scan_secrets` | Hardcoded API keys, tokens, passwords (60+ patterns) | Free |
-| `check_env` | `.env` not gitignored, `NEXT_PUBLIC_` secret exposure | Free |
-| `scan_webhooks` | Unverified Stripe, Paystack, M-Pesa, GitHub webhooks | Free |
-| `scan_injection` | SQL injection, NoSQL injection, command injection | Free |
-| `check_cors` | Wildcard CORS, missing origin filtering | Free |
-| `check_supply_chain` | Malicious and typosquatted npm packages | Free |
-| `check_auth_config` | Clerk, NextAuth, Supabase Auth misconfigurations | Free |
-| `check_headers` | Missing CSP, HSTS, X-Frame-Options on a live URL | Free |
-| `check_git` | Secrets in git history, `.gitignore` gaps | Free |
-| `scan_dependencies` | Known CVEs in your npm packages (via OSV.dev) | Free |
-| `check_supabase_rls` | Deep Supabase Row Level Security audit | Free |
-| `check_firebase` | Firebase security rules analysis | Free |
-| `scan_app_security` | Rate limiting, IDOR, password storage, file uploads, error exposure, sensitive logging, open redirects, mass assignment | Free |
-| `full_audit` | All 13 scanners + grade (A+ to F) + AI-ready fix prompt | **Pro** |
+| `scan_secrets` | Hardcoded API keys, tokens, passwords (60+ patterns) | Free (alert) |
+| `check_env` | `.env` not gitignored, `NEXT_PUBLIC_` secret exposure | Free (alert) |
+| `scan_webhooks` | Unverified Stripe, Paystack, M-Pesa, GitHub webhooks | Free (alert) |
+| `scan_injection` | SQL injection, NoSQL injection, command injection | Free (alert) |
+| `check_cors` | Wildcard CORS, missing origin filtering | Free (alert) |
+| `check_supply_chain` | Malicious and typosquatted npm packages | Free (alert) |
+| `check_auth_config` | Clerk, NextAuth, Supabase Auth misconfigurations | Free (alert) |
+| `check_headers` | Missing CSP, HSTS, X-Frame-Options on a live URL | Free (alert) |
+| `check_git` | Secrets in git history, `.gitignore` gaps | Free (alert) |
+| `scan_dependencies` | Known CVEs in your npm packages (via OSV.dev) | Free (alert) |
+| `check_supabase_rls` | Deep Supabase Row Level Security audit | Free (alert) |
+| `check_firebase` | Firebase security rules analysis | Free (alert) |
+| `scan_app_security` | Rate limiting, IDOR, password storage, file uploads, error exposure, sensitive logging, open redirects, mass assignment | Free (alert) |
+| `scan_rules_files` | Hidden Unicode backdoors, base64 payloads, malicious instructions in `.cursorrules` / `CLAUDE.md` | Free (alert) |
+| `full_audit` | All scanners + grade (A+ to F) + AI-ready fix prompt | **Pro only** |
+
+> The fixes, breach context, and the full audit are Pro. On free, Veilguard shows the alert and offers you the upgrade to unlock the solution.
 
 ---
 
