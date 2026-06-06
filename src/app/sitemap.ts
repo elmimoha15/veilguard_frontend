@@ -1,5 +1,8 @@
 import { MetadataRoute } from 'next';
 
+// Emit a static sitemap.xml at build time (required for `output: 'export'`).
+export const dynamic = 'force-static';
+
 const BASE = 'https://veilguard.dev';
 const NOW = new Date('2026-05-29');
 

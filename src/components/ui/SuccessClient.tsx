@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import FadeIn from '@/components/ui/FadeIn';
@@ -11,7 +11,7 @@ const MCP_CONFIG = `{
   "mcpServers": {
     "veilguard": {
       "command": "npx",
-      "args": ["-y", "veilguard"],
+      "args": ["-y", "--package=veilguard", "veilguard-mcp"],
       "env": {
         "VEILGUARD_KEY": "paste-your-key-here"
       }
@@ -19,7 +19,43 @@ const MCP_CONFIG = `{
   }
 }`;
 
-const CLAUDE_CODE_COMMAND = `claude mcp add veilguard --env VEILGUARD_KEY=paste-your-key-here -- npx -y veilguard`;
+const CLAUDE_CODE_COMMAND = `claude mcp add veilguard --env VEILGUARD_KEY=paste-your-key-here -- npx -y --package=veilguard veilguard-mcp`;
+
+// Fire a celebratory burst of brand-green confetti once, on mount. Decorative
+// only: dynamically imported (keeps it out of the prerender) and skipped for
+// users who prefer reduced motion. Any failure is swallowed silently.
+function useConfetti() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const confetti = (await import('canvas-confetti')).default;
+        if (cancelled) return;
+        const colors = ['#34D399', '#6EE7B7', '#10B981', '#F1F5F9'];
+        const fire = (particleRatio: number, opts: Record<string, unknown>) =>
+          confetti({
+            origin: { y: 0.7 },
+            colors,
+            particleCount: Math.floor(220 * particleRatio),
+            ...opts,
+          });
+        fire(0.25, { spread: 26, startVelocity: 55 });
+        fire(0.2, { spread: 60 });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+        fire(0.1, { spread: 120, startVelocity: 45 });
+      } catch {
+        // Confetti is purely decorative — ignore load/runtime failures.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+}
 
 function CodeBlock({ code, language }: { code: string; language?: string }) {
   const [copied, setCopied] = useState(false);
@@ -78,6 +114,7 @@ function Step({ number, title, children }: { number: number; title: string; chil
 }
 
 function SuccessContent() {
+  useConfetti();
   const searchParams = useSearchParams();
   // Polar's success_url placeholder is {CHECKOUT_ID}; the param name depends on
   // how the success URL is configured. Accept the common variants.
@@ -95,9 +132,9 @@ function SuccessContent() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-4xl md:text-5xl mb-5">Welcome to Veilguard Pro</h1>
+        <h1 className="text-4xl md:text-5xl mb-5">Thank you for your purchase</h1>
         <p className="text-lg text-text-body max-w-xl mx-auto">
-          Payment confirmed. Your license key is on its way to your inbox — follow the three steps below and Pro features go live the moment your IDE restarts.
+          You&apos;re on Veilguard Pro. Your license key is on its way to your inbox — follow the three steps below and Pro features go live the moment your IDE restarts.
         </p>
       </FadeIn>
 
