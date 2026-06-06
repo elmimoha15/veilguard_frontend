@@ -4,6 +4,13 @@ import { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import FadeIn, { FadeInStagger, FadeInStaggerItem } from '@/components/ui/FadeIn';
 
+// Polar hosted checkout links. Replace the placeholders in .env.local with the
+// real Polar checkout URLs once they're created. NEXT_PUBLIC_ vars are inlined
+// at build time, so the env reference must be static (no dynamic lookups).
+const MONTHLY_CHECKOUT_URL = process.env.NEXT_PUBLIC_POLAR_CHECKOUT_URL || 'https://sandbox.polar.sh/checkout/YOUR_CHECKOUT_LINK';
+const YEARLY_CHECKOUT_URL = process.env.NEXT_PUBLIC_POLAR_YEARLY_CHECKOUT_URL || 'https://sandbox.polar.sh/checkout/YOUR_YEARLY_CHECKOUT_LINK';
+const PORTAL_URL = 'https://polar.sh/veilguard/portal';
+
 function CheckoutContent() {
   const searchParams = useSearchParams();
   const isSuccess = searchParams?.get('success') === 'true';
@@ -77,8 +84,8 @@ function CheckoutContent() {
               <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report — unlimited</span></li>
             </ul>
 
-            <a href="https://polar.sh/checkout/veilguard-pro-monthly" className="block text-center w-full py-3 rounded-full border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
-              Subscribe — $19/mo
+            <a href={MONTHLY_CHECKOUT_URL} className="block text-center w-full py-3 rounded-full border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
+              Get Pro — $19/month
             </a>
           </div>
         </FadeIn>
@@ -106,12 +113,22 @@ function CheckoutContent() {
               <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Full audit report — unlimited</span></li>
             </ul>
             
-            <a href="https://polar.sh/checkout/veilguard-pro-annual" className={`block text-center w-full py-3 rounded-full font-semibold transition-transform ${isAnnual ? 'bg-accent text-[#080E12] hover:scale-[1.02]' : 'border border-border text-text-heading hover:bg-background-card-hover'}`}>
-              Subscribe — $149/yr
+            <a href={YEARLY_CHECKOUT_URL} className={`block text-center w-full py-3 rounded-full font-semibold transition-transform ${isAnnual ? 'bg-accent text-[#080E12] hover:scale-[1.02]' : 'border border-border text-text-heading hover:bg-background-card-hover'}`}>
+              Get Pro — $149/year
             </a>
           </div>
         </FadeIn>
       </div>
+
+      {/* Manage Subscription */}
+      <FadeIn className="text-center -mt-24 mb-32">
+        <p className="text-sm text-text-muted">
+          Already Pro?{' '}
+          <a href={PORTAL_URL} target="_blank" rel="noopener noreferrer" className="text-accent hover:text-accent-hover transition-colors font-medium underline underline-offset-4 decoration-accent/30 hover:decoration-accent">
+            Manage your subscription
+          </a>
+        </p>
+      </FadeIn>
 
       {/* Comparison Table */}
       <FadeIn className="max-w-4xl mx-auto mb-32">
@@ -159,7 +176,7 @@ function CheckoutContent() {
           {[
             { q: "How does the license key work?", a: "After subscribing, you'll receive a VEILGUARD_KEY via email. Simply add this to your MCP configuration's env mapping as detailed in the installation docs." },
             { q: "What if I cancel?", a: "You will retain your Pro license until the end of your billing cycle. Afterwards, Veilguard will automatically downgrade to the Free tier functionality." },
-            { q: "Can I use it on multiple projects?", a: "Yes, currently the license is per user rather per project. One license covers your personal projects on a single machine." },
+            { q: "Can I use it on multiple machines?", a: "Yes. The license is per user, not per project, so it covers all your projects. One license activates on up to 5 machines — say your laptop and desktop. Switching computers? Run “veilguard-cli deactivate” on the old one to free up a slot." },
             { q: "Is there a limit on how many full audits I can run?", a: "No. Pro includes unlimited full audits, and all other scanners run unlimited too." },
             { q: "Are you open source?", a: "The Veilguard CLI and core scanners are source-available, allowing you to verify what runs on your machine. The backend grading and telemetry parsing are proprietary." }
           ].map((faq, i) => (

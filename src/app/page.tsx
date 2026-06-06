@@ -102,7 +102,7 @@ export default function Home() {
         
         <FadeIn delay={0.3}>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 w-full sm:w-auto">
-            <Link href="/docs/install" className="w-full sm:w-auto px-8 py-4 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform shadow-[0_0_20px_rgba(52,211,153,0.3)]">
+            <Link href="/start" className="w-full sm:w-auto px-8 py-4 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform shadow-[0_0_20px_rgba(52,211,153,0.3)]">
               Install Free
             </Link>
             <Link href="#features" className="w-full sm:w-auto px-8 py-4 rounded-full border border-border text-text-heading hover:bg-background-card-hover font-medium transition-colors">
@@ -395,7 +395,7 @@ export default function Home() {
                 <li className="flex items-start gap-3"><svg className="w-5 h-5 text-[#475569] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg><span className="text-[#475569]">Full security audit &amp; letter grade (Pro only)</span></li>
               </ul>
               
-              <Link href="#install" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
+              <Link href="/start" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
                 Get started
               </Link>
             </div>
@@ -505,7 +505,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none"></div>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/docs/install" className="w-full sm:w-auto px-8 py-3 rounded-full bg-background-card border border-border text-text-heading hover:bg-background-card-hover font-medium transition-colors cursor-pointer">
+            <Link href="/start" className="w-full sm:w-auto px-8 py-3 rounded-full bg-background-card border border-border text-text-heading hover:bg-background-card-hover font-medium transition-colors cursor-pointer">
               Install Free
             </Link>
             <Link href="/pro" className="w-full sm:w-auto px-8 py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">

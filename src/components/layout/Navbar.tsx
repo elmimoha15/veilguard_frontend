@@ -22,6 +22,7 @@ export default function Navbar() {
             <Link href="/#how-it-works" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">How it works</Link>
             <Link href="/#features" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Features</Link>
             <Link href="/#pricing" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Pricing</Link>
+            <Link href="/pro" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Pro</Link>
             <Link href="/docs" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Docs</Link>
           </div>
 
@@ -29,7 +30,7 @@ export default function Navbar() {
             <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors flex items-center gap-1">
               GitHub <span className="text-[10px]">↗</span>
             </a>
-            <Link href="/#install" className="text-sm font-medium bg-[#34D399] text-[#080E12] px-5 py-2 rounded-full hover:scale-[1.02] transition-transform duration-150">
+            <Link href="/start" className="text-sm font-medium bg-[#34D399] text-[#080E12] px-5 py-2 rounded-full hover:scale-[1.02] transition-transform duration-150">
               Get started
             </Link>
           </div>
@@ -71,11 +72,12 @@ export default function Navbar() {
               <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">How it works</Link>
               <Link href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Features</Link>
               <Link href="/#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Pricing</Link>
+              <Link href="/pro" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Pro</Link>
               <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Docs</Link>
               <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">GitHub ↗</a>
             </div>
             <div className="mt-auto">
-              <Link href="/#install" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-[#34D399] text-[#080E12] px-6 py-4 rounded-full font-medium tracking-wide">
+              <Link href="/start" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-[#34D399] text-[#080E12] px-6 py-4 rounded-full font-medium tracking-wide">
                 Get started
               </Link>
             </div>

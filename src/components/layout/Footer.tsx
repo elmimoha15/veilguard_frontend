@@ -21,6 +21,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li><Link href="/docs" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Documentation</Link></li>
               <li><Link href="/pro" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Pro — $19/month</Link></li>
+              <li><a href="https://polar.sh/veilguard/portal" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Manage Subscription</a></li>
               <li><Link href="/docs/scanners" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Scanner Reference</Link></li>
               <li><Link href="/docs/scoring" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Security Scoring</Link></li>
               <li><Link href="/docs/fintech" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">African Fintech Security</Link></li>
