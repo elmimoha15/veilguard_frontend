@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'Get started with Veilguard',
   description: 'Pick your editor and get the exact Veilguard setup — Cursor, Claude Code, Windsurf, VS Code, or Antigravity. Free, no account required.',
   robots: { index: false, follow: true },
+  alternates: { canonical: '/start' },
   openGraph: {
     title: 'Get started with Veilguard',
     url: 'https://veilguard.dev/start',

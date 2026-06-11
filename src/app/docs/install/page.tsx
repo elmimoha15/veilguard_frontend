@@ -1,10 +1,12 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'Install Veilguard — Step-by-Step Guides for Every IDE',
   description: 'Step-by-step installation guides for Veilguard. Choose your IDE: Cursor, Windsurf, VS Code, or Claude Code. Get 14 security tools running in under a minute.',
   keywords: ['install veilguard', 'MCP server install', 'Cursor security setup', 'Claude Code MCP server', 'VS Code security extension install', 'Windsurf MCP server', 'npx veilguard'],
+  alternates: { canonical: '/docs/install' },
   openGraph: { url: 'https://veilguard.dev/docs/install' },
 };
 
@@ -54,6 +56,7 @@ const ides = [
 export default function DocsInstallPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'Install', url: '/docs/install' }]} />
       <h1 className="text-2xl font-semibold mb-3">Installation</h1>
       <p className="text-sm text-text-body mb-8">
         Pick your IDE below for a step-by-step guide with screenshots. Requires Node.js 18 or later.

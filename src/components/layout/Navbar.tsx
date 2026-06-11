@@ -13,7 +13,7 @@ export default function Navbar() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#080E12]/85 backdrop-blur-xl border-b border-[#94A3B8]/10 transition-all">
         <nav className="max-w-[1200px] mx-auto px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 relative z-50">
-            <Image src="/logos/logo-icon.png" width={28} height={28} alt="Veilguard" className="w-7 h-7 object-contain" />
+            <Image src="/logos/logo-icon.png" width={40} height={40} alt="Veilguard" className="w-10 h-10 object-contain" />
             <span className="font-semibold text-[#F1F5F9] text-lg tracking-tight">veilguard</span>
           </Link>
 
@@ -22,7 +22,6 @@ export default function Navbar() {
             <Link href="/#how-it-works" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">How it works</Link>
             <Link href="/#features" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Features</Link>
             <Link href="/#pricing" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Pricing</Link>
-            <Link href="/pro" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Pro</Link>
             <Link href="/docs" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Docs</Link>
           </div>
 
@@ -72,7 +71,6 @@ export default function Navbar() {
               <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">How it works</Link>
               <Link href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Features</Link>
               <Link href="/#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Pricing</Link>
-              <Link href="/pro" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Pro</Link>
               <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Docs</Link>
               <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">GitHub ↗</a>
             </div>

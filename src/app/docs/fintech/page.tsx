@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'African Fintech Security Patterns',
   description: 'Paystack, Flutterwave, M-Pesa security patterns. Webhook verification. Compliance.',
+  alternates: { canonical: '/docs/fintech' },
 };
 
 export default function DocsFintechPage() {

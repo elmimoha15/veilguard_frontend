@@ -1,24 +1,33 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import RulesFileStep from '@/components/ui/RulesFileStep';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'Install Veilguard on Antigravity — Step-by-Step Guide',
   description: 'Step-by-step guide to install the Veilguard MCP security server on Antigravity. Open MCP Config, paste the config, and get 14 security tools running in under a minute.',
+  alternates: { canonical: '/docs/install/antigravity' },
   openGraph: { url: 'https://veilguard.dev/docs/install/antigravity' },
 };
 
 export default function AntigravityInstallPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'Install', url: '/docs/install' }, { name: 'Antigravity', url: '/docs/install/antigravity' }]} />
       <h1 className="text-2xl font-semibold mb-2">Install on Antigravity</h1>
       <p className="text-sm text-text-body mb-8">
         Antigravity uses a global MCP config file. Open it from Settings → Customizations, paste the config, and restart.
       </p>
 
-      <div className="not-prose mb-6 flex items-center gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
+      <div className="not-prose mb-3 flex items-center gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
         <span className="text-accent font-mono font-semibold">Prerequisite</span>
         <span>Node.js 18 or later — verify with <code className="bg-background-code px-2 py-0.5 rounded font-mono text-xs">node --version</code></span>
+      </div>
+
+      <div className="not-prose mb-6 flex items-start gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
+        <span className="text-accent font-mono font-semibold shrink-0">First</span>
+        <span>Open the project you want to protect in Antigravity before you start. The server is shared across projects, but the security rules (Step 5) are saved <strong className="text-text-heading">inside the open project</strong>, so make sure it&apos;s the right one.</span>
       </div>
 
       {/* Step 1 */}
@@ -83,18 +92,9 @@ export default function AntigravityInstallPage() {
         <p className="text-text-body mb-5 ml-11">
           Save the config file. Go back to <strong className="text-text-heading">Settings → Customizations</strong> and click <strong className="text-text-heading">Refresh</strong>. You should see <strong className="text-text-heading">veilguard</strong> listed under Installed MCP Servers with a green dot and <strong className="text-text-heading">14 tools enabled</strong>.
         </p>
-        <div className="ml-11 rounded-xl overflow-hidden border border-border mb-5">
-          <Image
-            src="/docs/antigravity/step3-installed.png"
-            alt="Antigravity Settings Customizations showing veilguard installed with green dot and 14 tools enabled"
-            width={1024}
-            height={616}
-            className="w-full"
-          />
-        </div>
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image
-            src="/docs/antigravity/step4-installed-arrow.png"
+            src="/docs/antigravity/step3-installed.png"
             alt="Antigravity Customizations with veilguard installed and arrow pointing to Open MCP Config button"
             width={1024}
             height={616}
@@ -112,6 +112,7 @@ export default function AntigravityInstallPage() {
         <p className="text-text-body mb-5 ml-11">
           Open a new Antigravity agent chat and ask: <em className="text-text-heading">&quot;Run a full audit for this project&quot;</em>. Veilguard will run all 14 security scanners and return a detailed report with findings.
         </p>
+        
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image
             src="/docs/antigravity/step6-verify.png"
@@ -123,6 +124,16 @@ export default function AntigravityInstallPage() {
         </div>
       </div>
 
+      {/* Step 5 - Rules file */}
+      <RulesFileStep stepNumber={5} agentName="the Antigravity agent">
+        <p className="text-text-body mb-2">
+          <strong className="text-text-heading">Easiest way (no files):</strong> open <strong className="text-text-heading">Settings → Customizations</strong> (the same panel from Step 1). Under <strong className="text-text-heading">Rules</strong>, click <strong className="text-text-heading">+ Workspace</strong>, hit <strong className="text-text-heading">Copy</strong> below, paste it into the box, and save.
+        </p>
+        <p className="text-text-body">
+          <strong className="text-text-heading">Prefer a file?</strong> Antigravity also reads rules from a <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">.agents/rules</code> folder in your project. Create a file named <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">.agents/rules/veilguard.md</code> and paste the same content into it. Either way, the agent picks it up on your next chat — no restart needed.
+        </p>
+      </RulesFileStep>
+
       {/* Pro key */}
       <div className="not-prose mb-14">
         <div className="flex items-center gap-3 mb-4">
@@ -132,6 +143,15 @@ export default function AntigravityInstallPage() {
         <p className="text-text-body mb-5 ml-11">
           Go back to <strong className="text-text-heading">Settings → Customizations</strong> and click <strong className="text-text-heading">Open MCP Config</strong> again. Replace the empty string on <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">VEILGUARD_KEY</code> with your license key, save, and click Refresh.
         </p>
+            <div className="ml-11 rounded-xl overflow-hidden border border-border mb-5">
+          <Image
+            src="/docs/antigravity/step4-installed-arrow.png"
+            alt="Antigravity Settings Customizations showing veilguard installed with green dot and 14 tools enabled"
+            width={1024}
+            height={616}
+            className="w-full"
+          />
+        </div>
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image
             src="/docs/antigravity/step5-pro-key.png"
@@ -152,7 +172,7 @@ export default function AntigravityInstallPage() {
         <ul className="space-y-2 text-sm text-text-body">
           <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>The MCP config is stored at <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">~/.gemini/antigravity/mcp_config.json</code> — it applies globally to all Antigravity projects.</span></li>
           <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>Click <strong>Refresh</strong> in Customizations after any config change — no full restart required.</span></li>
-          <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>For auto-scanning, download the <a href="https://raw.githubusercontent.com/elmimoha15/veilguard/main/templates/cursorrules.txt" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">rules template</a> to your project root.</span></li>
+          <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>The security rules (Step 5) are what make scans fire automatically — add them to every project you want continuously protected.</span></li>
         </ul>
       </div>
 

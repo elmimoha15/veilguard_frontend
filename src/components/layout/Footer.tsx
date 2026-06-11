@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-10 mb-16">
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Image src="/logos/logo-icon.png" width={26} height={26} alt="Veilguard" className="w-6 h-6 object-contain" />
+              <Image src="/logos/logo-icon.png" width={40} height={40} alt="Veilguard" className="w-10 h-10 object-contain" />
               <span className="font-semibold text-[#F1F5F9] text-lg tracking-tight">veilguard</span>
             </Link>
             <p className="text-[#94A3B8] text-sm leading-relaxed max-w-xs">
@@ -45,8 +45,9 @@ export default function Footer() {
               <li><a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">GitHub</a></li>
               <li><a href="https://npmjs.com/package/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">npm package</a></li>
               <li><Link href="/docs/faq" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">FAQ &amp; Troubleshooting</Link></li>
-              <li><span className="text-[#94A3B8] text-sm cursor-pointer hover:text-[#F1F5F9] transition-colors">Privacy</span></li>
-              <li><span className="text-[#94A3B8] text-sm cursor-pointer hover:text-[#F1F5F9] transition-colors">Terms</span></li>
+              <li><Link href="/privacy" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Privacy</Link></li>
+              <li><Link href="/terms" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Terms</Link></li>
+              <li><Link href="/refund" className="text-[#94A3B8] hover:text-[#F1F5F9] text-sm transition-colors">Refund Policy</Link></li>
             </ul>
           </div>
         </div>

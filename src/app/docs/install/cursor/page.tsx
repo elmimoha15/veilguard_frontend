@@ -1,24 +1,33 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import RulesFileStep from '@/components/ui/RulesFileStep';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'Install Veilguard on Cursor — Step-by-Step Guide',
   description: 'Step-by-step guide to install the Veilguard MCP security server on Cursor. Configure your .cursor/mcp.json and get 14 security tools running in under a minute.',
+  alternates: { canonical: '/docs/install/cursor' },
   openGraph: { url: 'https://veilguard.dev/docs/install/cursor' },
 };
 
 export default function CursorInstallPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'Install', url: '/docs/install' }, { name: 'Cursor', url: '/docs/install/cursor' }]} />
       <h1 className="text-2xl font-semibold mb-2">Install on Cursor</h1>
       <p className="text-sm text-text-body mb-8">
         Get Veilguard running in Cursor in under a minute. You&apos;ll create one config file and restart.
       </p>
 
-      <div className="not-prose mb-6 flex items-center gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
+      <div className="not-prose mb-3 flex items-center gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
         <span className="text-accent font-mono font-semibold">Prerequisite</span>
         <span>Node.js 18 or later — verify with <code className="bg-background-code px-2 py-0.5 rounded font-mono text-xs">node --version</code></span>
+      </div>
+
+      <div className="not-prose mb-6 flex items-start gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
+        <span className="text-accent font-mono font-semibold shrink-0">First</span>
+        <span>Open the project you want to protect in Cursor before you start. Cursor saves Veilguard&apos;s config and rules <strong className="text-text-heading">inside that project</strong>, so make sure it&apos;s the right one.</span>
       </div>
 
       {/* Step 1 */}
@@ -45,10 +54,10 @@ export default function CursorInstallPage() {
       <div className="not-prose mb-14">
         <div className="flex items-center gap-3 mb-4">
           <span className="w-8 h-8 rounded-full bg-accent text-[#080E12] font-bold flex items-center justify-center text-sm shrink-0">2</span>
-          <h2 className="text-base font-semibold text-text-heading">Create <code className="text-sm">.cursor/mcp.json</code> in your project root</h2>
+          <h2 className="text-base font-semibold text-text-heading">Paste the MCP Config code</h2>
         </div>
         <p className="text-text-body mb-4 ml-11">
-          Create the folder <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">.cursor/</code> in your project root, then create <code className="bg-background-code px-1.5 py-0.5 rounded text-sm font-mono">mcp.json</code> inside it. Paste this config:
+          Paste this config:
         </p>
         <div className="ml-11 bg-background-code border border-border rounded-xl p-6 mb-5 font-mono text-sm text-text-body overflow-x-auto">
           <pre>{`{
@@ -64,7 +73,7 @@ export default function CursorInstallPage() {
 }`}</pre>
         </div>
         <p className="text-text-muted text-sm ml-11 mb-5">
-          Leave <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">VEILGUARD_KEY</code> empty for the free tier. If you already have a Pro key, paste it in now.
+          If you have a Pro <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">VEILGUARD_KEY</code>, paste it here. If you want the pro features, go to veiguard.dev/pro to get a key, but you can also leave it blank for now and add it later.
         </p>
         <div className="ml-11 rounded-xl overflow-hidden border border-border">
           <Image
@@ -106,16 +115,14 @@ export default function CursorInstallPage() {
         <p className="text-text-body mb-5 ml-11">
           Open a new Cursor Agent chat and ask: <em className="text-text-heading">&quot;What Veilguard tools do you have access to?&quot;</em> — it should list 14 security tools. Or try: <em className="text-text-heading">&quot;Use Veilguard to do a full audit&quot;</em>.
         </p>
-        <div className="ml-11 rounded-xl overflow-hidden border border-border">
-          <Image
-            src="/docs/cursor/step4-running.png"
-            alt="Cursor agent chat with 'Use veilguard to do a full audit of this project' typed in the input"
-            width={1024}
-            height={558}
-            className="w-full"
-          />
-        </div>
       </div>
+
+      {/* Step 5 - Rules file */}
+      <RulesFileStep stepNumber={5} agentName="Cursor">
+        <p className="text-text-body mb-1">
+          In Cursor, create a new file named <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">.cursorrules</code> in your project&apos;s top folder (right where your <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">package.json</code> lives). Hit <strong className="text-text-heading">Copy</strong> below, paste it all into the file, and save — Cursor reads it on your next chat, no restart needed.
+        </p>
+      </RulesFileStep>
 
       {/* Pro key */}
       <div className="not-prose mb-14">
@@ -155,7 +162,7 @@ export default function CursorInstallPage() {
         <ul className="space-y-2 text-sm text-text-body">
           <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span><code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">.cursor/mcp.json</code> is <strong>project-level</strong> — add it to each project you want protected.</span></li>
           <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>A full IDE restart is required after any config change — a window reload is not enough.</span></li>
-          <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>For auto-scanning, download the <a href="https://raw.githubusercontent.com/elmimoha15/veilguard/main/templates/cursorrules.txt" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer"><code>.cursorrules</code></a> file to your project root. Without it, the tools still work but won&apos;t fire automatically.</span></li>
+          <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>The <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">.cursorrules</code> file (Step 5) is what makes scans fire automatically — add it to every project you want continuously protected.</span></li>
         </ul>
       </div>
 

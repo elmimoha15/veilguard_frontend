@@ -2,6 +2,7 @@ import Link from 'next/link';
 import FadeIn, { FadeInStagger, FadeInStaggerItem } from '@/components/ui/FadeIn';
 import TerminalMockup from '@/components/ui/TerminalMockup';
 import IDEInstallTabs from '@/components/ui/IDEInstallTabs';
+import CommandBox from '@/components/ui/CommandBox';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
     'supply chain attack detection', 'vibe coding security 2026',
     'how to secure vibe coded app', 'AI coding vulnerabilities',
   ],
+  alternates: { canonical: '/' },
   openGraph: {
     title: 'Veilguard — Free Security Scanner for Vibe Coders',
     description: 'Catches leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks in AI-generated code. 14 scanners. Free forever. Works in Cursor, Claude Code, Windsurf, and VS Code.',
@@ -59,14 +61,70 @@ const faqItems = [
   },
 ];
 
-const faqSchema = {
+// Combined JSON-LD graph: Organization + WebSite + SoftwareApplication + FAQ.
+// SoftwareApplication with real Offers makes the homepage eligible for rich
+// results (price, category). No aggregateRating — we don't fabricate reviews.
+const structuredData = {
   '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faqItems.map((item) => ({
-    '@type': 'Question',
-    name: item.q,
-    acceptedAnswer: { '@type': 'Answer', text: item.a },
-  })),
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': 'https://veilguard.dev/#organization',
+      name: 'Veilguard',
+      url: 'https://veilguard.dev',
+      logo: 'https://veilguard.dev/og-image.png',
+      description: 'Free, open-source security scanner for AI-generated code.',
+      sameAs: ['https://github.com/elmimoha15/veilguard'],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://veilguard.dev/#website',
+      url: 'https://veilguard.dev',
+      name: 'Veilguard',
+      description: 'Free security scanner for vibe coders and AI-generated code.',
+      publisher: { '@id': 'https://veilguard.dev/#organization' },
+      inLanguage: 'en',
+    },
+    {
+      '@type': 'SoftwareApplication',
+      '@id': 'https://veilguard.dev/#software',
+      name: 'Veilguard',
+      applicationCategory: 'SecurityApplication',
+      applicationSubCategory: 'Security Scanner',
+      operatingSystem: 'macOS, Windows, Linux',
+      url: 'https://veilguard.dev',
+      downloadUrl: 'https://www.npmjs.com/package/veilguard',
+      softwareHelp: 'https://veilguard.dev/docs',
+      description: 'MCP security server with 14 scanners that catches leaked API keys, SQL injection, broken Supabase RLS, unverified webhooks, and supply chain attacks in AI-generated code. Works in Cursor, Claude Code, Windsurf, VS Code, and Antigravity.',
+      featureList: 'Secret detection, SQL injection scanning, Supabase RLS audit, Firebase rules audit, webhook verification, CORS checks, supply chain detection, dependency CVE scanning, security headers, git history scanning, AI rules file scanning, full security audit',
+      publisher: { '@id': 'https://veilguard.dev/#organization' },
+      offers: [
+        {
+          '@type': 'Offer',
+          name: 'Free',
+          price: '0',
+          priceCurrency: 'USD',
+          description: 'All 14 scanners and the MCP server, free forever for individual developers.',
+        },
+        {
+          '@type': 'Offer',
+          name: 'Pro',
+          price: '19',
+          priceCurrency: 'USD',
+          description: 'The exact fix for every finding, breach context, and the unlimited full security audit (A+ to F).',
+        },
+      ],
+    },
+    {
+      '@type': 'FAQPage',
+      '@id': 'https://veilguard.dev/#faq',
+      mainEntity: faqItems.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+  ],
 };
 
 export default function Home() {
@@ -74,49 +132,53 @@ export default function Home() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
       />
       {/* Hero Section */}
-      <section className="relative pt-[140px] pb-[100px] px-6 md:px-12 lg:px-16 max-w-[1200px] mx-auto text-center flex flex-col items-center justify-center">
-        {/* Radial Glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-accent-glow rounded-full blur-[120px] opacity-60 pointer-events-none -z-10"></div>
-        
-        <FadeIn delay={0}>
-          <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-muted border border-accent/20">
-            <div className="h-2 w-2 rounded-full bg-accent animate-pulse"></div>
-            <span className="text-sm font-medium text-accent">Now in public beta</span>
-          </div>
-        </FadeIn>
-        
-        <FadeIn delay={0.1}>
-          <h1 className="max-w-4xl mx-auto mb-6 text-text-heading">
-            Your AI writes code. Veilguard makes sure it doesn&apos;t get you hacked.
-          </h1>
-        </FadeIn>
-        
-        <FadeIn delay={0.2}>
-          <p className="max-w-2xl mx-auto text-text-body text-lg md:text-xl mb-12">
-            Free security scanner for AI-generated code. Catches leaked API keys, SQL injection, broken database policies, and supply chain attacks — while you vibe.
-          </p>
-        </FadeIn>
-        
-        <FadeIn delay={0.3}>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10 w-full sm:w-auto">
-            <Link href="/start" className="w-full sm:w-auto px-8 py-4 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform shadow-[0_0_20px_rgba(52,211,153,0.3)]">
-              Install Free
-            </Link>
-            <Link href="#features" className="w-full sm:w-auto px-8 py-4 rounded-full border border-border text-text-heading hover:bg-background-card-hover font-medium transition-colors">
-              See What It Catches
-            </Link>
-          </div>
-          <div className="text-xs text-text-muted font-mono tracking-wide mt-1">
-            Works in Cursor · Claude Code · VS Code · Windsurf · Antigravity
-          </div>
-        </FadeIn>
+      <section className="relative pt-[150px] pb-[100px] px-6 md:px-12 lg:px-16 text-center flex flex-col items-center justify-center overflow-hidden">
+        {/* Engineering grid + radial glow backdrop */}
+        <div className="absolute inset-0 bg-grid bg-grid-fade pointer-events-none -z-10" aria-hidden></div>
+        <div className="absolute top-[-120px] left-1/2 -translate-x-1/2 w-[900px] h-[640px] max-w-[120vw] bg-accent-glow rounded-full blur-[130px] opacity-60 pointer-events-none -z-10" aria-hidden></div>
 
-        <FadeIn delay={0.6} className="w-full mt-20">
-          <TerminalMockup />
-        </FadeIn>
+        <div className="max-w-[1200px] mx-auto flex flex-col items-center pt-6">
+          <FadeIn delay={0.1}>
+            <h1 className="max-w-4xl mx-auto mb-6 text-text-heading text-balance">
+              Your AI writes code.{' '}
+              <span className="text-gradient-accent">Veilguard</span> makes sure it doesn&apos;t get you hacked.
+            </h1>
+          </FadeIn>
+
+          <FadeIn delay={0.2}>
+            <p className="max-w-2xl mx-auto text-text-body text-lg md:text-xl mb-12 text-pretty">
+              Free security scanner for AI-generated code. Catches leaked API keys, SQL injection, broken database policies, and supply chain attacks — while you vibe.
+            </p>
+          </FadeIn>
+
+          <FadeIn delay={0.3}>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 w-full sm:w-auto">
+              <Link href="/start" className="btn-primary w-full sm:w-auto px-8 py-4 rounded-full bg-accent text-[#080E12] font-semibold shadow-[0_0_20px_rgba(52,211,153,0.3)] cursor-pointer">
+                Install Free
+              </Link>
+              <Link href="#features" className="w-full sm:w-auto px-8 py-4 rounded-full border border-border text-text-heading hover:bg-background-card-hover hover:border-border-hover font-medium transition-colors cursor-pointer">
+                See What It Catches
+              </Link>
+            </div>
+
+            {/* Trust strip */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-text-muted font-mono tracking-wide">
+              <span className="inline-flex items-center gap-1.5"><svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>14 scanners</span>
+              <span className="inline-flex items-center gap-1.5"><svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>100% local</span>
+              <span className="inline-flex items-center gap-1.5"><svg className="w-3.5 h-3.5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Free forever</span>
+            </div>
+            <div className="text-xs text-text-faint font-mono tracking-wide mt-4">
+              Works in Cursor · Claude Code · VS Code · Windsurf · Antigravity
+            </div>
+          </FadeIn>
+
+          <FadeIn delay={0.6} className="w-full mt-20">
+            <TerminalMockup />
+          </FadeIn>
+        </div>
       </section>
 
       {/* Problem Stats Section */}
@@ -127,26 +189,26 @@ export default function Home() {
         </FadeIn>
         
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 hover:border-border-hover transition-colors">
+          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 card-lift">
             <div className="text-5xl font-medium text-text-heading mb-4">45%</div>
             <div className="text-sm text-text-body mb-6 min-h-[40px]">of AI-generated code contains security vulnerabilities</div>
             <div className="text-xs text-text-muted">Veracode, 2025</div>
           </FadeInStaggerItem>
           
-          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 hover:border-border-hover transition-colors">
+          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 card-lift">
             <div className="text-5xl font-medium text-text-heading mb-4">28.6M</div>
             <div className="text-sm text-text-body mb-6 min-h-[40px]">hardcoded secrets pushed to public GitHub repos in 2025 — a 34% YoY increase</div>
             <div className="text-xs text-text-muted">GitGuardian</div>
           </FadeInStaggerItem>
           
-          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 hover:border-status-critical/50 transition-colors relative overflow-hidden">
+          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 card-lift relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-[#EF4444]/50 to-transparent opacity-50"></div>
             <div className="text-5xl font-medium text-status-critical mb-4 drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">1.5M</div>
             <div className="text-sm text-text-body mb-6 min-h-[40px]">API keys leaked in the Moltbook breach — a fully vibe-coded app with zero security review</div>
             <div className="text-xs text-text-muted">Moltbook, 2026</div>
           </FadeInStaggerItem>
           
-          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 hover:border-border-hover transition-colors">
+          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 card-lift">
             <div className="text-5xl font-medium text-text-heading mb-4">74</div>
             <div className="text-sm text-text-body mb-6 min-h-[40px]">CVEs directly attributed to AI coding tools</div>
             <div className="text-xs text-text-muted">Georgia Tech Vibe Security Radar</div>
@@ -168,7 +230,7 @@ export default function Home() {
         </FadeIn>
         
         <FadeInStagger className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 flex flex-col h-full hover:-translate-y-1 transition-transform duration-300">
+          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 flex flex-col h-full card-lift">
             <div className="mb-6 inline-block px-3 py-1 rounded-full bg-background text-text-muted text-xs font-medium border border-border">STEP 1</div>
             <h3 className="text-xl font-medium text-text-heading mb-4">Install in 30 seconds</h3>
             <p className="text-text-body text-base flex-grow mb-8">
@@ -189,7 +251,7 @@ export default function Home() {
             <div className="text-xs text-text-muted tracking-wider uppercase relative z-10">SILENT · IN YOUR IDE</div>
           </FadeInStaggerItem>
 
-          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 flex flex-col h-full hover:-translate-y-1 transition-transform duration-300">
+          <FadeInStaggerItem className="bg-background-card border border-border rounded-xl p-8 flex flex-col h-full card-lift">
             <div className="mb-6 inline-block px-3 py-1 rounded-full bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/20 text-xs font-medium">STEP 3</div>
             <h3 className="text-xl font-medium text-text-heading mb-4">Get a nudge when something&apos;s wrong</h3>
             <p className="text-text-body text-base flex-grow mb-8">
@@ -240,14 +302,14 @@ export default function Home() {
               <div className="bg-background-code rounded-xl border border-border p-6 shadow-2xl">
                 <div className="absolute top-0 left-10 w-[200px] h-[1px] bg-gradient-to-r from-transparent via-status-secure to-transparent"></div>
                 <div className="font-mono text-sm">
-                  <div className="mb-4 text-text-muted">// Before: AI hallucinated policy</div>
+                  <div className="mb-4 text-text-muted">{'// Before: AI hallucinated policy'}</div>
                   <div className="text-[#EF4444] bg-[#EF4444]/10 p-2 rounded mb-6">
-                    CREATE POLICY "Users can update" ON users<br/>
+                    CREATE POLICY &quot;Users can update&quot; ON users<br/>
                     FOR UPDATE USING (<span className="font-bold underline">auth.uid() IS NOT NULL</span>);
                   </div>
-                  <div className="mb-4 text-text-muted">// After: Veilguard fix applied</div>
+                  <div className="mb-4 text-text-muted">{'// After: Veilguard fix applied'}</div>
                   <div className="text-status-secure bg-status-secure/10 p-2 rounded">
-                    CREATE POLICY "Users can update" ON users<br/>
+                    CREATE POLICY &quot;Users can update&quot; ON users<br/>
                     FOR UPDATE USING (<span className="font-bold underline">auth.uid() = id</span>);
                   </div>
                 </div>
@@ -320,7 +382,7 @@ export default function Home() {
             { name: "AI Rules File Scanner", desc: "Scans .cursorrules, .windsurfrules, and CLAUDE.md for hidden Unicode backdoors, base64 payloads, and malicious instructions that hijack your AI agent.", pro: false },
             { name: "Full Security Audit", desc: "Runs all scanners, scores your project 0-100, assigns a grade A+ to F, and generates an AI-ready fix prompt. Pro only — unlimited.", pro: true },
           ].map((scanner, i) => (
-            <FadeInStaggerItem key={i} className={`p-6 rounded-xl border bg-background-card flex flex-col h-full hover:-translate-y-1 transition-transform ${scanner.pro ? 'border-accent/50 shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 'border-border'}`}>
+            <FadeInStaggerItem key={i} className={`p-6 rounded-xl border bg-background-card flex flex-col h-full card-lift ${scanner.pro ? 'border-accent/50 shadow-[0_0_15px_rgba(52,211,153,0.1)]' : 'border-border'}`}>
               <div className="flex items-center gap-3 mb-3">
                 <svg className={`w-5 h-5 shrink-0 ${scanner.pro ? 'text-accent' : 'text-text-heading'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -347,7 +409,7 @@ export default function Home() {
             { name: "Lovable", year: "2025", impact: "CVE-2025-48757 — 170 apps exposed", flaw: "Inverted access control in AI-generated RLS", tools: "check_supabase_rls" },
             { name: "GitGuardian 2026", year: "2025", impact: "28.65M hardcoded secrets in public repos", flaw: "AI-assisted commits leak at 2× baseline rate", tools: "scan_secrets" },
           ].map((breach, i) => (
-            <FadeInStaggerItem key={i} className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-background-card rounded-xl border border-border group hover:border-border-hover transition-colors">
+            <FadeInStaggerItem key={i} className="flex flex-col md:flex-row md:items-center justify-between p-6 bg-background-card rounded-xl border border-border group card-lift">
               <div className="mb-4 md:mb-0">
                 <div className="flex items-center gap-3 mb-1">
                   <span className="text-lg font-medium text-text-heading">{breach.name}</span>
@@ -383,7 +445,7 @@ export default function Home() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           <FadeIn direction="up" delay={0.1}>
-            <div className="bg-background-card border border-border rounded-xl p-10 flex flex-col h-full hover:border-border-hover transition-colors">
+            <div className="bg-background-card border border-border rounded-xl p-10 flex flex-col h-full card-lift">
               <h3 className="text-2xl font-medium text-text-heading mb-2">Free</h3>
               <div className="text-4xl font-semibold text-text-heading mb-8">$0<span className="text-lg text-text-muted font-normal">/mo</span></div>
               
@@ -395,7 +457,7 @@ export default function Home() {
                 <li className="flex items-start gap-3"><svg className="w-5 h-5 text-[#475569] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg><span className="text-[#475569]">Full security audit &amp; letter grade (Pro only)</span></li>
               </ul>
               
-              <Link href="/start" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover transition-colors">
+              <Link href="/start" className="block text-center w-full py-3 rounded-xl border border-border text-text-heading font-medium hover:bg-background-card-hover hover:border-border-hover transition-colors cursor-pointer">
                 Get started
               </Link>
             </div>
@@ -418,7 +480,7 @@ export default function Home() {
                 <li className="flex items-start gap-3"><svg className="w-5 h-5 text-accent shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg><span>Breach context on every finding</span></li>
               </ul>
               
-              <Link href="/pro" className="block text-center w-full py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
+              <Link href="/pro" className="block text-center w-full py-3 rounded-full bg-accent text-[#080E12] font-semibold btn-primary cursor-pointer">
                 Go Pro
               </Link>
             </div>
@@ -433,19 +495,27 @@ export default function Home() {
           <h2 className="mb-16 max-w-2xl mx-auto">Works in every AI coding IDE</h2>
         </FadeIn>
 
-        <FadeInStagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <FadeInStagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { name: "Cursor", desc: "Add the MCP config, ask it to scan \u2014 it just works." },
-            { name: "Claude Code", desc: "One command to connect. Then just ask Claude to check your code." },
-            { name: "Windsurf", desc: "Drop in the config file, restart, and you're good." },
-            { name: "VS Code", desc: "MCP server connects via Copilot Chat in one config file." },
-            { name: "Antigravity", desc: "Add via the MCP Settings Panel, no extra setup." },
+            { name: "Cursor", desc: "One command, then ask Cursor to scan \u2014 findings show up right in chat." },
+            { name: "Claude Code", desc: "One line to connect. Claude checks your code as it writes it." },
+            { name: "Windsurf", desc: "Set up in one command. Restart and you're protected." },
+            { name: "VS Code", desc: "Runs through Copilot Chat \u2014 one command, no manual config." },
+            { name: "Antigravity", desc: "One command wires it into the MCP panel. No extra setup." },
           ].map((ide, i) => (
-            <FadeInStaggerItem key={i} className="p-6 rounded-xl border border-border bg-background-card hover:-translate-y-1 transition-transform">
+            <FadeInStaggerItem key={i} className="p-6 rounded-xl border border-border bg-background-card card-lift">
               <h3 className="font-medium text-text-heading mb-2">{ide.name}</h3>
               <p className="text-sm text-text-body">{ide.desc}</p>
             </FadeInStaggerItem>
           ))}
+          {/* 6th tile balances the 3-col grid and doubles as a CTA */}
+          <FadeInStaggerItem className="p-6 rounded-xl border border-accent/30 bg-accent-muted/40 card-lift flex flex-col">
+            <h3 className="font-medium text-text-heading mb-2">Any MCP editor</h3>
+            <p className="text-sm text-text-body flex-grow">Built on the Model Context Protocol \u2014 if your editor speaks MCP, Veilguard works.</p>
+            <Link href="/start" className="mt-4 inline-flex items-center gap-1 text-accent text-sm font-medium">
+              Get started free <span aria-hidden>\u2192</span>
+            </Link>
+          </FadeInStaggerItem>
         </FadeInStagger>
       </section>
 
@@ -465,15 +535,15 @@ export default function Home() {
 
       {/* FAQ */}
       <section id="faq" className="py-[140px] px-6 md:px-12 lg:px-16 max-w-[1200px] mx-auto border-t border-border">
-        <FadeIn>
+        <FadeIn className="text-center">
           <div className="mb-4 caption text-accent font-mono">FAQ</div>
-          <h2 className="mb-4 max-w-2xl">Questions vibe coders ask before installing</h2>
-          <p className="text-text-body text-lg mb-16 max-w-2xl">
+          <h2 className="mb-4 max-w-2xl mx-auto">Questions vibe coders ask before installing</h2>
+          <p className="text-text-body text-lg mb-16 max-w-2xl mx-auto">
             Everything you need to know about securing AI-generated code, vibe coding security risks, and how Veilguard works.
           </p>
         </FadeIn>
 
-        <FadeInStagger className="max-w-3xl space-y-3">
+        <FadeInStagger className="max-w-3xl mx-auto space-y-3">
           {faqItems.map((item, i) => (
             <FadeInStaggerItem key={i}>
               <details className="group bg-background-card border border-border rounded-xl overflow-hidden [&_summary::-webkit-details-marker]:hidden">
@@ -496,19 +566,23 @@ export default function Home() {
 
       {/* Final CTA */}
       <section className="relative py-[200px] px-6 text-center border-t border-border overflow-hidden">
+        <div className="absolute inset-0 bg-grid bg-grid-fade pointer-events-none -z-10" aria-hidden></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent-glow rounded-full blur-[100px] pointer-events-none -z-10"></div>
         <FadeIn>
-          <h2 className="mb-4">Ship fast. Ship secure.</h2>
-          <p className="text-lg text-text-body mb-10 max-w-xl mx-auto">Install Veilguard in 30 seconds. Free forever for indie developers.</p>
-          <div className="inline-block bg-background-code border border-border px-6 py-4 rounded-xl font-mono text-xs sm:text-sm mb-10 shadow-2xl relative group max-w-full overflow-x-auto break-all">
-            <span className="text-accent mr-2">claude</span>mcp add veilguard -- npx -y --package=veilguard veilguard-mcp
-            <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl pointer-events-none"></div>
+          <h2 className="mb-4">Ship fast. <span className="text-gradient-accent">Ship secure.</span></h2>
+          <p className="text-lg text-text-body mb-10 max-w-xl mx-auto">One command. Pick your editor, restart, and start scanning. Free forever for indie developers.</p>
+          <div className="max-w-xl mx-auto text-left space-y-3 mb-3">
+            <CommandBox command="npx -y --package=veilguard veilguard-cli init" />
+            <CommandBox command="claude mcp add veilguard -- npx -y --package=veilguard veilguard-mcp" label="Claude Code" />
           </div>
+          <p className="text-sm text-text-muted mb-10 max-w-xl mx-auto">
+            Run it from inside your project folder — Veilguard installs into the project you&apos;re in.
+          </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/start" className="w-full sm:w-auto px-8 py-3 rounded-full bg-background-card border border-border text-text-heading hover:bg-background-card-hover font-medium transition-colors cursor-pointer">
+            <Link href="/start" className="w-full sm:w-auto px-8 py-3 rounded-full bg-background-card border border-border text-text-heading hover:bg-background-card-hover hover:border-border-hover font-medium transition-colors cursor-pointer">
               Install Free
             </Link>
-            <Link href="/pro" className="w-full sm:w-auto px-8 py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
+            <Link href="/pro" className="w-full sm:w-auto px-8 py-3 rounded-full bg-accent text-[#080E12] font-semibold btn-primary cursor-pointer">
               Go Pro — $19/mo
             </Link>
           </div>

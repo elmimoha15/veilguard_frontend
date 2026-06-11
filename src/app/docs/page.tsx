@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'Veilguard Documentation — Setup, Scanners, and IDE Integration',
   description: 'Complete documentation for Veilguard security scanner. Installation guide, all 14 scanners explained, MCP server configuration for Cursor, Claude Code, Windsurf, VS Code, and more.',
   keywords: ['veilguard docs', 'veilguard documentation', 'MCP security scanner setup', 'VS Code security extension', 'Cursor security scanner', 'vibe coding security tool documentation'],
+  alternates: { canonical: '/docs' },
   openGraph: { url: 'https://veilguard.dev/docs' },
 };
 

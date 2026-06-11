@@ -4,6 +4,7 @@ export const metadata: Metadata = {
   title: 'Veilguard Scanners — 14 Security Checks for AI-Generated Code',
   description: 'Detailed documentation for all 14 Veilguard security scanners. Secret detection, SQL injection, Supabase RLS audit, webhook verification, supply chain checks, app-layer security, AI rules-file backdoors, and more.',
   keywords: ['API key scanner', 'secret detection tool', 'SQL injection scanner', 'Supabase RLS audit tool', 'webhook security scanner', 'supply chain attack detection', 'CORS scanner', 'vibe coding security scanners'],
+  alternates: { canonical: '/docs/scanners' },
   openGraph: { url: 'https://veilguard.dev/docs/scanners' },
 };
 

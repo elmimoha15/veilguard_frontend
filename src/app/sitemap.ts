@@ -21,5 +21,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/docs/scoring`,                lastModified: NOW, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/docs/fintech`,                lastModified: NOW, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${BASE}/docs/faq`,                    lastModified: NOW, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${BASE}/terms`,                       lastModified: NOW, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${BASE}/privacy`,                     lastModified: NOW, changeFrequency: 'yearly',  priority: 0.3 },
+    { url: `${BASE}/refund`,                      lastModified: NOW, changeFrequency: 'yearly',  priority: 0.3 },
   ];
 }

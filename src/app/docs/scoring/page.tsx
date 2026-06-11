@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Security Scoring — A+ to F',
   description: 'How Veilguard grades your project. Score calculation, grade meanings, audit reports.',
+  alternates: { canonical: '/docs/scoring' },
 };
 
 export default function DocsScoringPage() {

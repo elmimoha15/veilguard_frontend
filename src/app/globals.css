@@ -109,3 +109,90 @@ p {
   font-weight: 600;
   color: var(--color-text-muted);
 }
+
+/* ------------------------------------------------------------------ */
+/* Polish layer — shared visual primitives used across the marketing  */
+/* site. Keeps the dark + "run green" identity consistent everywhere. */
+/* ------------------------------------------------------------------ */
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Accent gradient text for headline keywords. */
+.text-gradient-accent {
+  background: linear-gradient(120deg, #6EE7B7 0%, #34D399 55%, #34D399 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Faint engineering grid — evokes a code canvas behind hero/CTA sections. */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Grid that fades out toward the edges, so it never fights the content. */
+.bg-grid-fade {
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, #000 40%, transparent 100%);
+  mask-image: radial-gradient(ellipse 70% 70% at 50% 40%, #000 40%, transparent 100%);
+}
+
+/* Dotted matrix used as a subtle accent in select panels. */
+.bg-dots {
+  background-image: radial-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* One consistent card hover: lift + accent border + glow, transform-based
+   so it never reflows neighbours (skill rule: no layout-shifting hovers). */
+.card-lift {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 220ms ease,
+              box-shadow 220ms ease,
+              background-color 220ms ease;
+  will-change: transform;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-border-hover);
+  box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(52, 211, 153, 0.06),
+              0 0 28px -8px rgba(52, 211, 153, 0.18);
+}
+
+/* Soft conic shimmer for the primary CTA, kept tasteful. */
+.btn-primary {
+  position: relative;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms ease;
+  box-shadow: 0 0 0 0 rgba(52, 211, 153, 0);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -8px rgba(52, 211, 153, 0.45);
+}
+
+/* Visible keyboard focus everywhere (accessibility — skill CRITICAL). */
+:where(a, button, summary, [role="button"], input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* Respect users who prefer less motion. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

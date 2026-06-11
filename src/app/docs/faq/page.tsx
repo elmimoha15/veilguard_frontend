@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'FAQ & Troubleshooting — Veilguard',
   description: 'Common questions about setting up Veilguard, running scans, license keys, false positives, and how the MCP server works.',
+  alternates: { canonical: '/docs/faq' },
 };
 
 const faqs: { section: string; items: { q: string; a: React.ReactNode }[] }[] = [

@@ -1,24 +1,33 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import RulesFileStep from '@/components/ui/RulesFileStep';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'Install Veilguard on VS Code — Step-by-Step Guide',
   description: 'Step-by-step guide to install the Veilguard MCP security server on VS Code using the Command Palette MCP: Add Server flow. No JSON editing required.',
+  alternates: { canonical: '/docs/install/vscode' },
   openGraph: { url: 'https://veilguard.dev/docs/install/vscode' },
 };
 
 export default function VSCodeInstallPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'Install', url: '/docs/install' }, { name: 'VS Code', url: '/docs/install/vscode' }]} />
       <h1 className="text-2xl font-semibold mb-2">Install on VS Code</h1>
       <p className="text-sm text-text-body mb-8">
         VS Code has a built-in MCP wizard — no JSON editing required. Follow the Command Palette prompts and Veilguard installs in under a minute.
       </p>
 
-      <div className="not-prose mb-6 flex items-center gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
+      <div className="not-prose mb-3 flex items-center gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
         <span className="text-accent font-mono font-semibold">Prerequisite</span>
         <span>Node.js 18 or later — verify with <code className="bg-background-code px-2 py-0.5 rounded font-mono text-xs">node --version</code></span>
+      </div>
+
+      <div className="not-prose mb-6 flex items-start gap-3 bg-background-card border border-border rounded-xl px-5 py-3 text-sm text-text-body">
+        <span className="text-accent font-mono font-semibold shrink-0">First</span>
+        <span>Open the project you want to protect in VS Code before you start. The server is shared across projects, but the security rules (Step 8) are saved <strong className="text-text-heading">inside the open project</strong>, so make sure it&apos;s the right one.</span>
       </div>
 
       {/* Step 1 */}
@@ -170,6 +179,16 @@ export default function VSCodeInstallPage() {
         </div>
       </div>
 
+      {/* Step 8 - Rules file */}
+      <RulesFileStep stepNumber={8} agentName="GitHub Copilot">
+        <p className="text-text-body mb-2">
+          GitHub Copilot reads its project instructions from a file at <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">.github/copilot-instructions.md</code>. In VS Code, create a folder named <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">.github</code> in your project&apos;s top folder, and inside it create a file named <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">copilot-instructions.md</code>. Hit <strong className="text-text-heading">Copy</strong> below, paste it all in, and save.
+        </p>
+        <p className="text-text-muted text-sm">
+          Copilot picks it up automatically on your next agent chat. (If it doesn&apos;t, check that <code className="bg-background-code px-1.5 py-0.5 rounded text-xs font-mono">github.copilot.chat.codeGeneration.useInstructionFiles</code> is enabled in VS Code settings — it&apos;s on by default.)
+        </p>
+      </RulesFileStep>
+
       {/* Pro key */}
       <div className="not-prose mb-14">
         <div className="flex items-center gap-3 mb-4">
@@ -198,7 +217,7 @@ export default function VSCodeInstallPage() {
         <h3 className="text-base font-medium text-text-heading mb-3">Notes</h3>
         <ul className="space-y-2 text-sm text-text-body">
           <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>VS Code stores the global MCP config at <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">~/.config/Code/User/mcp.json</code> on Linux, <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">~/Library/Application Support/Code/User/mcp.json</code> on macOS.</span></li>
-          <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>For auto-scanning with GitHub Copilot agent mode, download the <a href="https://raw.githubusercontent.com/elmimoha15/veilguard/main/templates/cursorrules.txt" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer"><code>.cursorrules</code></a> file to your project root.</span></li>
+          <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>The <code className="bg-background-code px-1 py-0.5 rounded text-xs font-mono">.github/copilot-instructions.md</code> file (Step 8) is what makes scans fire automatically in Copilot agent mode — add it to every project you want continuously protected.</span></li>
           <li className="flex items-start gap-2"><span className="text-accent shrink-0">•</span><span>The MCP server requires GitHub Copilot or another MCP-compatible AI extension to call the tools.</span></li>
         </ul>
       </div>
