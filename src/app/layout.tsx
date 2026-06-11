@@ -46,6 +46,12 @@ export const metadata: Metadata = {
     images: ['/og-image.png'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  // Google Search Console HTML-tag verification. Set GOOGLE_SITE_VERIFICATION
+  // in the build env to the token GSC gives you (URL-prefix → HTML tag); the
+  // tag is omitted when unset.
+  verification: process.env.GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.GOOGLE_SITE_VERIFICATION }
+    : undefined,
   other: {
     'theme-color': '#080E12',
   },

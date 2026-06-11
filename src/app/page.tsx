@@ -144,7 +144,7 @@ export default function Home() {
           <FadeIn delay={0.1}>
             <h1 className="max-w-4xl mx-auto mb-6 text-text-heading text-balance">
               Your AI writes code.{' '}
-              <span className="text-gradient-accent">Veilguard</span> makes sure it doesn&apos;t get you hacked.
+              <span className="text-gradient-accent">Veilguard </span> makes sure it doesn&apos;t get you hacked.
             </h1>
           </FadeIn>
 
