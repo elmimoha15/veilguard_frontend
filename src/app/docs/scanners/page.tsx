@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'Veilguard Scanners — 14 Security Checks for AI-Generated Code',
@@ -134,6 +135,7 @@ const scanners = [
 export default function DocsScannersPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'Scanner Reference', url: '/docs/scanners' }]} />
       <h1 className="text-2xl font-semibold mb-3">Scanner Reference</h1>
       <p className="text-sm text-text-body mb-2">
         All 14 security scanners Veilguard can run on your project. To use any scanner, ask your AI agent directly — for example: <span className="font-mono text-accent bg-accent-muted px-1.5 py-0.5 rounded">&quot;scan this file for secrets&quot;</span> or <span className="font-mono text-accent bg-accent-muted px-1.5 py-0.5 rounded">&quot;audit my Supabase RLS policies&quot;</span>.

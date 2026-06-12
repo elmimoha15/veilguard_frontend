@@ -1,14 +1,18 @@
 import { Metadata } from 'next';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'Security Scoring — A+ to F',
-  description: 'How Veilguard grades your project. Score calculation, grade meanings, audit reports.',
+  title: 'Security Scoring — How Veilguard Grades Your Code A+ to F',
+  description: 'How Veilguard grades a vibe-coded project from A+ to F. The penalty-based score model, what each grade means, and how the Pre-Deploy security audit report is calculated.',
+  keywords: ['security score', 'code security grade', 'security audit score', 'A+ to F security rating', 'vibe coding security audit', 'pre-deploy security check'],
   alternates: { canonical: '/docs/scoring' },
+  openGraph: { url: 'https://veilguard.dev/docs/scoring' },
 };
 
 export default function DocsScoringPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'Security Scoring', url: '/docs/scoring' }]} />
       <h1 className="text-2xl font-semibold mb-3">Security Scoring</h1>
       <p className="text-sm text-text-body mb-8">
         When you run a <code className="text-accent bg-accent-muted px-1.5 py-0.5 rounded ml-1 text-xs font-mono">full_audit</code>, Veilguard scores your codebase with a strict penalty-based model. Every project starts at 100 and loses points per issue. The full audit is Pro-only and unlimited; on free, calling it returns an upgrade prompt — run the individual scanners for free vulnerability alerts.

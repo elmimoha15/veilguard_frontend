@@ -61,70 +61,20 @@ const faqItems = [
   },
 ];
 
-// Combined JSON-LD graph: Organization + WebSite + SoftwareApplication + FAQ.
-// SoftwareApplication with real Offers makes the homepage eligible for rich
-// results (price, category). No aggregateRating — we don't fabricate reviews.
+// Homepage-only FAQ schema. Organization, WebSite, and SoftwareApplication are
+// emitted once for the whole site in the root layout (src/app/layout.tsx) — we
+// don't repeat them here to avoid conflicting duplicate nodes. The FAQ is linked
+// into that site graph via `isPartOf` → the WebSite @id from the layout.
 const structuredData = {
   '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      '@id': 'https://veilguard.dev/#organization',
-      name: 'Veilguard',
-      url: 'https://veilguard.dev',
-      logo: 'https://veilguard.dev/og-image.png',
-      description: 'Free, open-source security scanner for AI-generated code.',
-      sameAs: ['https://github.com/elmimoha15/veilguard'],
-    },
-    {
-      '@type': 'WebSite',
-      '@id': 'https://veilguard.dev/#website',
-      url: 'https://veilguard.dev',
-      name: 'Veilguard',
-      description: 'Free security scanner for vibe coders and AI-generated code.',
-      publisher: { '@id': 'https://veilguard.dev/#organization' },
-      inLanguage: 'en',
-    },
-    {
-      '@type': 'SoftwareApplication',
-      '@id': 'https://veilguard.dev/#software',
-      name: 'Veilguard',
-      applicationCategory: 'SecurityApplication',
-      applicationSubCategory: 'Security Scanner',
-      operatingSystem: 'macOS, Windows, Linux',
-      url: 'https://veilguard.dev',
-      downloadUrl: 'https://www.npmjs.com/package/veilguard',
-      softwareHelp: 'https://veilguard.dev/docs',
-      description: 'MCP security server with 14 scanners that catches leaked API keys, SQL injection, broken Supabase RLS, unverified webhooks, and supply chain attacks in AI-generated code. Works in Cursor, Claude Code, Windsurf, VS Code, and Antigravity.',
-      featureList: 'Secret detection, SQL injection scanning, Supabase RLS audit, Firebase rules audit, webhook verification, CORS checks, supply chain detection, dependency CVE scanning, security headers, git history scanning, AI rules file scanning, full security audit',
-      publisher: { '@id': 'https://veilguard.dev/#organization' },
-      offers: [
-        {
-          '@type': 'Offer',
-          name: 'Free',
-          price: '0',
-          priceCurrency: 'USD',
-          description: 'All 14 scanners and the MCP server, free forever for individual developers.',
-        },
-        {
-          '@type': 'Offer',
-          name: 'Pro',
-          price: '19',
-          priceCurrency: 'USD',
-          description: 'The exact fix for every finding, breach context, and the unlimited full security audit (A+ to F).',
-        },
-      ],
-    },
-    {
-      '@type': 'FAQPage',
-      '@id': 'https://veilguard.dev/#faq',
-      mainEntity: faqItems.map((item) => ({
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      })),
-    },
-  ],
+  '@type': 'FAQPage',
+  '@id': 'https://veilguard.dev/#faq',
+  isPartOf: { '@id': 'https://veilguard.dev/#website' },
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
 };
 
 export default function Home() {

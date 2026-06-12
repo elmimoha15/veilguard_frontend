@@ -1,14 +1,18 @@
 import { Metadata } from 'next';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'African Fintech Security Patterns',
-  description: 'Paystack, Flutterwave, M-Pesa security patterns. Webhook verification. Compliance.',
+  title: 'African Fintech Security — Paystack, Flutterwave & M-Pesa Patterns',
+  description: 'Security patterns for African fintech integrations. Paystack, Flutterwave, and M-Pesa webhook signature verification, secret handling, and compliance checks for AI-generated payment code.',
+  keywords: ['Paystack security', 'Flutterwave webhook verification', 'M-Pesa security', 'African fintech security', 'payment webhook signature verification', 'fintech vibe coding security'],
   alternates: { canonical: '/docs/fintech' },
+  openGraph: { url: 'https://veilguard.dev/docs/fintech' },
 };
 
 export default function DocsFintechPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'African Fintech Security', url: '/docs/fintech' }]} />
       <h1 className="text-2xl font-semibold mb-3">African Fintech Security</h1>
       <p className="text-sm text-text-body mb-8">
         AI coding tools often generate invalid or insecure boilerplate for African payment providers. Veilguard natively prevents these oversights.

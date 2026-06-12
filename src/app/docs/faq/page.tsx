@@ -1,9 +1,12 @@
 import { Metadata } from 'next';
+import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
   title: 'FAQ & Troubleshooting — Veilguard',
-  description: 'Common questions about setting up Veilguard, running scans, license keys, false positives, and how the MCP server works.',
+  description: 'Common questions about setting up Veilguard, running scans, license keys, false positives, and how the MCP security server works in Cursor, Claude Code, Windsurf, and VS Code.',
+  keywords: ['veilguard faq', 'veilguard troubleshooting', 'MCP server not working', 'security scanner false positives', 'veilguard license key'],
   alternates: { canonical: '/docs/faq' },
+  openGraph: { url: 'https://veilguard.dev/docs/faq' },
 };
 
 const faqs: { section: string; items: { q: string; a: React.ReactNode }[] }[] = [
@@ -207,6 +210,7 @@ src/tests/mocks.ts
 export default function DocsFaqPage() {
   return (
     <>
+      <Breadcrumbs items={[{ name: 'Docs', url: '/docs' }, { name: 'FAQ & Troubleshooting', url: '/docs/faq' }]} />
       <h1 className="text-2xl font-semibold mb-3">FAQ &amp; Troubleshooting</h1>
       <p className="text-sm text-text-body mb-10">
         Common questions about setup, running scans, and how Veilguard works.
