@@ -2,9 +2,9 @@ import { Metadata } from 'next';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'FAQ & Troubleshooting — Veilguard',
-  description: 'Common questions about setting up Veilguard, running scans, license keys, false positives, and how the MCP security server works in Cursor, Claude Code, Windsurf, and VS Code.',
-  keywords: ['veilguard faq', 'veilguard troubleshooting', 'MCP server not working', 'security scanner false positives', 'veilguard license key'],
+  title: 'FAQ — Scans, Fixes & Privacy',
+  description: 'Answers on how Veilguard scans your live app, what the free scan can see, unlocking fixes, false positives, and how your code and data stay private.',
+  keywords: ['veilguard faq', 'app security scan questions', 'is the free scan safe', 'security scanner false positives', 'veilguard privacy'],
   alternates: { canonical: '/docs/faq' },
   openGraph: { url: 'https://veilguard.dev/docs/faq' },
 };

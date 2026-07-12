@@ -2,12 +2,12 @@ import { Metadata } from 'next';
 import ProClient from '@/components/ui/ProClient';
 
 export const metadata: Metadata = {
-  title: 'Veilguard Pro — Full Security Audit for AI-Generated Code | $19/month',
-  description: 'Every scanner — including Supabase RLS and Firebase — is free at full depth. Pro unlocks your full security grade (A+ to F) and an AI-ready fix prompt for your entire project. $19/month or $149/year.',
-  keywords: ['vibe coding security audit', 'Supabase RLS audit', 'Firebase security audit', 'AI code security grade', 'veilguard pro', 'pre-launch security check'],
+  title: 'Pricing — Unlock Fixes & Ongoing Monitoring',
+  description: 'The scan and grade are free. Unlock the exact fix for every issue and keep monitoring your app on every deploy, plus a deep Supabase & Firebase audit. $19/month or $149/year.',
+  keywords: ['veilguard pricing', 'app security monitoring', 'vibe coding security audit', 'Supabase security audit', 'Firebase security audit', 'fix security issues'],
   alternates: { canonical: '/pro' },
   openGraph: {
-    title: 'Veilguard Pro — Full Depth Security for AI-Generated Code',
+    title: 'Veilguard Pricing — Unlock Fixes & Ongoing Monitoring',
     url: 'https://veilguard.dev/pro',
   },
 };

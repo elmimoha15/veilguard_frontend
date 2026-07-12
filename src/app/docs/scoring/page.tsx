@@ -2,9 +2,9 @@ import { Metadata } from 'next';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'Security Scoring — How Veilguard Grades Your Code A+ to F',
-  description: 'How Veilguard grades a vibe-coded project from A+ to F. The penalty-based score model, what each grade means, and how the Pre-Deploy security audit report is calculated.',
-  keywords: ['security score', 'code security grade', 'security audit score', 'A+ to F security rating', 'vibe coding security audit', 'pre-deploy security check'],
+  title: 'Security Scoring — How the A–F Grade Works',
+  description: 'How Veilguard grades an AI-built app from A to F: the penalty-based score model, what each grade means, and how your plain-English security report is calculated.',
+  keywords: ['security score', 'app security grade', 'A to F security rating', 'security audit score', 'vibe coding security grade', 'is my app secure'],
   alternates: { canonical: '/docs/scoring' },
   openGraph: { url: 'https://veilguard.dev/docs/scoring' },
 };

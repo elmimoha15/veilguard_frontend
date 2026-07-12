@@ -191,7 +191,7 @@ function SuccessContent() {
       <FadeIn delay={0.3} className="text-center space-y-3">
         <p className="text-sm text-text-muted">
           Need a hand? See the{' '}
-          <Link href="/docs/install" className="text-accent hover:text-accent-hover underline underline-offset-2">full installation guide</Link>{' '}
+          <Link href="/docs" className="text-accent hover:text-accent-hover underline underline-offset-2">full installation guide</Link>{' '}
           or our{' '}
           <Link href="/docs/faq" className="text-accent hover:text-accent-hover underline underline-offset-2">FAQ &amp; troubleshooting</Link>.
         </p>

@@ -2,43 +2,56 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
+import Logo from '@/components/ui/Logo';
+
+const LINKS = [
+  { href: '/#how', label: 'How it works' },
+  { href: '/#scanners', label: 'Scanners' },
+  { href: '/#fix', label: 'Find & fix' },
+  { href: '/#pricing', label: 'Pricing' },
+  { href: '/#faq', label: 'FAQ' },
+];
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-[#080E12]/85 backdrop-blur-xl border-b border-[#94A3B8]/10 transition-all">
-        <nav className="max-w-[1200px] mx-auto px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 relative z-50">
-            <Image src="/logos/logo-icon.png" width={40} height={40} alt="Veilguard" className="w-10 h-10 object-contain" />
-            <span className="font-semibold text-[#F1F5F9] text-lg tracking-tight">veilguard</span>
+      <header className="sticky top-0 z-50 bg-bg/85 backdrop-blur-xl border-b border-border">
+        <nav className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
+          <Link href="/" className="relative z-50" aria-label="Veilguard home">
+            <Logo size={36} />
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/#how-it-works" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">How it works</Link>
-            <Link href="/#features" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Features</Link>
-            <Link href="/#pricing" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Pricing</Link>
-            <Link href="/docs" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors">Docs</Link>
+            {LINKS.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="text-[14.5px] font-medium text-muted hover:text-yellow-dark transition-colors"
+              >
+                {l.label}
+              </Link>
+            ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-6">
-            <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#94A3B8] hover:text-[#F1F5F9] transition-colors flex items-center gap-1">
-              GitHub <span className="text-[10px]">↗</span>
-            </a>
-            <Link href="/start" className="text-sm font-medium bg-[#34D399] text-[#080E12] px-5 py-2 rounded-full hover:scale-[1.02] transition-transform duration-150">
-              Get started
+          <div className="hidden md:flex items-center">
+            <Link
+              href="/#scan"
+              className="text-[14px] font-semibold bg-ink text-white px-5 h-10 inline-flex items-center rounded-[10px] hover:scale-[1.02] transition-transform duration-150"
+            >
+              Scan my app
             </Link>
           </div>
 
           {/* Mobile Toggle */}
-          <button 
-            className="md:hidden relative z-50 text-[#F1F5F9] p-2"
+          <button
+            className="md:hidden relative z-50 text-ink p-2"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               {mobileMenuOpen ? (
@@ -65,18 +78,27 @@ export default function Navbar() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-[#080E12]/95 backdrop-blur-2xl px-6 pt-24 pb-6 flex flex-col md:hidden"
+            className="fixed inset-0 z-40 bg-bg/95 backdrop-blur-2xl px-6 pt-24 pb-6 flex flex-col md:hidden"
           >
             <div className="flex flex-col gap-6 text-lg">
-              <Link href="/#how-it-works" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">How it works</Link>
-              <Link href="/#features" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Features</Link>
-              <Link href="/#pricing" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Pricing</Link>
-              <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">Docs</Link>
-              <a href="https://github.com/elmimoha15/veilguard" target="_blank" rel="noopener noreferrer" className="text-[#F1F5F9] font-medium border-b border-[#334155] pb-4">GitHub ↗</a>
+              {LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-ink font-medium border-b border-border pb-4"
+                >
+                  {l.label}
+                </Link>
+              ))}
             </div>
             <div className="mt-auto">
-              <Link href="/start" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-[#34D399] text-[#080E12] px-6 py-4 rounded-full font-medium tracking-wide">
-                Get started
+              <Link
+                href="/#scan"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center bg-ink text-white px-6 py-4 rounded-xl font-semibold"
+              >
+                Scan my app
               </Link>
             </div>
           </motion.div>

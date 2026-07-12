@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'African Fintech Security — Paystack, Flutterwave & M-Pesa Patterns',
-  description: 'Security patterns for African fintech integrations. Paystack, Flutterwave, and M-Pesa webhook signature verification, secret handling, and compliance checks for AI-generated payment code.',
+  title: 'Fintech Security — Paystack & M-Pesa Checks',
+  description: 'Security checks for African fintech apps built with AI: Paystack, Flutterwave and M-Pesa webhook signature verification, secret handling, and compliance for payment code.',
   keywords: ['Paystack security', 'Flutterwave webhook verification', 'M-Pesa security', 'African fintech security', 'payment webhook signature verification', 'fintech vibe coding security'],
   alternates: { canonical: '/docs/fintech' },
   openGraph: { url: 'https://veilguard.dev/docs/fintech' },
@@ -24,7 +24,7 @@ export default function DocsFintechPage() {
           In 2024, unauthorized transfers resulting from an unverified webhook vulnerability led to the loss of <strong>₦11B</strong> from a major Nigerian payment processor integrations.
         </p>
         <p className="text-text-body text-sm">
-          Futhermore, Kenya's Data Protection Act strictly penalizes non-compliant handlers with fines up to KSh 5M, and Nigeria's NDPR demands explicit cryptographic trust for data moving between applications.
+          Furthermore, Kenya&apos;s Data Protection Act strictly penalizes non-compliant handlers with fines up to KSh 5M, and Nigeria&apos;s NDPR demands explicit cryptographic trust for data moving between applications.
         </p>
       </div>
 
@@ -35,7 +35,7 @@ export default function DocsFintechPage() {
           <h3 className="text-xl font-medium text-text-heading mb-2">Paystack</h3>
           <p className="text-sm text-text-muted mb-4">Secret scanning identifies <code className="text-accent bg-accent-muted px-1 rounded">sk_live_</code> and <code className="text-accent bg-accent-muted px-1 rounded">sk_test_</code>. Webhook verification mandates checking the <code className="text-accent bg-accent-muted px-1 rounded">x-paystack-signature</code>.</p>
           <div className="bg-background-code p-4 rounded-lg font-mono text-sm border border-[#334155]">
-            <span className="text-status-critical">CRITICAL</span>: crypto.createHmac('sha512', secret).update(body).digest('hex') != req.headers['x-paystack-signature']
+            <span className="text-status-critical">CRITICAL</span>{": crypto.createHmac('sha512', secret).update(body).digest('hex') != req.headers['x-paystack-signature']"}
           </div>
         </div>
 

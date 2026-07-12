@@ -69,7 +69,7 @@ export default function StartClient() {
       <FadeIn delay={0.3} className="text-center mt-8">
         <p className="text-sm text-text-muted">
           Prefer to set it up by hand? See the{' '}
-          <Link href="/docs/install" className="text-accent hover:text-accent-hover underline underline-offset-2">manual install guides</Link>{' '}
+          <Link href="/docs" className="text-accent hover:text-accent-hover underline underline-offset-2">manual install guides</Link>{' '}
           for each editor.
         </p>
       </FadeIn>

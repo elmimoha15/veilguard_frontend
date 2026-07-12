@@ -2,9 +2,9 @@ import { Metadata } from 'next';
 import Breadcrumbs from '@/components/ui/Breadcrumbs';
 
 export const metadata: Metadata = {
-  title: 'Veilguard Scanners — 14 Security Checks for AI-Generated Code',
-  description: 'Detailed documentation for all 14 Veilguard security scanners. Secret detection, SQL injection, Supabase RLS audit, webhook verification, supply chain checks, app-layer security, AI rules-file backdoors, and more.',
-  keywords: ['API key scanner', 'secret detection tool', 'SQL injection scanner', 'Supabase RLS audit tool', 'webhook security scanner', 'supply chain attack detection', 'CORS scanner', 'vibe coding security scanners'],
+  title: 'What Veilguard Scans For — Security Checks',
+  description: 'Every security issue Veilguard checks in AI-built apps: exposed secrets, Supabase RLS, Firebase rules, SQL injection, webhooks, CORS, dependencies, and security headers.',
+  keywords: ['app security checks', 'Supabase RLS scanner', 'API key checker', 'SQL injection scanner', 'Firebase rules check', 'webhook signature verification', 'CORS scanner', 'vibe coding security'],
   alternates: { canonical: '/docs/scanners' },
   openGraph: { url: 'https://veilguard.dev/docs/scanners' },
 };

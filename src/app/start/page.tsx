@@ -2,8 +2,8 @@ import { Metadata } from 'next';
 import StartClient from '@/components/ui/StartClient';
 
 export const metadata: Metadata = {
-  title: 'Get started with Veilguard',
-  description: 'Pick your editor and get the exact Veilguard setup — Cursor, Claude Code, Windsurf, VS Code, or Antigravity. Free, no account required.',
+  title: { absolute: 'Get Started with Veilguard' },
+  description: 'Scan your app with Veilguard and see exactly where it stands — a plain-English security grade in about a minute. Free, no account required.',
   robots: { index: false, follow: true },
   alternates: { canonical: '/start' },
   openGraph: {

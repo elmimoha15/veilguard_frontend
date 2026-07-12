@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, Suspense } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import FadeIn, { FadeInStagger, FadeInStaggerItem } from '@/components/ui/FadeIn';
+import FadeIn from '@/components/ui/FadeIn';
 
 // Polar hosted checkout links. Replace the placeholders in .env.local with the
 // real Polar checkout URLs once they're created. NEXT_PUBLIC_ vars are inlined
@@ -24,7 +25,7 @@ function CheckoutContent() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
           </svg>
         </div>
-        <h1 className="text-4xl mb-6">You're on Veilguard Pro!</h1>
+        <h1 className="text-4xl mb-6">You&apos;re on Veilguard Pro!</h1>
         <p className="text-lg text-text-body mb-8">
           Welcome to absolute security. Check your email for your Polar receipt and license key.
         </p>
@@ -35,9 +36,9 @@ function CheckoutContent() {
 {`"env": { "VEILGUARD_KEY": "vg_live_..." }`}
           </pre>
         </div>
-        <a href="/docs/install" className="inline-block px-8 py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
+        <Link href="/docs" className="inline-block px-8 py-3 rounded-full bg-accent text-[#080E12] font-semibold hover:scale-[1.02] transition-transform">
           View installation guide
-        </a>
+        </Link>
       </FadeIn>
     );
   }

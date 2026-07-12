@@ -14,18 +14,6 @@ export default function DocsLayout({ children }: { children: ReactNode }) {
             </Link>
           </li>
           <li>
-            <Link href="/docs/install" className="text-text-muted hover:text-text-heading transition-colors block">
-              Installation
-            </Link>
-            <ul className="mt-2 ml-3 space-y-2 border-l border-border pl-3">
-              <li><Link href="/docs/install/cursor" className="text-text-muted hover:text-text-heading transition-colors block text-xs">Cursor</Link></li>
-              <li><Link href="/docs/install/windsurf" className="text-text-muted hover:text-text-heading transition-colors block text-xs">Windsurf</Link></li>
-              <li><Link href="/docs/install/vscode" className="text-text-muted hover:text-text-heading transition-colors block text-xs">VS Code</Link></li>
-              <li><Link href="/docs/install/claude-code" className="text-text-muted hover:text-text-heading transition-colors block text-xs">Claude Code</Link></li>
-              <li><Link href="/docs/install/antigravity" className="text-text-muted hover:text-text-heading transition-colors block text-xs">Antigravity</Link></li>
-            </ul>
-          </li>
-          <li>
             <Link href="/docs/scanners" className="text-text-muted hover:text-text-heading transition-colors block">
               Scanner Reference
             </Link>

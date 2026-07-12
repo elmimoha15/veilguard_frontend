@@ -1,17 +1,20 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { Hanken_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import Providers from '@/components/Providers';
 
-const inter = Inter({
+const hanken = Hanken_Grotesk({
   subsets: ['latin'],
-  variable: '--font-inter',
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-hanken',
   display: 'swap',
 });
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
+  weight: ['400', '500', '700'],
   variable: '--font-jetbrains-mono',
   display: 'swap',
 });
@@ -19,41 +22,41 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://veilguard.dev'),
   title: {
-    default: 'Veilguard — Free Security Scanner for Vibe Coders | Catch AI Code Vulnerabilities',
+    default: 'Veilguard — Is your app safe to charge people money?',
     template: '%s | Veilguard',
   },
-  description: 'Free security scanner for vibe coders. Catches leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks in AI-generated code. Works in Cursor, Claude Code, Windsurf, and VS Code. 14 scanners. Free forever.',
+  description:
+    'Built your app with Lovable, Bolt, Cursor, Replit or v0? Paste your link and get a plain-English security grade in 60 seconds — plus the exact fixes. Free, no signup.',
   keywords: [
-    'vibe coding security', 'vibe coder security scanner', 'vibe coding vulnerabilities',
-    'secure vibe coded app', 'vibe coding hacked', 'is vibe coding safe',
-    'AI code scanner', 'AI generated code security', 'AI agent security', 'AI coding vulnerabilities',
-    'MCP security server', 'Model Context Protocol security',
-    'Cursor security scanner', 'Claude Code security', 'Windsurf security scanner',
-    'VS Code security extension', 'secret detection', 'hardcoded API keys',
-    'Supabase RLS audit', 'SQL injection scanner', 'supply chain attack detection',
-    'vibe coding security 2026',
+    'app security scanner', 'is my app secure', 'Lovable security', 'Bolt security',
+    'Cursor app security', 'Replit security', 'v0 security', 'Supabase RLS check',
+    'Firebase security rules', 'exposed API key checker', 'AI app security scan',
+    'security grade for my app', 'vibe coding security', 'no-code app security',
   ],
   openGraph: {
     siteName: 'Veilguard',
     type: 'website',
     locale: 'en_US',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Veilguard — Free Security Scanner for Vibe Coders' }],
+    title: 'Veilguard — Is your app safe to charge people money?',
+    description:
+      'Paste your app link and get a plain-English security grade in 60 seconds, plus the exact fixes. Free, no signup.',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Veilguard — a plain-English security grade for apps built with AI' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Veilguard — Free Security Scanner for Vibe Coders',
-    description: 'Catches leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks in AI-generated code. 14 scanners. Free forever.',
+    title: 'Veilguard — Is your app safe to charge people money?',
+    description:
+      'Paste your app link and get a plain-English security grade in 60 seconds, plus the exact fixes. Free, no signup.',
     images: ['/og-image.png'],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
   // Google Search Console HTML-tag verification. Set GOOGLE_SITE_VERIFICATION
-  // in the build env to the token GSC gives you (URL-prefix → HTML tag); the
-  // tag is omitted when unset.
+  // in the build env to the token GSC gives you; the tag is omitted when unset.
   verification: process.env.GOOGLE_SITE_VERIFICATION
     ? { google: process.env.GOOGLE_SITE_VERIFICATION }
     : undefined,
   other: {
-    'theme-color': '#080E12',
+    'theme-color': '#ECEBE7',
   },
 };
 
@@ -63,8 +66,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-      <body className="antialiased font-sans bg-background text-text-body relative overflow-x-hidden min-h-screen flex flex-col">
+    <html lang="en" className={`${hanken.variable} ${jetbrainsMono.variable}`}>
+      <body className="antialiased font-sans bg-bg text-ink relative overflow-x-hidden min-h-screen flex flex-col">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -75,44 +78,42 @@ export default function RootLayout({
                   '@type': 'SoftwareApplication',
                   '@id': 'https://veilguard.dev/#software',
                   name: 'Veilguard',
-                  applicationCategory: 'DeveloperApplication',
-                  applicationSubCategory: 'Security',
-                  operatingSystem: 'macOS, Windows, Linux',
-                  description: 'Free security scanner for vibe coders. Catches leaked API keys, SQL injection, broken Supabase Row Level Security policies, and supply chain attacks in AI-generated code. Works as an MCP server in Cursor, Claude Code, Windsurf, VS Code, and Antigravity.',
+                  applicationCategory: 'SecurityApplication',
+                  operatingSystem: 'Web',
+                  description:
+                    'A security scanner for apps built with AI coding tools like Lovable, Bolt, Cursor, Replit and v0. Paste your app URL and get a plain-English A–F security grade in 60 seconds, plus the exact fix for every issue.',
                   url: 'https://veilguard.dev',
-                  downloadUrl: 'https://npmjs.com/package/veilguard',
-                  installUrl: 'https://veilguard.dev/docs/install',
-                  keywords: 'vibe coding security, vibe coder, AI code scanner, MCP security server, Cursor security, Claude Code security, Windsurf security, Supabase RLS audit, secret detection, vibe coding vulnerabilities',
                   offers: [
                     {
                       '@type': 'Offer',
-                      name: 'Free',
+                      name: 'Free scan',
                       price: '0',
                       priceCurrency: 'USD',
-                      description: 'All 14 security scanners, MCP server for all IDEs including VS Code (via MCP) — free forever for individual developers.',
+                      description: 'Full A–F security grade, every issue found and explained in plain English. No signup.',
                     },
                     {
                       '@type': 'Offer',
-                      name: 'Pro',
+                      name: 'Guard',
                       price: '19',
                       priceCurrency: 'USD',
-                      description: 'Full security audit with A+ to F letter grade, AI-ready fix prompt, unlimited scan depth, and breach context. $19/month or $149/year.',
+                      description: 'Unlimited scans and all fixes, auto re-scan on every deploy, instant email alerts, and a deep Supabase & Firebase audit. $19/month.',
+                    },
+                    {
+                      '@type': 'Offer',
+                      name: 'Fix Pack',
+                      price: '19',
+                      priceCurrency: 'USD',
+                      description: 'All fixes for one scan — copy-paste code plus ready-made AI prompts and a downloadable PDF report. $19 once.',
                     },
                   ],
                   featureList: [
-                    'Secret detection for 60+ API key patterns: Stripe, OpenAI, Supabase, Paystack, Flutterwave, M-Pesa, AWS, Firebase, GitHub, Twilio',
-                    'SQL injection detection via template literals and unsanitized user input',
-                    'Supabase Row Level Security deep audit — catches the patterns behind the Moltbook breach',
+                    'Plain-English A–F security grade for any live app',
+                    'Detects exposed API keys and secrets',
+                    'Supabase Row Level Security audit',
                     'Firebase security rules analysis',
-                    'Webhook signature verification for Stripe, Paystack, M-Pesa, GitHub, and Flutterwave',
-                    'npm supply chain attack and typosquat detection',
-                    'Dependency CVE scanning via Google OSV.dev',
-                    'CORS misconfiguration detection',
-                    'Git history secret scanning',
-                    'App-layer security: rate limiting, IDOR, password storage, file uploads, open redirects, mass assignment',
-                    'AI rules-file scanning for hidden Unicode backdoors and prompt-injection in .cursorrules / CLAUDE.md',
-                    'MCP server for Cursor, Claude Code, Windsurf, VS Code, and Antigravity',
-                    'Full security audit with 0-100 score and A+ to F letter grade (Pro)',
+                    'CORS and open-API misconfiguration checks',
+                    'Exact copy-paste fixes and ready-made prompts for your AI tool',
+                    'Continuous monitoring with re-scan on every deploy and email alerts',
                   ],
                 },
                 {
@@ -126,26 +127,29 @@ export default function RootLayout({
                     width: 512,
                     height: 512,
                   },
-                  sameAs: ['https://github.com/elmimoha15/veilguard'],
-                  description: 'Veilguard builds security tooling for vibe coders — developers who build with AI agents like Cursor, Claude Code, and Windsurf. Our MCP server catches the security vulnerabilities that AI coding tools routinely introduce.',
+                  description:
+                    'Veilguard is security for people who build with AI. It scans apps built with tools like Lovable, Bolt, Cursor, Replit and v0, explains every issue in plain English, and hands over the exact fix.',
                 },
                 {
                   '@type': 'WebSite',
                   '@id': 'https://veilguard.dev/#website',
                   name: 'Veilguard',
                   url: 'https://veilguard.dev',
-                  description: 'Free security scanner for vibe coders. Catches leaked API keys, SQL injection, broken Supabase RLS, and supply chain attacks in AI-generated code.',
+                  description:
+                    'Paste your app link and get a plain-English security grade in 60 seconds, plus the exact fixes.',
                   publisher: { '@id': 'https://veilguard.dev/#organization' },
                 },
               ],
             }),
           }}
         />
-        <Navbar />
-        <main className="flex-1 pt-16">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Navbar />
+          <main className="flex-1">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
