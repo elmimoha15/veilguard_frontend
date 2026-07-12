@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
   return (
     <Image
-      src="/logos/logo-icon.png"
+      src="/logos/logo-mark.png"
       alt="Veilguard"
       width={size}
       height={size}
