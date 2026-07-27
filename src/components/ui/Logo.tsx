@@ -37,6 +37,9 @@ export default function Logo({
       <LogoMark size={size} />
       {wordmark && (
         <span
+          // Pinned to Hanken so the wordmark keeps its brand type while the rest
+          // of the UI runs on Inter (--font-sans).
+          style={{ fontFamily: 'var(--font-hanken), sans-serif' }}
           className={cn('font-bold tracking-[-0.02em] text-[21px] leading-none', wordmarkClassName)}
         >
           Veilguard

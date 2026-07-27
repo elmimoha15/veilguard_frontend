@@ -19,7 +19,7 @@ AI coding tools let anyone ship a working app in a weekend, but they're built to
 6. Stay safe — turn on monitoring and Veilguard re-checks on every deploy, emailing you the moment a new change opens a new hole.
 
 ## What it checks
-Exposed secrets and API keys; database access rules (Supabase row-level security and Firebase rules — the most common and most damaging issue); logins and authentication; payment webhook verification; overly open CORS; injection attacks such as SQL injection; vulnerable or malicious dependencies; HTTPS and security headers; secrets buried in git history; and risky AI-rules files that tell an assistant to skip security.
+Exposed secrets and API keys; database access rules (Supabase row-level security and Firebase rules — the most common and most damaging issue); logins and authentication; payment webhook verification; overly open CORS; injection attacks such as SQL injection; vulnerable or malicious dependencies; HTTPS and security headers; and secrets buried in git history.
 
 ## What makes it different
 - It fixes, it doesn't just flag: most scanners hand you a scary list; Veilguard hands you the solution.
@@ -50,5 +50,4 @@ Veilguard catches the common, high-impact mistakes behind almost every vibe-code
 ## Links
 - Homepage: https://veilguard.dev
 - Pricing: https://veilguard.dev/#pricing
-- Documentation: https://veilguard.dev/docs
 - FAQ: https://veilguard.dev/#faq

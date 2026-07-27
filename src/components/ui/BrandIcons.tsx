@@ -53,6 +53,19 @@ export function BoltIcon(p: IconProps) {
   );
 }
 
+// GitHub — the Octocat mark. Uses currentColor so it reads correctly on a light
+// card (ink) or a dark tile (white) — set the parent's text color.
+export function GitHubIcon(p: IconProps) {
+  return (
+    <Svg {...p} title={p.title ?? 'GitHub'}>
+      <path
+        fill="currentColor"
+        d="M12 1a11 11 0 0 0-3.5 21.4c.6.1.8-.2.8-.5v-2c-3 .7-3.7-1.3-3.7-1.3-.5-1.3-1.2-1.6-1.2-1.6-1-.7 0-.7 0-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.4-.3-5-1.2-5-5.3 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-2.8 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.5 0c2.1-1.4 3-1.1 3-1.1.6 1.4.2 2.5.1 2.8.7.8 1.1 1.8 1.1 3 0 4.1-2.6 5-5 5.3.4.3.8 1 .8 2.1v3c0 .3.2.6.8.5A11 11 0 0 0 12 1z"
+      />
+    </Svg>
+  );
+}
+
 // Supabase — bolt mark, signature green.
 export function SupabaseIcon(p: IconProps) {
   return (
@@ -112,6 +125,7 @@ export function CursorIcon(p: IconProps) {
 }
 
 export type BrandKey =
+  | 'github'
   | 'lovable'
   | 'bolt'
   | 'supabase'
@@ -121,6 +135,7 @@ export type BrandKey =
   | 'cursor';
 
 export const BRAND_ICON: Record<BrandKey, (p: IconProps) => React.JSX.Element> = {
+  github: GitHubIcon,
   lovable: LovableIcon,
   bolt: BoltIcon,
   supabase: SupabaseIcon,

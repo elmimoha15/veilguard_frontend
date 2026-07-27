@@ -8,7 +8,9 @@
 
   --color-ink: #1E1D1B;         /* body text + dark sections + buttons     */
   --color-ink-tile: #111010;    /* near-black brand-board tiles            */
+  --color-panel: #2a2926;       /* dark sidebar cards / popovers           */
   --color-muted: #5b5a56;       /* secondary body text                     */
+  --color-label: #8b8a86;       /* form labels / meta captions             */
   --color-tertiary: #9a9994;    /* placeholder / prefix text               */
   --color-faint: #a4a39e;       /* captions / code comments                */
 
@@ -29,7 +31,8 @@
   --color-red-light: #FF6B5E;
 
   /* ---- Fonts ---------------------------------------------------------- */
-  --font-sans: var(--font-hanken), system-ui, sans-serif;
+  /* Apple-style UI type: Inter first (bundled), then the native SF/system stack. */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
@@ -43,12 +46,16 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Slightly larger base (was the 16px browser default). Scales rem-based and
+       unsized/inherited text; fixed text-[Npx] utilities are unaffected. */
+    font-size: 17px;
   }
 
   body {
     background-color: var(--color-bg);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    font-size: 1.0625rem;
     position: relative;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
@@ -155,6 +162,49 @@
 }
 
 .animate-float { animation: vgFloat 6.5s ease-in-out infinite; }
+
+/* ------------------------------------------------------------------ */
+/* Product-app motion (mirrors the design handoff keyframes)           */
+/* ------------------------------------------------------------------ */
+@keyframes vgFade  { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes vgRise  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes vgPop   { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes vgToast { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: none; } }
+@keyframes vgConfetti { 0% { transform: translateY(0) rotate(0); opacity: 1; } 100% { transform: translateY(240px) rotate(420deg); opacity: 0; } }
+@keyframes vgPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: .4; } }
+@keyframes vgShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+
+.vg-fade { animation: vgFade .4s ease both; }
+.vg-rise { animation: vgRise .5s ease both; }
+.vg-pop  { animation: vgPop .6s cubic-bezier(.2, 1.4, .4, 1) both; }
+.vg-spin { animation: vgSpin .7s linear infinite; }
+
+/* Skeleton shimmer for loading states. */
+.vg-skel {
+  background: linear-gradient(90deg, #e9e8e3 0px, #f3f2ee 200px, #e9e8e3 400px);
+  background-size: 800px 100%;
+  animation: vgShimmer 1.3s linear infinite;
+  border-radius: 8px;
+}
+
+/* Tactile press + hover lift used across the app UI. */
+.vg-press { transition: transform .12s ease; }
+.vg-press:active { transform: scale(.96); }
+.vg-lift { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+.vg-lift:hover { transform: translateY(-3px); box-shadow: 0 18px 34px -20px rgba(0, 0, 0, .45); }
+
+/* Dot-grid on a yellow surface (dark dots). */
+.bg-dots-yellow {
+  background-image: radial-gradient(circle, rgba(30, 29, 27, 0.10) 1px, transparent 1.5px);
+  background-size: 18px 18px;
+}
+
+/* Halftone fill clipped to big grade letters (A / C / D / F heroes). */
+.grade-halftone {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
 
 /* ------------------------------------------------------------------ */
 /* Accessibility                                                       */

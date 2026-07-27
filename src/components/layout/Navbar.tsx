@@ -37,7 +37,13 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center gap-5">
+            <Link
+              href="/login"
+              className="text-[14.5px] font-medium text-muted hover:text-yellow-dark transition-colors"
+            >
+              Log in
+            </Link>
             <Link
               href="/#scan"
               className="text-[14px] font-semibold bg-ink text-white px-5 h-10 inline-flex items-center rounded-[10px] hover:scale-[1.02] transition-transform duration-150"
@@ -92,7 +98,14 @@ export default function Navbar() {
                 </Link>
               ))}
             </div>
-            <div className="mt-auto">
+            <div className="mt-auto flex flex-col gap-3">
+              <Link
+                href="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block w-full text-center border border-border text-ink px-6 py-4 rounded-xl font-semibold"
+              >
+                Log in
+              </Link>
               <Link
                 href="/#scan"
                 onClick={() => setMobileMenuOpen(false)}
