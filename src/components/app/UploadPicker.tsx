@@ -2,7 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { zip } from 'fflate';
+import ignore from 'ignore';
 
 /**
  * Folder / .zip upload chooser for a Pro white-box scan. Supports a folder picker,
@@ -15,6 +17,8 @@ import { zip } from 'fflate';
 const IGNORE = new Set([
   '.git', 'node_modules', '.next', 'dist', 'build', 'coverage', 'out',
   'venv', '.venv', '__pycache__', 'vendor', '.tox', '.mypy_cache', '.pytest_cache', '.gradle',
+  // Test/fixture artifacts — not deployed, so scanning them is false-positive noise.
+  'test-fixtures', 'fixtures', '__tests__', '__mocks__', '.storybook', 'cypress', 'e2e',
 ]);
 const MAX_FILE_BYTES = 2_000_000; // engine skips bigger files anyway
 const MAX_ZIP_BYTES = 40 * 1024 * 1024; // must match backend config.uploadMaxBytes
@@ -67,6 +71,24 @@ function topLevelName(picked: Picked[]): string {
   return first.split('/')[0] || 'folder';
 }
 
+/**
+ * Build a matcher from the folder's root-most `.gitignore` so we upload exactly
+ * what git would keep — a picked folder has no git context, so this is what keeps
+ * gitignored secrets/.env/local dirs OUT of the upload (never leave the browser).
+ */
+async function buildGitignore(picked: Picked[]): Promise<{ dir: string; ig: ReturnType<typeof ignore> } | null> {
+  const gis = picked.filter((p) => /(^|\/)\.gitignore$/.test(p.path));
+  if (!gis.length) return null;
+  gis.sort((a, b) => a.path.split('/').length - b.path.split('/').length || a.path.length - b.path.length);
+  const g = gis[0]!;
+  const dir = g.path.includes('/') ? g.path.slice(0, g.path.lastIndexOf('/') + 1) : '';
+  try {
+    return { dir, ig: ignore().add(await g.file.text()) };
+  } catch {
+    return null;
+  }
+}
+
 export function UploadPicker({
   onClose,
   onScan,
@@ -74,25 +96,36 @@ export function UploadPicker({
   onClose: () => void;
   onScan: (zip: Blob, name: string) => Promise<boolean>;
 }) {
+  const router = useRouter();
   const folderRef = useRef<HTMLInputElement>(null);
   const zipRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [status, setStatus] = useState<'idle' | 'preparing' | 'starting'>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<{ name: string; count: number; bytes: number } | null>(null);
+  const [summary, setSummary] = useState<{ name: string; count: number; bytes: number; gitignore: boolean } | null>(null);
 
   const busy = status !== 'idle';
 
   const humanSize = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
 
   /** Build a zip Blob from picked entries (or pass a dropped .zip straight through). */
-  async function prepare(picked: Picked[]): Promise<{ blob: Blob; name: string; count: number; bytes: number } | null> {
-    // A single .zip → send as-is (user already packaged it).
+  async function prepare(picked: Picked[]): Promise<{ blob: Blob; name: string; count: number; bytes: number; gitignore: boolean } | null> {
+    // A single .zip → send as-is (user already packaged it). The backend applies
+    // the same .gitignore + ignore rules on extract, so it's still filtered.
     if (picked.length === 1 && /\.zip$/i.test(picked[0]!.file.name)) {
       const f = picked[0]!.file;
-      return { blob: f, name: f.name.replace(/\.zip$/i, '') || 'upload', count: 1, bytes: f.size };
+      return { blob: f, name: f.name.replace(/\.zip$/i, '') || 'upload', count: 1, bytes: f.size, gitignore: false };
     }
-    const kept = picked.filter((p) => keep(p.path, p.file.size));
+    // Skip exactly what the repo's .gitignore would — secrets/.env/local dirs
+    // never leave the browser, so the scan matches what you'd actually deploy.
+    const gi = await buildGitignore(picked);
+    const gitignored = (path: string): boolean => {
+      if (!gi || !path.startsWith(gi.dir)) return false;
+      const rel = path.slice(gi.dir.length);
+      if (!rel) return false;
+      try { return gi.ig.ignores(rel); } catch { return false; }
+    };
+    const kept = picked.filter((p) => keep(p.path, p.file.size) && !gitignored(p.path));
     if (!kept.length) { setError('No scannable source files found in that folder.'); return null; }
 
     const files: Record<string, Uint8Array> = {};
@@ -104,7 +137,7 @@ export function UploadPicker({
       bytes += buf.length;
     }
     const zipped = await new Promise<Uint8Array>((res, rej) => zip(files, { level: 6 }, (e, d) => (e ? rej(e) : res(d))));
-    return { blob: new Blob([zipped as BlobPart], { type: 'application/zip' }), name: topLevelName(kept), count: kept.length, bytes };
+    return { blob: new Blob([zipped as BlobPart], { type: 'application/zip' }), name: topLevelName(kept), count: kept.length, bytes, gitignore: !!gi };
   }
 
   async function handlePicked(picked: Picked[]) {
@@ -120,7 +153,7 @@ export function UploadPicker({
         setStatus('idle');
         return;
       }
-      setSummary({ name: prepped.name, count: prepped.count, bytes: prepped.bytes });
+      setSummary({ name: prepped.name, count: prepped.count, bytes: prepped.bytes, gitignore: prepped.gitignore });
       setStatus('starting');
       const ok = await onScan(prepped.blob, prepped.name);
       if (!ok) setStatus('idle'); // stay open so the user can retry
@@ -142,7 +175,8 @@ export function UploadPicker({
     <div onClick={busy ? undefined : onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: 'rgba(30,29,27,.5)', backdropFilter: 'blur(3px)' }}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[520px] bg-card rounded-[20px] p-8 vg-pop shadow-[0_30px_70px_-24px_rgba(0,0,0,.6)]">
         <h2 className="font-extrabold text-[22px] tracking-[-0.02em] mb-[6px]">Upload a folder</h2>
-        <p className="text-[14px] text-muted mb-[18px]">Scan code straight from your computer — no GitHub needed. We zip it in your browser (skipping <code className="font-mono">node_modules</code>, <code className="font-mono">.git</code>, build output), scan it, and delete it. Your code is never stored.</p>
+        <p className="text-[14px] text-muted mb-[12px]">Scan code straight from your computer — no GitHub needed. We zip it in your browser (respecting your <code className="font-mono">.gitignore</code> and skipping <code className="font-mono">node_modules</code>, tests, and build output), scan it, and delete it. Your code is never stored.</p>
+        <p className="text-[12.5px] text-muted mb-[18px]" style={{ opacity: 0.85 }}>Tip: for an exact scan of what’s actually live, <button onClick={() => router.push('/settings')} className="text-yellow-dark font-semibold underline">connect GitHub</button> — it scans exactly what you’ve pushed.</p>
 
         {/* Drop zone */}
         <div
@@ -168,7 +202,7 @@ export function UploadPicker({
 
         {summary && !error && (
           <div className="mt-3 text-[13px] text-muted">
-            <span className="font-semibold text-fg">{summary.name}</span> · {summary.count} files · {humanSize(summary.bytes)}
+            <span className="font-semibold text-fg">{summary.name}</span> · {summary.count} files · {humanSize(summary.bytes)}{summary.gitignore ? ' · respected .gitignore' : ''}
           </div>
         )}
         {error && <div className="mt-3 text-[13px] text-red">{error}</div>}
