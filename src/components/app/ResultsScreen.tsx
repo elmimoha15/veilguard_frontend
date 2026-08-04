@@ -10,13 +10,14 @@ import { api } from '@/lib/api';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
 import { toUiFinding, toUiCounts, GRADE_COLOR } from '@/lib/adapters';
 import { scanLabel } from '@/lib/hooks';
+import { SEV_TINT, SEV_COLOR } from './data';
 
 const HERO: Record<string, { label: string; labelColor: string; headline: string }> = {
-  A: { label: 'LOOKING GOOD', labelColor: '#4FD897', headline: 'Your app looks safe to charge money.' },
-  B: { label: 'LOOKING GOOD', labelColor: '#4FD897', headline: 'Your app is in good shape.' },
-  C: { label: 'NEEDS WORK', labelColor: '#F2851F', headline: 'A few things to fix before you charge money.' },
-  D: { label: 'CRITICAL RISK', labelColor: '#FF6B5E', headline: 'Your app isn’t safe to charge money yet.' },
-  F: { label: 'CRITICAL RISK', labelColor: '#FF6B5E', headline: 'Your app isn’t safe to charge money yet.' },
+  A: { label: 'LOOKING GOOD', labelColor: '#1F9D57', headline: 'Your app looks safe to charge money.' },
+  B: { label: 'LOOKING GOOD', labelColor: '#1F9D57', headline: 'Your app is in good shape.' },
+  C: { label: 'NEEDS WORK', labelColor: '#E0932F', headline: 'A few things to fix before you charge money.' },
+  D: { label: 'CRITICAL RISK', labelColor: '#E5484D', headline: 'Your app isn’t safe to charge money yet.' },
+  F: { label: 'CRITICAL RISK', labelColor: '#E5484D', headline: 'Your app isn’t safe to charge money yet.' },
 };
 
 export default function ResultsScreen() {
@@ -40,8 +41,8 @@ export default function ResultsScreen() {
   if (notFound) {
     return (
       <div className="min-h-screen bg-bg flex flex-col items-center justify-center text-center p-6">
-        <div className="text-[18px] font-bold mb-2">Scan not found</div>
-        <button onClick={() => router.push('/')} className="text-yellow-dark font-semibold">← Run a new scan</button>
+        <div className="text-[18px] font-semibold mb-2">Scan not found</div>
+        <button onClick={() => router.push('/')} className="cursor-pointer text-ink font-semibold hover:underline">Run a new scan</button>
       </div>
     );
   }
@@ -54,64 +55,73 @@ export default function ResultsScreen() {
 
   return (
     <div className="min-h-screen bg-bg vg-fade pb-28">
-      <div className="bg-card border-b border-border-2 px-6 py-4">
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="max-w-[960px] mx-auto flex items-center gap-[11px]">
           <Logo size={32} wordmarkClassName="text-[17px]" />
-          <span className="ml-auto font-mono text-[12.5px] text-label">{scan ? scanLabel(scan) : '…'}</span>
+          <span className="ml-auto font-mono text-[13.5px] text-label">{scan ? scanLabel(scan) : '…'}</span>
         </div>
       </div>
 
-      <div className="max-w-[960px] mx-auto px-6 pt-9">
+      <div className="max-w-[960px] mx-auto px-6 pt-10">
         {/* grade hero */}
-        <div className="relative overflow-hidden bg-ink rounded-[24px] p-9 flex flex-wrap gap-8 items-center">
-          <div aria-hidden className="absolute inset-0 bg-dots-dark" />
-          <GradeLetter letter={grade ?? '…'} color={grade ? GRADE_COLOR[grade] : '#8a8a85'} size={150} className="relative vg-pop" />
-          <div className="relative flex-1 min-w-[220px]">
-            <div className="font-mono text-[12px] tracking-[0.14em]" style={{ color: hero?.labelColor ?? '#F3C500' }}>
-              {running ? 'SCANNING…' : (hero?.label ?? 'RESULT')}
-            </div>
-            <h1 className="font-extrabold text-[28px] tracking-[-0.02em] text-white mt-[6px] mb-[14px]">
-              {running ? 'Grading your app…' : (hero?.headline ?? 'Scan complete.')}
-            </h1>
-            <div className="flex gap-[10px] flex-wrap">
-              <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[13px] font-semibold" style={{ background: 'rgba(229,53,43,.16)', color: '#FF6B5E' }}>
-                <span className="w-2 h-2 rounded-full bg-red" style={{ animation: 'vgPulse 1.6s ease-in-out infinite' }} />{counts.critical} critical
+        <div className="text-center">
+          <GradeLetter letter={grade ?? '…'} color={grade ? GRADE_COLOR[grade] : '#B0B0AC'} size={130} className="inline-block vg-pop" />
+          <div className="mt-1 inline-flex items-center gap-[7px] font-mono text-[13px] tracking-[0.1em]" style={{ color: hero?.labelColor ?? '#8a6d00' }}>
+            {running ? 'SCANNING…' : (hero?.label ?? 'RESULT')}
+          </div>
+          <h1 className="font-semibold text-[clamp(24px,3.2vw,30px)] tracking-[-0.02em] mt-[14px]">
+            {running ? 'Grading your app…' : (hero?.headline ?? 'Scan complete.')}
+          </h1>
+          <div className="flex gap-2 flex-wrap justify-center mt-4">
+            <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[14px] font-semibold tnum" style={{ background: SEV_TINT.CRITICAL.bg, color: SEV_TINT.CRITICAL.fg }}>
+              <span className="w-[7px] h-[7px] rounded-full" style={{ background: SEV_COLOR.CRITICAL }} />{counts.critical} critical
+            </span>
+            <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[14px] font-semibold tnum" style={{ background: SEV_TINT.WARNING.bg, color: SEV_TINT.WARNING.fg }}>
+              <span className="w-[7px] h-[7px] rounded-full" style={{ background: SEV_COLOR.WARNING }} />{counts.warnings} warnings
+            </span>
+            {counts.passed > 0 && (
+              <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[14px] font-semibold tnum" style={{ background: SEV_TINT.PASSED.bg, color: SEV_TINT.PASSED.fg }}>
+                <span className="w-[7px] h-[7px] rounded-full" style={{ background: SEV_COLOR.PASSED }} />{counts.passed} passed
               </span>
-              <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[13px] font-semibold" style={{ background: 'rgba(242,133,31,.16)', color: '#F2851F' }}>{counts.warnings} warnings</span>
-              {counts.passed > 0 && <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[13px] font-semibold" style={{ background: 'rgba(31,184,107,.16)', color: '#4FD897' }}>{counts.passed} passed</span>}
-            </div>
+            )}
           </div>
         </div>
 
         {/* findings with locked fixes */}
         <div className="mt-6 flex flex-col gap-3">
           {findings.length === 0 && running && <div className="text-center text-muted py-10">Findings will appear here as they’re found…</div>}
-          {findings.length === 0 && !running && <div className="text-center text-muted py-10">No issues found. 🎉</div>}
+          {findings.length === 0 && !running && <div className="text-center text-muted py-10">No issues found.</div>}
           {findings.map((f, i) => (
             <div
               key={f.id}
-              className="block bg-card border border-border-2 rounded-2xl p-5 vg-rise"
+              className="vg-card block vg-surface p-5 vg-rise"
               style={{ animationDelay: `${Math.min(i, 8) * 0.06}s` }}
             >
               <div className="flex items-start gap-3">
-                <span className="shrink-0 mt-[5px] w-[11px] h-[11px] rounded-[3px]" style={{ background: f.color }} />
+                <span className="shrink-0 mt-[5px] w-[9px] h-[9px] rounded-full" style={{ background: f.color }} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-[9px] flex-wrap">
-                    <span className="font-mono text-[10px] tracking-[0.1em]" style={{ color: f.color }}>{f.sev}</span>
-                    <span className="font-mono text-[10px] text-faint">{f.cat}</span>
+                    <span className="font-mono text-[11px] tracking-[0.1em]" style={{ color: f.color }}>{f.sev}</span>
+                    <span className="font-mono text-[11px] text-faint">{f.cat}</span>
                   </div>
-                  <div className="font-bold text-[16px] mt-[3px]">{f.title}</div>
-                  <div className="text-[14px] leading-[1.5] text-muted mt-[3px]">{f.what}</div>
-                  {f.where && <div className="font-mono text-[11.5px] text-faint mt-[6px]">{f.where}</div>}
-                  <div className="relative mt-3 rounded-[10px] overflow-hidden border border-[#EEEDE8]">
-                    <div className="blur-[6px] select-none p-[14px] bg-ink-tile font-mono text-[12px] text-[#8fae9c] leading-[1.6]">
+                  <div className="font-semibold text-[17px] mt-[3px]">{f.title}</div>
+                  <div className="text-[15px] leading-[1.5] text-muted mt-[3px]">{f.what}</div>
+                  {f.where && <div className="font-mono text-[12.5px] text-faint mt-[6px]">{f.where}</div>}
+                  <div className="relative mt-3 rounded-[10px] overflow-hidden border border-border">
+                    <div className="blur-[6px] select-none p-[14px] bg-bg-soft font-mono text-[13px] text-label leading-[1.6]">
                       {/* the real fix is server-only (locked) */}
                       # the exact fix for this issue is here
                       <br />
                       # unlock to reveal the copy-paste code + AI prompt
                     </div>
-                    <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'rgba(30,29,27,.35)' }}>
-                      <span className="inline-flex items-center gap-[7px] bg-yellow text-ink font-bold text-[13px] px-[14px] py-2 rounded-full">🔒 Fix locked</span>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="inline-flex items-center gap-[7px] bg-ink text-white font-semibold text-[13.5px] px-[14px] py-2 rounded-full">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
+                          <rect x="5" y="11" width="14" height="9" rx="2" stroke="#fff" strokeWidth="1.8" />
+                          <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="#fff" strokeWidth="1.8" />
+                        </svg>
+                        Fix locked
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -123,20 +133,20 @@ export default function ResultsScreen() {
 
       {/* sticky upgrade / save bar */}
       {!running && findings.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 z-50 bg-ink border-t border-white/10 px-6 py-[14px]">
+        <div className="fixed bottom-0 inset-x-0 z-50 bg-card border-t border-border px-6 py-[14px]">
           <div className="max-w-[960px] mx-auto flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[180px]">
-              <div className="font-bold text-[16px] text-white">Unlock all {findings.length} fixes + monitoring</div>
-              <div className="text-[13px] text-white/60">Copy-paste code, AI prompts, and auto re-scans.</div>
+              <div className="font-semibold text-[16.5px] text-ink">Unlock all <span className="tnum">{findings.length}</span> fixes + monitoring</div>
+              <div className="text-[14px] text-muted">Copy-paste code, AI prompts, and auto re-scans.</div>
             </div>
             {user ? (
               scan && scan.ownerUid == null ? (
-                <button onClick={async () => { await api.claimScan(scanId!); router.push('/dashboard'); }} className="vg-press bg-yellow text-ink font-bold text-[15px] rounded-[11px] px-[26px] py-[14px]">Save to my account →</button>
+                <button onClick={async () => { await api.claimScan(scanId!); router.push('/dashboard'); }} className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Save to my account</button>
               ) : (
-                <Link href="/dashboard" className="vg-press bg-yellow text-ink font-bold text-[15px] rounded-[11px] px-[26px] py-[14px]">Go to dashboard →</Link>
+                <Link href="/dashboard" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Go to dashboard</Link>
               )
             ) : (
-              <Link href="/signup" className="vg-press bg-yellow text-ink font-bold text-[15px] rounded-[11px] px-[26px] py-[14px]">Unlock fixes →</Link>
+              <Link href="/signup" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Unlock fixes</Link>
             )}
           </div>
         </div>

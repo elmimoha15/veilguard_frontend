@@ -23,9 +23,9 @@ export interface UiFinding {
 }
 
 export const SEV_COLOR: Record<UiSev, string> = {
-  CRITICAL: '#E5352B',
-  WARNING: '#F2851F',
-  PASSED: '#1FB86B',
+  CRITICAL: '#E5484D',
+  WARNING: '#E0932F',
+  PASSED: '#1F9D57',
 };
 
 function toUiSev(sev: BackendFinding['severity']): UiSev {
@@ -95,9 +95,9 @@ export function toUiCounts(scan: ScanDoc | null, findings: UiFinding[]): UiCount
 }
 
 export const GRADE_COLOR: Record<string, string> = {
-  A: '#1FB86B',
-  B: '#1FB86B',
-  C: '#F2851F',
-  D: '#E5352B',
-  F: '#E5352B',
+  A: '#1F9D57',
+  B: '#1F9D57',
+  C: '#E0932F',
+  D: '#E5484D',
+  F: '#E5484D',
 };

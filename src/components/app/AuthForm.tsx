@@ -50,17 +50,20 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   if (mode === 'forgot') {
     return (
       <div className="vg-fade">
-        <h1 className="font-extrabold text-[30px] tracking-[-0.02em] m-0">Reset your password</h1>
-        <p className="text-[15px] text-muted mt-[10px] mb-[26px]">Enter your email and we&apos;ll send you a reset link.</p>
+        <div className="flex flex-col items-center text-center mb-[26px]">
+          <div className="mb-[26px]"><Logo size={30} wordmarkClassName="text-[20px]" /></div>
+          <h1 className="font-bold text-[26px] tracking-[-0.02em] m-0">Reset your password</h1>
+          <p className="text-[16px] text-muted mt-2">We&apos;ll email you a secure reset link.</p>
+        </div>
         <Label>Email</Label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email" className="w-full bg-card border border-border-2 rounded-[11px] px-[15px] py-[14px] text-[15px] outline-none focus:border-ink" />
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email" className="w-full bg-white border border-border-2 rounded-[10px] px-[14px] py-[13px] text-[16px] outline-none focus:border-ink" />
         <button
-          onClick={async () => { await api.sendReset(email).catch(() => {}); toast('If that email has an account, a reset link is on its way.', '#1FB86B'); router.push('/login'); }}
-          className="vg-press w-full mt-4 bg-ink text-white font-bold text-[15px] rounded-[11px] py-[15px]"
+          onClick={async () => { await api.sendReset(email).catch(() => {}); toast('If that email has an account, a reset link is on its way.', '#1F9D57'); router.push('/login'); }}
+          className="vg-press w-full mt-[14px] bg-yellow text-ink font-bold text-[16px] rounded-[10px] py-[14px]"
         >
           Send reset link
         </button>
-        <button onClick={() => router.push('/login')} className="w-full mt-3 bg-transparent text-muted text-[14px] font-semibold">← Back to log in</button>
+        <button onClick={() => router.push('/login')} className="w-full mt-[14px] bg-transparent text-muted text-[15px] font-semibold">Back to log in</button>
       </div>
     );
   }
@@ -77,36 +80,40 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <div className="vg-fade">
-      <div className="mb-6"><Logo size={34} wordmarkClassName="text-[19px]" /></div>
-      <h1 className="font-extrabold text-[30px] tracking-[-0.02em] m-0">{c.title}</h1>
-      <p className="text-[15px] text-muted mt-2 mb-6">{c.sub}</p>
+      <div className="flex flex-col items-center text-center mb-[30px]">
+        <div className="mb-[26px]"><Logo size={30} wordmarkClassName="text-[20px]" /></div>
+        <h1 className="font-bold text-[26px] tracking-[-0.02em] m-0">{c.title}</h1>
+        <p className="text-[16px] text-muted mt-2">{c.sub}</p>
+      </div>
 
-      <div className="flex flex-col gap-[10px]">
-        <button onClick={() => run(google)} disabled={loading} className="vg-press vg-lift flex items-center justify-center gap-[10px] bg-card border border-border-2 rounded-[11px] py-[13px] text-[14.5px] font-semibold">
+      <div className="flex flex-col gap-[9px]">
+        <button onClick={() => run(google)} disabled={loading} className="vg-press vg-card flex items-center justify-center gap-[10px] bg-white border border-border-2 rounded-[10px] py-3 text-[15.5px] font-semibold">
           <GoogleIcon /> Continue with Google
         </button>
-        <button onClick={() => run(github)} disabled={loading} className="vg-press vg-lift flex items-center justify-center gap-[10px] bg-ink text-white rounded-[11px] py-[13px] text-[14.5px] font-semibold">
+        <button onClick={() => run(github)} disabled={loading} className="vg-press vg-card flex items-center justify-center gap-[10px] bg-white border border-border-2 rounded-[10px] py-3 text-[15.5px] font-semibold">
           <GithubIcon /> Continue with GitHub
         </button>
       </div>
 
-      <div className="flex items-center gap-3 my-5 text-faint text-[12px]"><span className="flex-1 h-px bg-border-2" />OR<span className="flex-1 h-px bg-border-2" /></div>
+      <div className="flex items-center gap-3 my-[18px] text-faint text-[13px]"><span className="flex-1 h-px bg-[#EBEBE8]" />OR<span className="flex-1 h-px bg-[#EBEBE8]" /></div>
 
       <Label>Email</Label>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" aria-label="Email" className="w-full bg-card border border-border-2 rounded-[11px] px-[15px] py-[13px] text-[15px] outline-none focus:border-ink" />
-      <div className="mt-[14px]"><Label>Password</Label></div>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" aria-label="Password" onKeyDown={(e) => e.key === 'Enter' && submitEmail()} className="w-full bg-card border border-border-2 rounded-[11px] px-[15px] py-[13px] text-[15px] outline-none focus:border-ink" />
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" aria-label="Email" className="w-full bg-white border border-border-2 rounded-[10px] px-[14px] py-3 text-[16px] outline-none focus:border-ink" />
+      <div className="mt-[13px]"><Label>Password</Label></div>
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" aria-label="Password" onKeyDown={(e) => e.key === 'Enter' && submitEmail()} className="w-full bg-white border border-border-2 rounded-[10px] px-[14px] py-3 text-[16px] outline-none focus:border-ink" />
 
-      {error && <div className="mt-3 text-[13px] text-red font-semibold">{error}</div>}
+      {error && <div className="mt-3 text-[14px] text-red font-semibold">{error}</div>}
 
-      <button onClick={submitEmail} disabled={loading} className="vg-press w-full mt-[18px] bg-yellow text-ink font-bold text-[15px] rounded-[11px] py-[15px] flex items-center justify-center gap-[9px] disabled:opacity-70">
+      <button onClick={submitEmail} disabled={loading} className="vg-press w-full mt-4 bg-yellow text-ink font-bold text-[16px] rounded-[10px] py-[14px] flex items-center justify-center gap-[9px] disabled:opacity-70">
         {loading && <Spinner dark />}
         {c.cta}
       </button>
 
-      <div className="flex justify-between mt-4 text-[13.5px]">
-        <button onClick={() => router.push(`/${c.to}`)} className="bg-none text-yellow-dark font-bold">{c.switch}</button>
-        <button onClick={() => router.push('/forgot')} className="bg-none text-muted font-semibold">Forgot password?</button>
+      <div className="text-center mt-[18px] text-[14.5px]">
+        <button onClick={() => router.push(`/${c.to}`)} className="bg-none text-ink font-bold">{c.switch}</button>
+      </div>
+      <div className="text-center mt-[10px]">
+        <button onClick={() => router.push('/forgot')} className="bg-none text-[#9B9B96] text-[14px] font-medium">Forgot password?</button>
       </div>
     </div>
   );
@@ -126,7 +133,7 @@ function friendly(code?: string): string {
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <label className="block text-[13px] font-semibold mb-[6px]">{children}</label>;
+  return <label className="block text-[14px] font-semibold mb-[6px]">{children}</label>;
 }
 
 function GoogleIcon() {
@@ -142,7 +149,7 @@ function GoogleIcon() {
 
 function GithubIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" aria-hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#0A0A0A" aria-hidden>
       <path d="M12 1a11 11 0 0 0-3.5 21.4c.6.1.8-.2.8-.5v-2c-3 .7-3.7-1.3-3.7-1.3-.5-1.3-1.2-1.6-1.2-1.6-1-.7 0-.7 0-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.4-.3-5-1.2-5-5.3 0-1.2.4-2.2 1.1-3-.1-.3-.5-1.4.1-2.8 0 0 .9-.3 3 1.1a10.4 10.4 0 0 1 5.5 0c2.1-1.4 3-1.1 3-1.1.6 1.4.2 2.5.1 2.8.7.8 1.1 1.8 1.1 3 0 4.1-2.6 5-5 5.3.4.3.8 1 .8 2.1v3c0 .3.2.6.8.5A11 11 0 0 0 12 1z" />
     </svg>
   );

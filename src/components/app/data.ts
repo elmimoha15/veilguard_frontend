@@ -9,20 +9,27 @@ export type Sev = 'CRITICAL' | 'WARNING' | 'PASSED';
 export type Status = 'open' | 'fixed' | 'ignored' | 'passed';
 
 export const SEV_COLOR: Record<Sev, string> = {
-  CRITICAL: '#E5352B',
-  WARNING: '#F2851F',
-  PASSED: '#1FB86B',
+  CRITICAL: '#E5484D',
+  WARNING: '#E0932F',
+  PASSED: '#1F9D57',
 };
 
-export const SEV_META: Record<Sev, { emoji: string; sevPlain: string; sevHint: string }> = {
-  CRITICAL: { emoji: '🔴', sevPlain: 'Serious problem — fix this first', sevHint: 'Someone could actually get to your customers’ data right now.' },
-  WARNING: { emoji: '🟠', sevPlain: 'Worth fixing soon', sevHint: 'Not an emergency, but it makes you an easier target.' },
-  PASSED: { emoji: '🟢', sevPlain: 'You’re good here', sevHint: 'This check passed — nothing to do.' },
+/* Tint / text pairs for severity — used by finding banners & pills. */
+export const SEV_TINT: Record<Sev, { bg: string; fg: string }> = {
+  CRITICAL: { bg: '#FBEAEA', fg: '#C23B3F' },
+  WARNING: { bg: '#FBF1E1', fg: '#9A6412' },
+  PASSED: { bg: '#EAF6EF', fg: '#157A43' },
+};
+
+export const SEV_META: Record<Sev, { sevPlain: string; sevHint: string }> = {
+  CRITICAL: { sevPlain: 'Serious problem — fix this first', sevHint: 'Someone could actually get to your customers’ data right now.' },
+  WARNING: { sevPlain: 'Worth fixing soon', sevHint: 'Not an emergency, but it makes you an easier target.' },
+  PASSED: { sevPlain: 'You’re good here', sevHint: 'This check passed — nothing to do.' },
 };
 
 export const STATUS_META: Record<Status, { label: string; bg: string; fg: string }> = {
-  open: { label: 'Open', bg: 'rgba(229,53,43,.1)', fg: '#c0392f' },
-  fixed: { label: 'Fixed ✓', bg: 'rgba(31,184,107,.14)', fg: '#158a4f' },
-  ignored: { label: 'Ignored', bg: '#EEEDE8', fg: '#8b8a86' },
-  passed: { label: 'Passed', bg: 'rgba(31,184,107,.14)', fg: '#158a4f' },
+  open: { label: 'Open', bg: '#FBEAEA', fg: '#C23B3F' },
+  fixed: { label: 'Fixed', bg: '#EAF6EF', fg: '#157A43' },
+  ignored: { label: 'Ignored', bg: '#F2F2EF', fg: '#9B9B96' },
+  passed: { label: 'Passed', bg: '#EAF6EF', fg: '#157A43' },
 };

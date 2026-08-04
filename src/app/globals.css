@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
-@theme inline {
+/* Non-inline @theme: utilities emit `var(--color-*)` (not baked literals), so a
+   scoped `.app-theme` can retint the whole signed-in app while the marketing
+   site keeps these :root values untouched. See `.app-theme` below. */
+@theme {
   /* ---- Neutrals ------------------------------------------------------- */
   --color-bg: #ECEBE7;          /* page background (warm off-white)        */
   --color-bg-soft: #F4F3EF;     /* light section background                */
@@ -34,6 +37,70 @@
   /* Apple-style UI type: Inter first (bundled), then the native SF/system stack. */
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ------------------------------------------------------------------ */
+/* App theme (signed-in product only)                                  */
+/* ------------------------------------------------------------------ */
+/* The redesigned product app uses a lighter "ElevenLabs"-style palette
+   (white canvas, near-black ink, one yellow accent) + Hanken Grotesk.
+   Scoped to a `.app-theme` wrapper on the (app) route group so every
+   token utility (bg-bg, text-ink, border-border, text-muted, bg-green…)
+   retints for the app while the marketing site keeps the :root tokens.
+   Only leaf color/font tokens are overridden — utilities resolve them
+   from the nearest ancestor, i.e. this scope. */
+.app-theme {
+  --color-bg: #F4F4F3;          /* app canvas — clean cool light gray (cards stay white) */
+  --color-bg-soft: #F7F7F6;     /* code / search / soft inset fills */
+  --color-card: #FFFFFF;
+  --color-ink: #0A0A0A;         /* text + primary buttons + dark sidebar */
+  --color-ink-tile: #0A0A0A;
+  --color-panel: #1A1A18;       /* dark sidebar cards / popovers */
+  --color-muted: #6E6E6A;
+  --color-label: #8B8A86;       /* section labels / eyebrows */
+  --color-tertiary: #B0B0AC;
+  --color-faint: #A4A39E;
+  /* ONE hairline border everywhere — kills the old 4-value drift. */
+  --color-border: #E8E7E3;
+  --color-border-2: #E8E7E3;
+  --color-border-3: #E8E7E3;
+  --color-hairline: #EFEEEA;    /* even softer inner row dividers */
+  --color-green: #1F9D57;
+  --color-orange: #E0932F;
+  --color-red: #E5484D;
+  /* yellow unchanged (#F3C500) */
+
+  /* Depth + motion tokens (used by the Card primitive & interactions). */
+  --shadow-card: 0 1px 2px rgba(23, 23, 22, 0.04), 0 6px 16px -10px rgba(23, 23, 22, 0.08);
+  --shadow-pop: 0 16px 40px -14px rgba(23, 23, 22, 0.22);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Apple/SF-style UI type: Inter (bundled) then the native SF/system stack. */
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------------ */
+/* App type refinement — restraint over the marketing 800-weight heads. */
+/* ElevenLabs/Linear feel: semibold (600) display, real hierarchy.      */
+/* ------------------------------------------------------------------ */
+.app-theme h1, .app-theme h2, .app-theme h3, .app-theme h4 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+/* Tabular figures for every metric/number so columns align and read pro. */
+.app-theme .tnum { font-variant-numeric: tabular-nums; }
+/* Refined section label (clean sans, not mono). */
+.app-theme .kicker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-label);
 }
 
 /* ------------------------------------------------------------------ */
@@ -186,10 +253,35 @@
   animation: vgShimmer 1.3s linear infinite;
   border-radius: 8px;
 }
+/* Skeleton on the app's white canvas (lighter stops). */
+.app-theme .vg-skel {
+  background: linear-gradient(90deg, #F1F1EF 0px, #F8F8F6 200px, #F1F1EF 400px);
+  background-size: 800px 100%;
+  border-radius: 10px;
+}
 
-/* Tactile press + hover lift used across the app UI. */
-.vg-press { transition: transform .12s ease; }
-.vg-press:active { transform: scale(.96); }
+/* Tactile press feedback (Emil: subtle scale on :active, strong ease-out). */
+.vg-press { transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+.vg-press:active { transform: scale(.97); }
+
+/* Card / surface primitive: white, one hairline border, soft depth. */
+.app-theme .vg-surface {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+}
+
+/* App-shell hover affordances. Nav rows tint on hover; interactive surfaces
+   lift their tint subtly (not just the border). Unlayered so they win over
+   Tailwind's layered utilities. */
+.app-theme .vg-nav { transition: background .15s ease; }
+.app-theme .vg-nav:hover { background: #F2F2F0; }
+.app-theme .vg-card { transition: border-color .15s var(--ease-out), box-shadow .2s var(--ease-out), background .15s var(--ease-out); }
+.app-theme .vg-card:hover { background: #FCFCFB; box-shadow: 0 2px 4px rgba(23,23,22,.05), 0 10px 24px -12px rgba(23,23,22,.12); }
+/* Interactive row hover (list items). */
+.app-theme .vg-row { transition: background .13s var(--ease-out); }
+.app-theme .vg-row:hover { background: #FAFAF9; }
 .vg-lift { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
 .vg-lift:hover { transform: translateY(-3px); box-shadow: 0 18px 34px -20px rgba(0, 0, 0, .45); }
 

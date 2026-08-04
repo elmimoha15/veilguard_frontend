@@ -100,11 +100,15 @@ export function UploadPicker({
   const folderRef = useRef<HTMLInputElement>(null);
   const zipRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'preparing' | 'starting'>('idle');
+  const [status, setStatus] = useState<'idle' | 'preparing' | 'ready' | 'starting'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ name: string; count: number; bytes: number; gitignore: boolean } | null>(null);
+  // The zipped upload is held here after a successful drop/pick so the user can
+  // review it and press Scan — we no longer auto-start the scan on drop.
+  const [prepared, setPrepared] = useState<{ blob: Blob; name: string } | null>(null);
 
-  const busy = status !== 'idle';
+  // 'ready' still lets the user interact (press Scan / re-choose / cancel).
+  const busy = status === 'preparing' || status === 'starting';
 
   const humanSize = (b: number) => (b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`);
 
@@ -153,15 +157,23 @@ export function UploadPicker({
         setStatus('idle');
         return;
       }
+      // Two-step: hold the zip and show an "upload ready" summary — the user must
+      // press Scan to actually start (no surprise auto-scan on drop).
       setSummary({ name: prepped.name, count: prepped.count, bytes: prepped.bytes, gitignore: prepped.gitignore });
-      setStatus('starting');
-      const ok = await onScan(prepped.blob, prepped.name);
-      if (!ok) setStatus('idle'); // stay open so the user can retry
+      setPrepared({ blob: prepped.blob, name: prepped.name });
+      setStatus('ready');
     } catch {
       setError('Could not read that folder — try again, or upload a .zip instead.');
       setStatus('idle');
     }
   }
+
+  const runScan = async () => {
+    if (!prepared) return;
+    setStatus('starting');
+    const ok = await onScan(prepared.blob, prepared.name);
+    if (!ok) setStatus('ready'); // stay open on failure so the user can retry
+  };
 
   const onDrop = async (e: React.DragEvent) => {
     e.preventDefault();
@@ -172,11 +184,11 @@ export function UploadPicker({
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div onClick={busy ? undefined : onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: 'rgba(30,29,27,.5)', backdropFilter: 'blur(3px)' }}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[520px] bg-card rounded-[20px] p-8 vg-pop shadow-[0_30px_70px_-24px_rgba(0,0,0,.6)]">
-        <h2 className="font-extrabold text-[22px] tracking-[-0.02em] mb-[6px]">Upload a folder</h2>
-        <p className="text-[14px] text-muted mb-[12px]">Scan code straight from your computer — no GitHub needed. We zip it in your browser (respecting your <code className="font-mono">.gitignore</code> and skipping <code className="font-mono">node_modules</code>, tests, and build output), scan it, and delete it. Your code is never stored.</p>
-        <p className="text-[12.5px] text-muted mb-[18px]" style={{ opacity: 0.85 }}>Tip: for an exact scan of what’s actually live, <button onClick={() => router.push('/settings')} className="text-yellow-dark font-semibold underline">connect GitHub</button> — it scans exactly what you’ve pushed.</p>
+    <div onClick={busy ? undefined : onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: 'rgba(10,10,10,.28)' }}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[520px] bg-card border border-border rounded-[16px] p-7 vg-pop shadow-[var(--shadow-pop)]">
+        <h2 className="font-semibold text-[20px] tracking-[-0.02em] mb-[6px]">Upload a folder</h2>
+        <p className="text-[15px] text-muted mb-[12px]">Scan code straight from your computer — no GitHub needed. We zip it in your browser (respecting your <code className="font-mono">.gitignore</code> and skipping <code className="font-mono">node_modules</code>, tests, and build output), scan it, and delete it. Your code is never stored.</p>
+        <p className="text-[13.5px] text-muted mb-[18px]" style={{ opacity: 0.85 }}>Tip: for an exact scan of what’s actually live, <button onClick={() => router.push('/settings')} className="text-yellow-dark font-semibold underline">connect GitHub</button> — it scans exactly what you’ve pushed.</p>
 
         {/* Drop zone */}
         <div
@@ -185,27 +197,41 @@ export function UploadPicker({
           onDrop={onDrop}
           onClick={() => !busy && folderRef.current?.click()}
           className="cursor-pointer rounded-[16px] border-2 border-dashed p-8 text-center transition-colors"
-          style={{ borderColor: dragging ? '#F3C500' : '#E4E3DE', background: dragging ? '#FFF7D6' : '#FAFAF8' }}
+          style={{ borderColor: dragging ? '#F3C500' : '#DCDCD8', background: dragging ? '#FFFBEB' : '#FBFBFA' }}
         >
-          <div className="text-[34px] mb-1">{status === 'preparing' ? '📦' : '📁'}</div>
+          <div className="flex justify-center mb-2 text-tertiary">
+            {status === 'preparing' ? (
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+            ) : status === 'ready' ? (
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4 4 10-10" stroke="#1F9D57" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            ) : (
+              <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></svg>
+            )}
+          </div>
           {status === 'preparing' ? (
-            <div className="font-bold text-[15px]">Packaging your folder…</div>
+            <div className="font-semibold text-[16px]">Packaging your folder…</div>
           ) : status === 'starting' ? (
-            <div className="font-bold text-[15px]">Uploading &amp; starting scan…</div>
+            <div className="font-semibold text-[16px]">Uploading &amp; starting scan…</div>
+          ) : status === 'ready' ? (
+            <>
+              <div className="font-semibold text-[16px]">Upload ready</div>
+              <div className="text-[14px] text-muted mt-1">Click to choose a different folder</div>
+            </>
           ) : (
             <>
-              <div className="font-bold text-[15px]">Drag a folder here, or click to choose</div>
-              <div className="text-[13px] text-muted mt-1">Whole project folder, or a <code className="font-mono">.zip</code> — up to {MAX_ZIP_BYTES / 1024 / 1024}MB</div>
+              <div className="font-semibold text-[16px]">Drag a folder here, or click to choose</div>
+              <div className="text-[14px] text-muted mt-1">Whole project folder, or a <code className="font-mono">.zip</code> — up to {MAX_ZIP_BYTES / 1024 / 1024}MB</div>
             </>
           )}
         </div>
 
         {summary && !error && (
-          <div className="mt-3 text-[13px] text-muted">
-            <span className="font-semibold text-fg">{summary.name}</span> · {summary.count} files · {humanSize(summary.bytes)}{summary.gitignore ? ' · respected .gitignore' : ''}
+          <div className="mt-3 flex items-center gap-2 text-[14px] text-muted">
+            {status === 'ready' && <span className="shrink-0 w-[7px] h-[7px] rounded-full bg-green" />}
+            <span><span className="font-semibold text-ink">{summary.name}</span> · {summary.count} files · {humanSize(summary.bytes)}{summary.gitignore ? ' · respected .gitignore' : ''}</span>
           </div>
         )}
-        {error && <div className="mt-3 text-[13px] text-red">{error}</div>}
+        {error && <div className="mt-3 text-[14px] text-red">{error}</div>}
 
         {/* Hidden inputs: folder picker (webkitdirectory) + .zip picker. */}
         <input
@@ -225,9 +251,18 @@ export function UploadPicker({
         />
 
         <div className="flex gap-[10px] mt-5">
-          <button onClick={onClose} disabled={busy} className="vg-press flex-1 bg-card border border-border-2 rounded-[11px] py-[13px] font-bold text-[14.5px] text-muted disabled:opacity-60">Cancel</button>
-          <button onClick={() => !busy && zipRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-bg-soft border border-border-2 rounded-[11px] py-[13px] font-bold text-[14.5px] disabled:opacity-60">Choose a .zip</button>
-          <button onClick={() => !busy && folderRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-yellow text-ink rounded-[11px] py-[13px] font-bold text-[14.5px] disabled:opacity-70">{busy ? 'Working…' : 'Choose folder'}</button>
+          <button onClick={onClose} disabled={busy} className="vg-press flex-1 bg-card border border-border rounded-[10px] py-[13px] font-semibold text-[15.5px] text-muted disabled:opacity-60">Cancel</button>
+          {status === 'ready' ? (
+            <>
+              <button onClick={() => !busy && folderRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-bg-soft border border-border rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-60">Choose different</button>
+              <button onClick={runScan} disabled={busy} className="vg-press flex-1 bg-ink text-white rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-70">Scan</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => !busy && zipRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-bg-soft border border-border rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-60">Choose a .zip</button>
+              <button onClick={() => !busy && folderRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-ink text-white rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-70">{status === 'preparing' ? 'Working…' : 'Choose folder'}</button>
+            </>
+          )}
         </div>
       </div>
     </div>,

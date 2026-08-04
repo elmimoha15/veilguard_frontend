@@ -1,8 +1,12 @@
-import type { Metadata } from 'next';
-import MonitoringScreen from '@/components/app/MonitoringScreen';
+'use client';
 
-export const metadata: Metadata = { title: 'Monitoring', robots: { index: false } };
+// Monitoring is now a tab inside the per-app hub (/app?key=…&tab=monitoring).
+// This legacy route redirects any old /monitoring link to the apps list.
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function MonitoringPage() {
-  return <MonitoringScreen />;
+  const router = useRouter();
+  useEffect(() => { router.replace('/apps'); }, [router]);
+  return <div className="vg-skel h-[400px]" />;
 }

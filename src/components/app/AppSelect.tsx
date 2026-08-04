@@ -5,11 +5,17 @@ import { type App, appKind, GRADE_TINT } from '@/lib/hooks';
 import { GitHubIcon } from '@/components/ui/BrandIcons';
 
 type Kind = 'Repo' | 'URL' | 'Upload';
-const KIND_STYLE: Record<Kind, { bg: string; fg: string; icon: string }> = {
-  Repo: { bg: 'rgba(0,0,0,.06)', fg: '#5b5a56', icon: '' },
-  URL: { bg: 'rgba(0,0,0,.06)', fg: '#5b5a56', icon: '🌐' },
-  Upload: { bg: 'rgba(31,184,107,.16)', fg: '#158a4f', icon: '📁' },
+const KIND_STYLE: Record<Kind, { bg: string; fg: string }> = {
+  Repo: { bg: '#F2F2EF', fg: '#6E6E6A' },
+  URL: { bg: '#F2F2EF', fg: '#6E6E6A' },
+  Upload: { bg: '#EAF6EF', fg: '#157A43' },
 };
+
+function KindIcon({ kind }: { kind: Kind }) {
+  if (kind === 'Repo') return <GitHubIcon size={11} className="text-ink" />;
+  if (kind === 'URL') return <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" /><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" stroke="currentColor" strokeWidth="1.8" /></svg>;
+  return <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>;
+}
 
 /**
  * Shared app/target picker used by the Monitoring and Findings pages, so the user
@@ -24,9 +30,9 @@ export function AppSelect({ apps, activeKey, onSelect }: { apps: App[]; activeKe
 
   if (apps.length <= 1) {
     return (
-      <div className="inline-flex items-center gap-[10px] bg-card border border-border-2 rounded-[12px] px-4 py-[9px]">
+      <div className="inline-flex items-center gap-[10px] bg-card border border-border rounded-[12px] px-4 py-[9px]">
         <GradeSquare grade={active.grade} />
-        <span className="text-[14px] font-semibold truncate max-w-[240px]">{active.name}</span>
+        <span className="text-[15px] font-semibold truncate max-w-[240px]">{active.name}</span>
         <KindBadge kind={appKind(active)} />
       </div>
     );
@@ -34,30 +40,30 @@ export function AppSelect({ apps, activeKey, onSelect }: { apps: App[]; activeKe
 
   return (
     <div className="relative inline-block">
-      <button onClick={() => setOpen((v) => !v)} className="vg-press flex items-center gap-[10px] bg-card border border-border-2 rounded-[12px] px-4 py-[9px] min-w-[280px]">
+      <button onClick={() => setOpen((v) => !v)} className="vg-press flex items-center gap-[10px] bg-card border border-border rounded-[12px] px-4 py-[9px] min-w-[280px]">
         <GradeSquare grade={active.grade} />
         <span className="flex-1 text-left min-w-0">
-          <span className="block text-[14px] font-semibold truncate">{active.name}</span>
-          <span className="block font-mono text-[10.5px] text-faint">{appKind(active)} · tap to switch app</span>
+          <span className="block text-[15px] font-semibold truncate">{active.name}</span>
+          <span className="block font-mono text-[11.5px] text-faint">{appKind(active)} · tap to switch app</span>
         </span>
-        <span className="text-faint text-[11px]">▾</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-faint"><path d="M8 10l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-[40]" onClick={() => setOpen(false)} />
-          <div className="absolute z-[50] top-[calc(100%+6px)] left-0 w-[320px] max-h-[360px] overflow-y-auto bg-card border border-border-2 rounded-[14px] p-[6px] shadow-[0_20px_44px_-16px_rgba(0,0,0,.4)] vg-fade">
-            <div className="font-mono text-[10px] tracking-[0.12em] text-faint px-[10px] pt-[8px] pb-[4px]">YOUR APPS</div>
+          <div className="absolute z-[50] top-[calc(100%+6px)] left-0 w-[320px] max-h-[360px] overflow-y-auto bg-card border border-border rounded-[12px] p-[6px] shadow-[0_20px_44px_-16px_rgba(0,0,0,.4)] vg-fade">
+            <div className="font-mono text-[11px] tracking-[0.12em] text-faint px-[10px] pt-[8px] pb-[4px]">YOUR APPS</div>
             {apps.map((a) => {
               const on = a.key === active.key;
               return (
                 <button key={a.key} onClick={() => { onSelect(a); setOpen(false); }} className="flex items-center gap-[10px] w-full rounded-[10px] px-[10px] py-[9px] text-left hover:bg-bg-soft" style={{ background: on ? 'rgba(243,197,0,.12)' : undefined }}>
                   <GradeSquare grade={a.grade} />
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[13.5px] font-semibold truncate">{a.name}</span>
+                    <span className="block text-[14.5px] font-semibold truncate">{a.name}</span>
                   </span>
                   <KindBadge kind={appKind(a)} />
-                  {on && <span className="shrink-0 text-yellow-dark text-[13px]">✓</span>}
+                  {on && <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: '#8a6d00' }}><path d="M5 12.5l4 4 10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                 </button>
               );
             })}
@@ -71,14 +77,14 @@ export function AppSelect({ apps, activeKey, onSelect }: { apps: App[]; activeKe
 function KindBadge({ kind }: { kind: Kind }) {
   const s = KIND_STYLE[kind];
   return (
-    <span className="shrink-0 inline-flex items-center gap-[4px] text-[10.5px] font-bold px-[8px] py-[3px] rounded-full" style={{ background: s.bg, color: s.fg }}>
-      {kind === 'Repo' ? <GitHubIcon size={11} className="text-ink" /> : s.icon} {kind}
+    <span className="shrink-0 inline-flex items-center gap-[4px] text-[11.5px] font-semibold px-[8px] py-[3px] rounded-full" style={{ background: s.bg, color: s.fg }}>
+      <KindIcon kind={kind} /> {kind}
     </span>
   );
 }
 
 function GradeSquare({ grade }: { grade?: 'A' | 'B' | 'C' | 'D' | 'F' }) {
   return (
-    <span className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-[15px]" style={{ background: grade ? GRADE_TINT[grade].bg : 'rgba(0,0,0,.05)', color: grade ? GRADE_TINT[grade].fg : '#9a9a95' }}>{grade ?? '…'}</span>
+    <span className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-[16px]" style={{ background: grade ? GRADE_TINT[grade].bg : '#F2F2EF', color: grade ? GRADE_TINT[grade].fg : '#B0B0AC' }}>{grade ?? '…'}</span>
   );
 }

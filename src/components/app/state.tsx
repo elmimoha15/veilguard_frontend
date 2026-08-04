@@ -101,7 +101,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setObState((prev) => ({ ...prev, ...patch }));
   }, []);
 
-  const toast = useCallback((msg: string, color = '#1FB86B') => {
+  const toast = useCallback((msg: string, color = '#1F9D57') => {
     const id = ++toastId.current;
     setToasts((ts) => [...ts, { id, msg, color }]);
     setTimeout(() => setToasts((ts) => ts.filter((t) => t.id !== id)), 2600);

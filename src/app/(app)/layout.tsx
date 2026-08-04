@@ -14,10 +14,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <AppStateProvider>
-        {children}
-        <ScanWatcher />
-        <ToastStack />
-        <ConfettiOverlay />
+        {/* `app-theme` scopes the lighter ElevenLabs-style palette + Hanken font
+            to the whole signed-in tree; marketing keeps the :root tokens. */}
+        <div className="app-theme min-h-screen bg-bg text-ink">
+          {children}
+          <ScanWatcher />
+          <ToastStack />
+          <ConfettiOverlay />
+        </div>
       </AppStateProvider>
     </AuthProvider>
   );

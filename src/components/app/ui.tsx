@@ -16,7 +16,7 @@ export function ToastStack() {
           style={{ animation: 'vgToast .3s ease both' }}
         >
           <span className="w-[9px] h-[9px] rounded-full" style={{ background: t.color }} />
-          <span className="text-[13.5px] font-medium">{t.msg}</span>
+          <span className="text-[14.5px] font-medium">{t.msg}</span>
         </div>
       ))}
     </div>
@@ -26,7 +26,7 @@ export function ToastStack() {
 /* -------------------------------------------------------------------------- */
 /* Confetti burst — fires while `celebrate` is true.                           */
 /* -------------------------------------------------------------------------- */
-const CONFETTI_COLORS = ['#F3C500', '#1FB86B', '#F2851F', '#E5352B'];
+const CONFETTI_COLORS = ['#F3C500', '#1F9D57', '#E0932F', '#E5484D'];
 
 // Positions are derived from the piece index with a deterministic hash — NOT
 // Math.random(), which evaluates independently on the server and the client and
@@ -71,7 +71,7 @@ export function GradeRing({
   size = 120,
   pct,
   color,
-  track = 'rgba(255,255,255,.12)',
+  track = '#EDEDEA',
   strokeWidth = 9,
   animate = false,
   children,
@@ -118,7 +118,7 @@ export function GradeLetter({
   letter,
   color,
   size = 150,
-  halftone = true,
+  halftone = false,
   className,
 }: {
   letter: string;
@@ -129,9 +129,9 @@ export function GradeLetter({
 }) {
   return (
     <div
-      className={halftone ? `grade-halftone ${className ?? ''}` : className}
+      className={halftone ? `grade-halftone tnum ${className ?? ''}` : `tnum ${className ?? ''}`}
       style={{
-        fontWeight: 800,
+        fontWeight: 600,
         fontSize: size,
         lineHeight: 0.8,
         ...(halftone
@@ -166,11 +166,11 @@ export function Toggle({ on, onClick, label }: { on: boolean; onClick: () => voi
       aria-checked={on}
       aria-label={label}
       onClick={onClick}
-      className="relative w-11 h-[26px] rounded-full border-0 transition-colors"
-      style={{ background: on ? '#1FB86B' : '#cfceca' }}
+      className="relative w-[42px] h-6 rounded-full border-0 transition-colors"
+      style={{ background: on ? '#1F9D57' : '#E2E2DF' }}
     >
       <span
-        className="absolute top-[3px] w-5 h-5 rounded-full bg-white transition-[left]"
+        className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-[left] shadow-[0_1px_2px_rgba(0,0,0,.2)]"
         style={{ left: on ? 21 : 3 }}
       />
     </button>
@@ -185,8 +185,8 @@ export function Spinner({ dark = false }: { dark?: boolean }) {
     <span
       className="inline-block w-[15px] h-[15px] rounded-full vg-spin"
       style={{
-        border: `2px solid ${dark ? 'rgba(30,29,27,.3)' : 'rgba(255,255,255,.3)'}`,
-        borderTopColor: dark ? '#1E1D1B' : '#fff',
+        border: `2px solid ${dark ? 'rgba(10,10,10,.25)' : 'rgba(255,255,255,.3)'}`,
+        borderTopColor: dark ? '#0A0A0A' : '#fff',
       }}
     />
   );

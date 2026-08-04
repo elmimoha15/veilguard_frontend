@@ -31,12 +31,12 @@ type Step = CardStep | InputStep | ConnectStep | PlanStep;
 const LAST_STEP = 9;
 
 const STEPS: Record<number, Step> = {
-  1: { kind: 'card', q: 'What did you build your app with?', hint: 'This tunes which checks we run.', key: 'tool', options: [{ label: 'Lovable', icon: '💗' }, { label: 'Bolt', icon: '⚡' }, { label: 'Cursor', icon: '▸' }, { label: 'Replit', icon: '◧' }, { label: 'v0', icon: 'v0' }, { label: 'Something else', icon: '✳' }] },
+  1: { kind: 'card', q: 'What did you build your app with?', hint: 'This tunes which checks we run.', key: 'tool', options: [{ label: 'Lovable', icon: '' }, { label: 'Bolt', icon: '' }, { label: 'Cursor', icon: '' }, { label: 'Replit', icon: '' }, { label: 'v0', icon: '' }, { label: 'Something else', icon: '' }] },
   2: { kind: 'url' },
-  3: { kind: 'card', q: 'What’s your backend / database?', hint: 'Decides which deep checks run.', key: 'db', options: [{ label: 'Supabase', icon: '⚡' }, { label: 'Firebase', icon: '🔥' }, { label: 'Custom (Node/etc.)', icon: '⚙' }, { label: 'Not sure', icon: '❓' }] },
-  4: { kind: 'card', q: 'Are you handling payments?', hint: 'Flags webhook & secret checks.', key: 'pay', options: [{ label: 'Stripe', icon: '💳' }, { label: 'Other', icon: '💰' }, { label: 'Not yet', icon: '—' }] },
-  5: { kind: 'card', q: 'How comfortable are you with code?', hint: 'Tunes how we explain fixes.', key: 'skill', options: [{ label: 'I can’t read code', icon: '🙈' }, { label: 'I know a little', icon: '📖' }, { label: 'I’m a developer', icon: '👩‍💻' }] },
-  6: { kind: 'card', q: 'How often do you ship updates?', hint: 'Sets your monitoring cadence.', key: 'ship', options: [{ label: 'Multiple times a day', icon: '🚀' }, { label: 'A few times a week', icon: '📆' }, { label: 'Rarely', icon: '🐢' }] },
+  3: { kind: 'card', q: 'What’s your backend / database?', hint: 'Decides which deep checks run.', key: 'db', options: [{ label: 'Supabase', icon: '' }, { label: 'Firebase', icon: '' }, { label: 'Custom (Node/etc.)', icon: '' }, { label: 'Not sure', icon: '' }] },
+  4: { kind: 'card', q: 'Are you handling payments?', hint: 'Flags webhook & secret checks.', key: 'pay', options: [{ label: 'Stripe', icon: '' }, { label: 'Other', icon: '' }, { label: 'Not yet', icon: '' }] },
+  5: { kind: 'card', q: 'How comfortable are you with code?', hint: 'Tunes how we explain fixes.', key: 'skill', options: [{ label: 'I can’t read code', icon: '' }, { label: 'I know a little', icon: '' }, { label: 'I’m a developer', icon: '' }] },
+  6: { kind: 'card', q: 'How often do you ship updates?', hint: 'Sets your monitoring cadence.', key: 'ship', options: [{ label: 'Multiple times a day', icon: '' }, { label: 'A few times a week', icon: '' }, { label: 'Rarely', icon: '' }] },
   7: { kind: 'email' },
   8: { kind: 'plan' },
   9: { kind: 'connect' },
@@ -102,18 +102,18 @@ export default function OnboardingWizard() {
     try {
       if (!(await applyPlan())) return; // Polar redirect took over (future)
       if (ob.gh || ob.sb) {
-        toast('Connect GitHub/Supabase in Settings to include them in deep scans.', '#F2851F');
+        toast('Connect GitHub/Supabase in Settings to include them in deep scans.', '#E0932F');
       }
       const scan = await api.createScan(c.url!);
       if (!scan.ok || !scan.data.scanId) {
-        toast(scan.data.error || 'Could not start the scan.', '#E5352B');
+        toast(scan.data.error || 'Could not start the scan.', '#E5484D');
         setBusy(false);
         return;
       }
       if (user) { await markOnboarded(user.uid).catch(() => {}); await refreshProfile(); }
       router.replace(`/scanning?scanId=${scan.data.scanId}&flow=onboarding`);
     } catch {
-      toast('Something went wrong starting your scan.', '#E5352B');
+      toast('Something went wrong starting your scan.', '#E5484D');
       setBusy(false);
     }
   };
@@ -127,46 +127,46 @@ export default function OnboardingWizard() {
   const nextLabel = busy
     ? 'Just a sec…'
     : step >= LAST_STEP
-      ? (hasUrl ? 'Run first scan →' : 'Go to dashboard →')
+      ? (hasUrl ? 'Run first scan' : 'Go to dashboard')
       : step === 2 || step === 7
-        ? 'Continue →'
-        : 'Skip for now →';
+        ? 'Continue'
+        : 'Skip for now';
 
   return (
-    <div className="min-h-screen bg-bg-soft flex flex-col items-center justify-center px-5 py-10">
-      <div className="w-full max-w-[600px]">
-        <div className="flex items-center justify-between mb-3 px-1">
-          <Logo size={30} wordmarkClassName="text-[16px]" />
-          <button onClick={skipToDashboard} disabled={busy} className="font-semibold text-[13px] text-label hover:text-ink transition-colors disabled:opacity-60">
-            Skip setup →
-          </button>
-        </div>
-        <div className="bg-card border border-border-2 rounded-[24px] p-7 sm:p-9 shadow-[0_24px_60px_-30px_rgba(0,0,0,.4)]">
-          <div className="font-mono text-[11px] tracking-[0.14em] text-label mb-[10px]">STEP {step} / {LAST_STEP + 1}</div>
-          <div className="h-[6px] bg-border-2 rounded-full overflow-hidden mb-[30px]">
-            <div
-              className="h-full bg-yellow rounded-full transition-[width] duration-[400ms] ease-[cubic-bezier(.3,.7,.3,1)]"
-              style={{ width: `${(step / (LAST_STEP + 1)) * 100}%` }}
-            />
-          </div>
+    <div className="min-h-screen bg-bg flex flex-col">
+      {/* header */}
+      <div className="flex items-center justify-between px-6 sm:px-7 py-[22px]">
+        <Logo size={30} wordmarkClassName="text-[17px]" />
+        <button onClick={skipToDashboard} disabled={busy} className="bg-transparent border-0 font-semibold text-[15px] text-label hover:text-ink transition-colors disabled:opacity-60">
+          Skip setup
+        </button>
+      </div>
 
-          <div key={step} className="vg-fade">
+      {/* step */}
+      <div className="flex-1 flex items-center justify-center px-5 py-5">
+        <div key={step} className="w-full max-w-[600px] vg-fade">
           {view.kind === 'card' && (
             <>
-              <h1 className="font-extrabold text-[clamp(24px,3.6vw,34px)] tracking-[-0.02em] mb-[6px]">{view.q}</h1>
-              <p className="text-[15px] text-muted mb-[26px]">{view.hint}</p>
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-3">
+              <div className="text-center mb-[30px]">
+                <h1 className="font-bold text-[clamp(24px,3.4vw,32px)] tracking-[-0.02em] m-0">{view.q}</h1>
+                <p className="text-[16px] text-muted mt-2">{view.hint}</p>
+              </div>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3">
                 {view.options.map((o) => {
                   const selected = ob[view.key] === o.label;
+                  const bk = OPTION_BRAND[o.label];
+                  const Icon = bk ? BRAND_ICON[bk] : null;
                   return (
                     <button
                       key={o.label}
                       onClick={() => { setOb({ [view.key]: o.label }); setTimeout(next, 160); }}
-                      className="vg-press vg-lift text-left rounded-2xl p-[18px] flex flex-col gap-2 min-h-[96px] border-2"
-                      style={{ background: selected ? '#FFF7D6' : '#fff', borderColor: selected ? '#F3C500' : '#E4E3DE' }}
+                      className="vg-press vg-card text-left bg-card rounded-[14px] p-4 flex items-center gap-3 min-h-[64px] border-[1.5px]"
+                      style={{ borderColor: selected ? '#F3C500' : '#E2E2DF' }}
                     >
-                      {(() => { const bk = OPTION_BRAND[o.label]; const Icon = bk ? BRAND_ICON[bk] : null; return Icon ? <Icon size={26} /> : <span className="text-[24px]">{o.icon}</span>; })()}
-                      <span className="font-bold text-[15.5px] text-ink">{o.label}</span>
+                      <span className="shrink-0 w-[34px] h-[34px] rounded-[9px] bg-bg-soft border border-border flex items-center justify-center">
+                        {Icon ? <Icon size={22} /> : <span className="font-bold text-[14px] text-muted">{o.label.charAt(0)}</span>}
+                      </span>
+                      <span className="font-semibold text-[16px] text-ink">{o.label}</span>
                     </button>
                   );
                 })}
@@ -176,15 +176,17 @@ export default function OnboardingWizard() {
 
           {view.kind === 'url' && (
             <>
-              <h1 className="font-extrabold text-[clamp(24px,3.6vw,34px)] tracking-[-0.02em] mb-[6px]">What’s your app’s live URL?</h1>
-              <p className="text-[15px] text-muted mb-[26px]">We’ll scan this address the way an attacker would. Optional — leave it blank to skip the scan and go straight to your dashboard.</p>
-              <label className="flex items-center gap-[9px] bg-card border-2 border-border-2 rounded-[14px] px-4 min-h-[60px] focus-within:border-yellow">
-                <span className="font-mono text-tertiary text-[15px]">https://</span>
+              <div className="text-center mb-[28px]">
+                <h1 className="font-bold text-[clamp(24px,3.4vw,32px)] tracking-[-0.02em] m-0">What’s your app’s live URL?</h1>
+                <p className="text-[16px] text-muted mt-2">We’ll scan this address the way an attacker would. Optional — leave it blank to skip the scan and go straight to your dashboard.</p>
+              </div>
+              <label className="flex items-center gap-[9px] bg-card border border-border-2 rounded-[12px] px-[15px] min-h-[56px] focus-within:border-yellow">
+                <span className="font-mono text-tertiary text-[16px]">https://</span>
                 <input
                   value={ob.url}
                   onChange={(e) => setOb({ url: e.target.value })}
                   aria-label="App URL"
-                  className="flex-1 border-0 outline-none bg-transparent text-[16px]"
+                  className="flex-1 border-0 outline-none bg-transparent text-[17px]"
                 />
               </label>
             </>
@@ -192,22 +194,26 @@ export default function OnboardingWizard() {
 
           {view.kind === 'email' && (
             <>
-              <h1 className="font-extrabold text-[clamp(24px,3.6vw,34px)] tracking-[-0.02em] mb-[6px]">Where should we send alerts?</h1>
-              <p className="text-[15px] text-muted mb-[26px]">We’ll email you the moment something breaks.</p>
+              <div className="text-center mb-[28px]">
+                <h1 className="font-bold text-[clamp(24px,3.4vw,32px)] tracking-[-0.02em] m-0">Where should we send alerts?</h1>
+                <p className="text-[16px] text-muted mt-2">We’ll email you the moment something breaks.</p>
+              </div>
               <input
                 type="email"
                 value={ob.email}
                 onChange={(e) => setOb({ email: e.target.value })}
                 aria-label="Alert email"
-                className="w-full bg-card border-2 border-border-2 rounded-[14px] px-4 py-[18px] text-[16px] outline-none focus:border-yellow"
+                className="w-full bg-card border border-border-2 rounded-[12px] px-[15px] py-[16px] text-[17px] outline-none focus:border-yellow"
               />
             </>
           )}
 
           {view.kind === 'plan' && (
             <>
-              <h1 className="font-extrabold text-[clamp(24px,3.6vw,34px)] tracking-[-0.02em] mb-[6px]">Pick your plan</h1>
-              <p className="text-[15px] text-muted mb-[26px]">Free grades any URL. Paid unlocks code scans, connections, folder upload, monitoring &amp; every fix. You can change this anytime in Billing.</p>
+              <div className="text-center mb-[28px]">
+                <h1 className="font-bold text-[clamp(24px,3.4vw,32px)] tracking-[-0.02em] m-0">Pick your plan</h1>
+                <p className="text-[16px] text-muted mt-2">Free grades any URL. Paid unlocks code scans, connections, folder upload, monitoring &amp; every fix. You can change this anytime in Billing.</p>
+              </div>
               <div className="flex flex-col gap-3">
                 {PLAN_OPTIONS.map((p) => {
                   const selected = ob.plan === p.key;
@@ -215,26 +221,28 @@ export default function OnboardingWizard() {
                     <button
                       key={p.key}
                       onClick={() => { setOb({ plan: p.key }); setTimeout(next, 160); }}
-                      className="vg-press text-left rounded-2xl p-[18px] flex items-center gap-3 border-2"
-                      style={{ background: selected ? '#FFF7D6' : '#fff', borderColor: selected ? '#F3C500' : '#E4E3DE' }}
+                      className="vg-press vg-card text-left bg-card rounded-[14px] p-[18px] flex items-center gap-3 border-[1.5px]"
+                      style={{ borderColor: selected ? '#F3C500' : '#E2E2DF' }}
                     >
                       <span className="flex-1 min-w-0">
-                        <span className="block font-bold text-[15.5px] text-ink">{p.name} <span className="font-mono text-[12px] text-label">{p.price}</span></span>
-                        <span className="text-[13px] text-label">{p.blurb}</span>
+                        <span className="block font-bold text-[16.5px] text-ink">{p.name} <span className="font-mono text-[13px] text-label">{p.price}</span></span>
+                        <span className="text-[14px] text-label">{p.blurb}</span>
                       </span>
-                      <span className="shrink-0 font-bold text-[13px]" style={{ color: p.key === 'free' ? '#8a7400' : '#158a4f' }}>{p.key === 'free' ? 'Choose' : 'Go Pro'}</span>
+                      <span className="shrink-0 font-bold text-[14px]" style={{ color: p.key === 'free' ? '#8a6d00' : '#157A43' }}>{p.key === 'free' ? 'Choose' : 'Go Pro'}</span>
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[12px] text-faint mt-3">Test mode — paid plans are applied instantly, no card charged.</p>
+              <p className="text-[13px] text-faint mt-3">Test mode — paid plans are applied instantly, no card charged.</p>
             </>
           )}
 
           {view.kind === 'connect' && (
             <>
-              <h1 className="font-extrabold text-[clamp(24px,3.6vw,34px)] tracking-[-0.02em] mb-[6px]">Connect for deep checks</h1>
-              <p className="text-[15px] text-muted mb-6">{ob.plan === 'free' ? 'Connections are a Pro feature — you can upgrade later in Billing.' : 'Read-only. We never store your code.'}</p>
+              <div className="text-center mb-[28px]">
+                <h1 className="font-bold text-[clamp(24px,3.4vw,32px)] tracking-[-0.02em] m-0">Connect for deep checks</h1>
+                <p className="text-[16px] text-muted mt-2">{ob.plan === 'free' ? 'Connections are a Pro feature — you can upgrade later in Billing.' : 'Read-only. We never store your code.'}</p>
+              </div>
               <div className="flex flex-col gap-3">
                 <ConnectRow
                   on={ob.gh}
@@ -251,29 +259,45 @@ export default function OnboardingWizard() {
                   tile={<span className="w-11 h-11 rounded-[11px] bg-ink flex items-center justify-center"><SupabaseIcon size={22} /></span>}
                 />
               </div>
-              <button onClick={next} disabled={busy} className="w-full mt-4 bg-transparent text-muted text-[14px] font-semibold disabled:opacity-60">
-                {hasUrl ? 'Skip connections, scan public site only →' : 'Skip — go to my dashboard →'}
+              <button onClick={next} disabled={busy} className="w-full mt-4 bg-transparent text-muted text-[15px] font-semibold disabled:opacity-60">
+                {hasUrl ? 'Skip connections, scan public site only' : 'Skip — go to my dashboard'}
               </button>
             </>
           )}
         </div>
+      </div>
 
-          <div className="flex items-center justify-between mt-8">
-            <button
-              onClick={prev}
-              className="bg-transparent text-label font-semibold text-[14.5px]"
-              style={{ visibility: step > 1 ? 'visible' : 'hidden' }}
-            >
-              ← Back
-            </button>
-            <button
-              onClick={next}
-              disabled={busy}
-              className="vg-press bg-ink text-white font-bold text-[15px] rounded-xl px-[30px] py-[14px] disabled:opacity-70"
-            >
-              {nextLabel}
-            </button>
+      {/* footer: back / progress dots / next */}
+      <div className="px-6 sm:px-7 pt-4 pb-[26px]">
+        <div className="max-w-[600px] mx-auto flex items-center justify-between">
+          <button
+            onClick={prev}
+            className="bg-transparent border-0 text-muted font-semibold text-[15.5px]"
+            style={{ visibility: step > 1 ? 'visible' : 'hidden' }}
+          >
+            Back
+          </button>
+          <div className="flex gap-[7px]">
+            {Array.from({ length: LAST_STEP }, (_, i) => {
+              const n = i + 1;
+              const active = n === step;
+              const done = n < step;
+              return (
+                <span
+                  key={n}
+                  className="h-[6px] rounded-full transition-all duration-200"
+                  style={{ width: active ? 22 : 6, background: active ? '#F3C500' : done ? '#0A0A0A' : '#E2E2DF' }}
+                />
+              );
+            })}
           </div>
+          <button
+            onClick={next}
+            disabled={busy}
+            className="vg-press bg-yellow text-ink font-bold text-[15.5px] border-0 rounded-[10px] px-[26px] py-3 disabled:opacity-70"
+          >
+            {nextLabel}
+          </button>
         </div>
       </div>
     </div>
@@ -284,16 +308,16 @@ function ConnectRow({ on, onClick, title, sub, tile }: { on: boolean; onClick: (
   return (
     <button
       onClick={onClick}
-      className="vg-press flex items-center gap-[14px] rounded-2xl p-[18px] text-left border-2"
-      style={{ background: on ? '#EAF7F0' : '#fff', borderColor: on ? '#1FB86B' : '#E4E3DE' }}
+      className="vg-press vg-card flex items-center gap-[13px] rounded-[13px] p-4 text-left border-[1.5px]"
+      style={{ background: on ? '#EAF6EF' : '#fff', borderColor: on ? '#1F9D57' : '#E2E2DF' }}
     >
       {tile}
       <span className="flex-1">
-        <span className="block font-bold text-[15.5px]">{title}</span>
-        <span className="text-[13px] text-label">{sub}</span>
+        <span className="block font-semibold text-[16px]">{title}</span>
+        <span className="text-[14px] text-label">{sub}</span>
       </span>
-      <span className="font-bold text-[14px]" style={{ color: on ? '#158a4f' : '#8a7400' }}>
-        {on ? 'Connected ✓' : 'Connect'}
+      <span className="font-bold text-[14.5px]" style={{ color: on ? '#157A43' : '#8a6d00' }}>
+        {on ? 'Connected' : 'Connect'}
       </span>
     </button>
   );

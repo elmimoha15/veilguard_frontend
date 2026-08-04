@@ -1,45 +1,49 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useApp } from './state';
-import { useApps, findActiveApp, GRADE_TINT } from '@/lib/hooks';
+import { useRouter } from 'next/navigation';
+import { GRADE_TINT, type App } from '@/lib/hooks';
 import { subscribeFindings, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
 import { toUiFinding, type UiSev, type UiFinding } from '@/lib/adapters';
 import DeepScanHints from './DeepScanHints';
-import { AppSelect } from './AppSelect';
+import { SEV_COLOR, SEV_TINT, STATUS_META } from './data';
 
-const SECTIONS: { sev: UiSev; label: string; color: string; emoji: string }[] = [
-  { sev: 'CRITICAL', label: 'Critical', color: '#E5352B', emoji: '🔴' },
-  { sev: 'WARNING', label: 'Warnings', color: '#F2851F', emoji: '🟠' },
-  { sev: 'PASSED', label: 'Passed', color: '#1FB86B', emoji: '🟢' },
+const SECTIONS: { sev: UiSev; label: string }[] = [
+  { sev: 'CRITICAL', label: 'Critical' },
+  { sev: 'WARNING', label: 'Warnings' },
+  { sev: 'PASSED', label: 'Passed' },
 ];
+
+/** Small line-SVG chevron used on list rows and the scan picker. */
+function Chevron({ dir = 'right', size = 16, color = '#C7C7C2' }: { dir?: 'right' | 'down'; size?: number; color?: string }) {
+  const d = dir === 'down' ? 'M6 9l6 6 6-6' : 'M9 6l6 6-6 6';
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden><path d={d} stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+  );
+}
 
 type Diff = 'new' | 'open' | 'fixed';
 const keyOf = (f: UiFinding) => `${f.ruleId}@${f.where}`;
 
-export default function FindingsScreen() {
+/**
+ * Findings for ONE app — rendered as a tab inside the app hub (AppDetailScreen).
+ * The app is passed in (no global app-switcher); the per-app ScanPicker chooses
+ * which scan's findings to view, with a diff vs the previous same-lens scan.
+ */
+export default function FindingsScreen({ app, initialScanId }: { app: App; initialScanId?: string | null }) {
   const router = useRouter();
-  const params = useSearchParams();
-  const { activeSite, setActiveSite } = useApp();
-  const { apps, loading } = useApps();
-
-  // Which app: active app (top-bar picker) wins; on a ?scan= deep-link fall
-  // back to the app that owns that scan; else the first app.
-  const paramScanId = params.get('scan');
-  const paramHost = paramScanId ? apps.find((a) => a.scans.some((x) => x.id === paramScanId))?.host : null;
-  const site = findActiveApp(apps, activeSite ?? paramHost ?? null);
+  const site = app;
 
   // Which scan within the app: a picked historical one, else the latest.
-  const [viewScanId, setViewScanId] = useState<string | null>(paramScanId);
-  const selected: ScanDoc | null = site?.scans.find((s) => s.id === viewScanId) ?? site?.latest ?? null;
+  const [viewScanId, setViewScanId] = useState<string | null>(initialScanId ?? null);
+  const selected: ScanDoc | null = site.scans.find((s) => s.id === viewScanId) ?? site.latest ?? null;
   const scanId = selected?.id ?? null;
 
   // The previous completed scan OF THE SAME LENS (a URL scan and a Deep scan run
   // different rule sets, so diffing across lenses would be meaningless).
   const sameLens = (a: ScanDoc, b: ScanDoc) => (a.type === 'deep') === (b.type === 'deep');
-  const selectedIndex = site && selected ? site.scans.findIndex((s) => s.id === selected.id) : -1;
-  const prevScan = selectedIndex >= 0 && selected ? site?.scans.slice(selectedIndex + 1).find((s) => sameLens(s, selected)) : undefined;
+  const selectedIndex = selected ? site.scans.findIndex((s) => s.id === selected.id) : -1;
+  const prevScan = selectedIndex >= 0 && selected ? site.scans.slice(selectedIndex + 1).find((s) => sameLens(s, selected)) : undefined;
   const prevScanId = prevScan && prevScan.status === 'done' ? prevScan.id : null;
 
   // Current scan findings (live).
@@ -60,14 +64,8 @@ export default function FindingsScreen() {
   }, [prevScanId]);
   const diffReady = !!prevScanId && prev.id === prevScanId;
 
-  if (loading) return <div className="vg-skel h-[320px]" />;
-  if (!site || !selected) {
-    return (
-      <div className="vg-fade">
-        <h1 className="font-extrabold text-[28px] tracking-[-0.02em] mb-1">Findings</h1>
-        <div className="text-center text-muted py-16 text-[15px]">Run a scan to see findings.</div>
-      </div>
-    );
+  if (!selected) {
+    return <div className="text-center text-muted py-16 text-[16px]">Run a scan to see findings.</div>;
   }
 
   const findings = rawItems.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
@@ -85,49 +83,50 @@ export default function FindingsScreen() {
 
   return (
     <div className="vg-fade">
-      <h1 className="font-extrabold text-[28px] tracking-[-0.02em] mb-3">Findings</h1>
-
-      {/* One control bar: pick the app, then the scan; the selected scan's grade sits at the right. */}
+      {/* Pick which scan to view; the selected scan's grade sits at the right. */}
       <div className="flex items-center gap-[10px] flex-wrap mb-5">
-        <AppSelect apps={apps} activeKey={site.key} onSelect={(a) => { setActiveSite(a.key); setViewScanId(null); }} />
         <ScanPicker scans={site.scans} selectedId={selected.id} onSelect={setViewScanId} />
         {selected.grade && (
-          <span className="ml-auto w-11 h-11 rounded-xl flex items-center justify-center font-extrabold text-[22px]" style={{ background: GRADE_TINT[selected.grade].bg, color: GRADE_TINT[selected.grade].fg }}>{selected.grade}</span>
+          <span className="ml-auto w-11 h-11 rounded-xl flex items-center justify-center font-semibold text-[22px] tnum" style={{ background: GRADE_TINT[selected.grade].bg, color: GRADE_TINT[selected.grade].fg }}>{selected.grade}</span>
         )}
       </div>
 
       {/* diff summary vs previous scan */}
       {diffReady && (newCount > 0 || fixed.length > 0) && (
-        <div className="flex items-center gap-3 mb-4 text-[13px] font-semibold">
-          <span className="text-faint font-mono text-[11px] tracking-[0.08em]">VS PREVIOUS SCAN</span>
-          {newCount > 0 && <span style={{ color: '#E5352B' }}>+{newCount} new</span>}
-          {fixed.length > 0 && <span style={{ color: '#1FB86B' }}>{fixed.length} fixed ✓</span>}
+        <div className="flex items-center gap-3 mb-4 text-[14px] font-semibold">
+          <span className="text-faint font-mono text-[12px] tracking-[0.08em]">VS PREVIOUS SCAN</span>
+          {newCount > 0 && <span style={{ color: SEV_COLOR.CRITICAL }}>+{newCount} new</span>}
+          {fixed.length > 0 && <span style={{ color: SEV_COLOR.PASSED }}>{fixed.length} fixed</span>}
           {newCount === 0 && fixed.length > 0 && <span className="text-muted">no new issues — nice work</span>}
         </div>
       )}
 
-      {/* summary counts */}
-      <div className="flex gap-[10px] flex-wrap mb-5">
-        {SECTIONS.map((sec) => (
-          <span key={sec.sev} className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[7px] text-[13px] font-semibold" style={{ background: `${sec.color}1e`, color: sec.color }}>
-            {findings.filter((f) => f.sev === sec.sev).length} {sec.label.toLowerCase()}
-          </span>
-        ))}
+      {/* summary — calm metric strip (matches Overview) */}
+      <div className="flex flex-wrap items-start gap-x-9 gap-y-3 mb-6">
+        {SECTIONS.map((sec) => {
+          const n = findings.filter((f) => f.sev === sec.sev).length;
+          return (
+            <div key={sec.sev}>
+              <div className="tnum text-[22px] font-semibold leading-none" style={{ color: n ? SEV_COLOR[sec.sev] : '#B0B0AC' }}>{n}</div>
+              <div className="text-[12px] text-muted mt-[5px]">{sec.label}</div>
+            </div>
+          );
+        })}
       </div>
 
       {/* stack-aware nudges (connect Supabase / Firebase-rules note) */}
       <DeepScanHints scan={selected} />
 
       {errored ? (
-        <div className="bg-card border border-border-2 rounded-[16px] p-8 text-center">
-          <div className="text-[30px] mb-2">⚠️</div>
-          <div className="font-bold text-[16px]">This scan errored</div>
-          <p className="text-muted text-[14px] mt-1 font-mono">{selected.error || 'The target could not be reached.'}</p>
+        <div className="vg-surface p-8 text-center">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" className="mx-auto mb-2"><path d="M12 9v4m0 4h.01M10.3 3.9 2 18a1.7 1.7 0 0 0 1.5 2.5h17A1.7 1.7 0 0 0 22 18L13.7 3.9a1.7 1.7 0 0 0-3 0Z" stroke={SEV_COLOR.WARNING} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <div className="font-semibold text-[17px]">This scan errored</div>
+          <p className="text-muted text-[15px] mt-1 font-mono">{selected.error || 'The target could not be reached.'}</p>
         </div>
       ) : running && findings.length === 0 ? (
-        <div className="text-center text-muted py-16 text-[15px]">Scanning… findings will appear here live.</div>
+        <div className="text-center text-muted py-16 text-[16px]">Scanning… findings will appear here live.</div>
       ) : totalShown === 0 ? (
-        <div className="text-center text-muted py-16 text-[15px]">No issues found. 🎉</div>
+        <div className="text-center text-muted py-16 text-[16px]">No issues found.</div>
       ) : (
         <div className="flex flex-col gap-6">
           {SECTIONS.map((sec) => {
@@ -136,18 +135,17 @@ export default function FindingsScreen() {
             if (current.length === 0 && fixedHere.length === 0) return null;
             return (
               <section key={sec.sev}>
-                <div className="flex items-center gap-[10px] mb-[10px]">
-                  <span className="text-[15px]">{sec.emoji}</span>
-                  <span className="font-extrabold text-[16px]" style={{ color: sec.color }}>{sec.label}</span>
-                  <span className="text-[13px] font-bold text-faint">{current.length}</span>
-                  <span className="flex-1 h-px bg-border-2" />
+                <div className="flex items-center gap-[9px] mb-[10px]">
+                  <span className="inline-block w-[8px] h-[8px] rounded-full" style={{ background: SEV_COLOR[sec.sev] }} />
+                  <span className="text-[13px] font-semibold" style={{ color: SEV_TINT[sec.sev].fg }}>{sec.label}</span>
+                  <span className="tnum text-[13px] font-semibold text-faint">{current.length}</span>
                 </div>
-                <div className="flex flex-col gap-[10px]">
-                  {current.map((f) => (
-                    <FindingRow key={f.id} f={f} diff={diffOf(f)} showDiff={diffReady} onClick={() => router.push(`/finding?scan=${scanId}&id=${f.id}`)} />
+                <div className="vg-surface overflow-hidden">
+                  {current.map((f, i) => (
+                    <FindingRow key={f.id} f={f} diff={diffOf(f)} showDiff={diffReady} first={i === 0} onClick={() => router.push(`/finding?scan=${scanId}&id=${f.id}`)} />
                   ))}
-                  {fixedHere.map((f) => (
-                    <FindingRow key={`fixed-${f.id}`} f={f} diff="fixed" showDiff />
+                  {fixedHere.map((f, i) => (
+                    <FindingRow key={`fixed-${f.id}`} f={f} diff="fixed" showDiff first={current.length === 0 && i === 0} />
                   ))}
                 </div>
               </section>
@@ -160,24 +158,24 @@ export default function FindingsScreen() {
 }
 
 const DIFF_BADGE: Record<Diff, { label: string; bg: string; fg: string } | null> = {
-  new: { label: 'NEW', bg: 'rgba(229,53,43,.14)', fg: '#E5352B' },
+  new: { label: 'NEW', bg: SEV_TINT.CRITICAL.bg, fg: SEV_TINT.CRITICAL.fg },
   open: null,
-  fixed: { label: 'FIXED ✓', bg: 'rgba(31,184,107,.16)', fg: '#1FB86B' },
+  fixed: { label: 'Fixed', bg: STATUS_META.fixed.bg, fg: STATUS_META.fixed.fg },
 };
 
-function FindingRow({ f, diff, showDiff, onClick }: { f: UiFinding; diff: Diff; showDiff: boolean; onClick?: () => void }) {
+function FindingRow({ f, diff, showDiff, onClick, first }: { f: UiFinding; diff: Diff; showDiff: boolean; onClick?: () => void; first?: boolean }) {
   const isFixed = diff === 'fixed';
   const badge = showDiff ? DIFF_BADGE[diff] : null;
   return (
-    <button type="button" onClick={onClick} disabled={!onClick} className={`flex items-center gap-[14px] bg-card border border-border-2 rounded-[14px] px-[18px] py-4 text-left ${onClick ? 'vg-lift' : 'cursor-default'} ${isFixed ? 'opacity-60' : ''}`}>
-      <span className="shrink-0 w-3 h-3 rounded-[3px]" style={{ background: f.color, animation: diff === 'new' && f.sev === 'CRITICAL' ? 'vgPulse 1.8s ease-in-out infinite' : undefined }} />
+    <button type="button" onClick={onClick} disabled={!onClick} className={`w-full flex items-center gap-[14px] px-[18px] py-[14px] text-left ${onClick ? 'vg-row cursor-pointer' : 'cursor-default'} ${isFixed ? 'opacity-60' : ''}`} style={{ borderTop: first ? undefined : '1px solid var(--color-hairline)' }}>
+      <span className="shrink-0 w-[9px] h-[9px] rounded-full" style={{ background: SEV_COLOR[f.sev], animation: diff === 'new' && f.sev === 'CRITICAL' ? 'vgPulse 1.8s ease-in-out infinite' : undefined }} />
       <div className="flex-1 min-w-0">
-        <div className={`font-bold text-[15.5px] ${isFixed ? 'line-through text-muted' : ''}`}>{f.title}</div>
-        {!isFixed && <div className="text-[13px] text-muted leading-[1.4] mt-[2px] line-clamp-1">{f.what}</div>}
-        <div className="font-mono text-[11.5px] text-faint mt-[4px]">{f.cat}{f.where ? ` · ${f.where}` : ''}</div>
+        <div className={`font-semibold text-[15px] ${isFixed ? 'line-through text-muted' : ''}`}>{f.title}</div>
+        {!isFixed && <div className="text-[13.5px] text-muted leading-[1.4] mt-[2px] line-clamp-1">{f.what}</div>}
+        <div className="font-mono text-[12px] text-faint mt-[4px]">{f.cat}{f.where ? ` · ${f.where}` : ''}</div>
       </div>
-      {badge && <span className="shrink-0 text-[11px] font-bold px-[10px] py-[4px] rounded-full" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>}
-      {onClick && <span className="text-[#c7c6c1] text-[18px]">›</span>}
+      {badge && <span className="shrink-0 text-[11.5px] font-semibold px-[10px] py-[4px] rounded-full" style={{ background: badge.bg, color: badge.fg }}>{badge.label}</span>}
+      {onClick && <Chevron />}
     </button>
   );
 }
@@ -196,10 +194,10 @@ function ScanPicker({ scans, selectedId, onSelect }: { scans: ScanDoc[]; selecte
   // Only one scan → a plain dated label, no dropdown needed.
   if (scans.length <= 1) {
     return (
-      <div className="inline-flex items-center gap-[9px] bg-card border border-border-2 rounded-[12px] px-4 py-[9px]">
+      <div className="inline-flex items-center gap-[9px] bg-card border border-border rounded-[12px] px-4 py-[9px]">
         <GradeSquare grade={selected?.grade} />
-        <span className="text-[13.5px] font-semibold">{fmtWhen(selected.createdAt)}</span>
-        <span className="font-mono text-[10.5px] text-faint">Latest scan</span>
+        <span className="text-[14.5px] font-semibold">{fmtWhen(selected.createdAt)}</span>
+        <span className="font-mono text-[11.5px] text-faint">Latest scan</span>
       </div>
     );
   }
@@ -208,33 +206,33 @@ function ScanPicker({ scans, selectedId, onSelect }: { scans: ScanDoc[]; selecte
 
   return (
     <div className="relative inline-block">
-      <button onClick={() => setOpen((v) => !v)} className="vg-press flex items-center gap-[10px] bg-card border border-border-2 rounded-[12px] px-4 py-[9px] min-w-[260px]">
+      <button onClick={() => setOpen((v) => !v)} className="vg-press cursor-pointer flex items-center gap-[10px] bg-card border border-border rounded-[12px] px-4 py-[9px] min-w-[260px]">
         <GradeSquare grade={selected?.grade} />
         <span className="flex-1 text-left min-w-0">
-          <span className="block text-[13.5px] font-semibold truncate">{fmtWhen(selected.createdAt)}</span>
-          <span className="block font-mono text-[10.5px] text-faint">{selected.id === latestId ? 'Latest scan' : 'Older scan'} · {selected.status}</span>
+          <span className="block text-[14.5px] font-semibold truncate">{fmtWhen(selected.createdAt)}</span>
+          <span className="block font-mono text-[11.5px] text-faint">{selected.id === latestId ? 'Latest scan' : 'Older scan'} · {selected.status}</span>
         </span>
-        <span className="text-faint text-[11px]">▾</span>
+        <Chevron dir="down" size={13} color="#9B9B96" />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-[40]" onClick={() => setOpen(false)} />
-          <div className="absolute z-[50] top-[calc(100%+6px)] left-0 w-[300px] max-h-[340px] overflow-y-auto bg-card border border-border-2 rounded-[14px] p-[6px] shadow-[0_20px_44px_-16px_rgba(0,0,0,.4)] vg-fade">
+          <div className="absolute z-[50] top-[calc(100%+6px)] left-0 w-[300px] max-h-[340px] overflow-y-auto bg-card border border-border rounded-[12px] p-[6px] shadow-[0_20px_44px_-16px_rgba(0,0,0,.4)] vg-fade">
             {groups.map((g) => (
               <div key={g.day}>
-                <div className="font-mono text-[10px] tracking-[0.12em] text-faint px-[10px] pt-[10px] pb-[4px]">{g.day.toUpperCase()}</div>
+                <div className="font-mono text-[11px] tracking-[0.12em] text-faint px-[10px] pt-[10px] pb-[4px]">{g.day.toUpperCase()}</div>
                 {g.items.map((s) => {
                   const on = s.id === selectedId;
                   return (
-                    <button key={s.id} onClick={() => { onSelect(s.id); setOpen(false); }} className="flex items-center gap-[10px] w-full rounded-[10px] px-[10px] py-[9px] text-left hover:bg-bg-soft" style={{ background: on ? 'rgba(243,197,0,.12)' : undefined }}>
+                    <button key={s.id} onClick={() => { onSelect(s.id); setOpen(false); }} className="vg-row cursor-pointer flex items-center gap-[10px] w-full rounded-[10px] px-[10px] py-[9px] text-left" style={{ background: on ? 'rgba(243,197,0,.12)' : undefined }}>
                       <GradeSquare grade={s.grade} />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[13.5px] font-semibold">{fmtTime(s.createdAt)}</span>
-                        <span className="block font-mono text-[10.5px] text-faint capitalize">{s.status}{s.type === 'deep' ? ' · deep' : ''}</span>
+                        <span className="block text-[14.5px] font-semibold">{fmtTime(s.createdAt)}</span>
+                        <span className="block font-mono text-[11.5px] text-faint capitalize">{s.status}{s.type === 'deep' ? ' · deep' : ''}</span>
                       </span>
-                      {s.id === latestId && <span className="shrink-0 text-[10px] font-bold px-[8px] py-[3px] rounded-full" style={{ background: 'rgba(243,197,0,.18)', color: '#8a7400' }}>LATEST</span>}
-                      {on && <span className="shrink-0 text-yellow-dark text-[13px]">✓</span>}
+                      {s.id === latestId && <span className="shrink-0 text-[11px] font-semibold px-[8px] py-[3px] rounded-full" style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }}>LATEST</span>}
+                      {on && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0"><path d="M20 6 9 17l-5-5" stroke="#8a6d00" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
                     </button>
                   );
                 })}
@@ -249,7 +247,7 @@ function ScanPicker({ scans, selectedId, onSelect }: { scans: ScanDoc[]; selecte
 
 function GradeSquare({ grade }: { grade?: 'A' | 'B' | 'C' | 'D' | 'F' }) {
   return (
-    <span className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-extrabold text-[15px]" style={{ background: grade ? GRADE_TINT[grade].bg : 'rgba(0,0,0,.05)', color: grade ? GRADE_TINT[grade].fg : '#9a9a95' }}>{grade ?? '…'}</span>
+    <span className="shrink-0 w-8 h-8 rounded-lg flex items-center justify-center font-semibold text-[16px] tnum" style={{ background: grade ? GRADE_TINT[grade].bg : 'rgba(0,0,0,.05)', color: grade ? GRADE_TINT[grade].fg : '#9B9B96' }}>{grade ?? '…'}</span>
   );
 }
 
