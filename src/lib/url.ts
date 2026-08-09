@@ -39,6 +39,17 @@ export function checkUrl(input: string): UrlCheck {
  * Used to match a URL scan's target to an app so re-scans and links roll up
  * under one project regardless of trailing slashes / scheme / www.
  */
+/**
+ * Build the Billing upgrade URL carrying the CURRENT in-app page as `next`, so
+ * after checkout the user is returned to where they clicked upgrade. Captures
+ * `window.location` at call time (client-only).
+ */
+export function billingHref(): string {
+  if (typeof window === 'undefined') return '/billing';
+  const cur = window.location.pathname + window.location.search;
+  return `/billing?next=${encodeURIComponent(cur)}`;
+}
+
 export function hostOf(value: string): string {
   try {
     return new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`).hostname.toLowerCase().replace(/^www\./, '');

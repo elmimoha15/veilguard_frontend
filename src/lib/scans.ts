@@ -30,9 +30,49 @@ async function writeUserDoc(uid: string, data: Record<string, unknown>): Promise
   }
 }
 
+/** Persist the user's account-wide notification preferences (their own doc). */
+export async function saveNotifications(
+  uid: string,
+  notifications: { email: boolean; critical: boolean; deploy: boolean; summary: boolean },
+): Promise<void> {
+  await writeUserDoc(uid, { notifications });
+}
+
 /** Flip the user's own onboarded flag after the wizard. */
 export async function markOnboarded(uid: string): Promise<void> {
   await writeUserDoc(uid, { onboarded: true });
+}
+
+/** The onboarding quiz answers we persist for segmentation. */
+export interface OnboardingAnswers {
+  builtWith?: string;
+  backend?: string;
+  handles?: string[];
+  codeComfort?: string;
+  scanTarget?: 'url' | 'repo' | 'upload' | '';
+  shipFrequency?: string;
+}
+
+/**
+ * Persist the onboarding answers + alert email onto the user's own doc and flip
+ * `onboarded`. Kept as top-level fields (queryable: `onboarding.builtWith ==`,
+ * `handles array-contains`). Goes through the same client write path as
+ * markOnboarded — `plan`/billing stay server-owned, so firestore.rules permit it.
+ */
+export async function saveOnboarding(
+  uid: string,
+  answers: OnboardingAnswers,
+  alertEmail?: string,
+): Promise<void> {
+  const onboarding = Object.fromEntries(
+    Object.entries(answers).filter(([, v]) => v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0)),
+  );
+  await writeUserDoc(uid, {
+    onboarding,
+    ...(alertEmail ? { alertEmail } : {}),
+    onboarded: true,
+    onboardedAt: new Date().toISOString(),
+  });
 }
 
 /** Raw backend shapes (mirror ../veilguard-backend). Kept loose on purpose. */

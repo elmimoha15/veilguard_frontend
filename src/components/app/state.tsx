@@ -9,31 +9,38 @@ export type Modal = null | 'addApp' | 'cancel';
 
 export interface OnboardingState {
   step: number;
-  tool: string;
+  /** What the user wants to check — drives the target step. */
+  scanTarget: 'url' | 'repo' | 'upload' | '';
+  builtWith: string;
+  backend: string;
+  /** Multi-select: payments / logins / personal data / not yet. */
+  handles: string[];
+  codeComfort: string;
+  shipFrequency: string;
   url: string;
-  db: string;
-  pay: string;
-  skill: string;
-  ship: string;
   email: string;
-  /** Chosen plan key ('free' | 'guard' | 'fixpack'); applied (fake) on finish. */
+  /** Chosen plan key ('free' | 'guard'); a paid plan is granted only by the Polar webhook. */
   plan: string;
   gh: boolean;
   sb: boolean;
+  /** The scan kicked off inside onboarding (shown inline before the dashboard). */
+  scanId: string | null;
 }
 
 const INITIAL_OB: OnboardingState = {
   step: 1,
-  tool: '',
+  scanTarget: 'url',
+  builtWith: '',
+  backend: '',
+  handles: [],
+  codeComfort: '',
+  shipFrequency: '',
   url: '',
-  db: '',
-  pay: '',
-  skill: '',
-  ship: '',
   email: '',
-  plan: '',
+  plan: 'free', // Free is the default; Guard is chosen explicitly (opens checkout).
   gh: false,
   sb: false,
+  scanId: null,
 };
 
 interface AppState {

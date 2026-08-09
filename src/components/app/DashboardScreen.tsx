@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
-import { useApps, GRADE_TINT, timeAgo, scanLabel, type App } from '@/lib/hooks';
+import { useApps, GRADE_TINT, timeAgo, scanLabel, repoDisplay, type App } from '@/lib/hooks';
 import type { ScanDoc } from '@/lib/scans';
-import { Card, SectionLabel, Metric, GradeBadge } from './primitives';
+import { Card, SectionLabel, Metric, GradeBadge, PageHeading } from './primitives';
+import { GradeHelp } from './GradeHelp';
+import OverviewScanCard from './OverviewScanCard';
 
 /**
  * Overview — a calm, hierarchical read on security posture across every app.
@@ -52,21 +54,19 @@ export default function DashboardScreen() {
 
   return (
     <div className="vg-fade">
-      {/* Title */}
-      <div className="flex items-end justify-between flex-wrap gap-3 mb-6">
-        <div>
-          <h1 className="text-[24px] font-semibold tracking-[-0.02em] m-0">Overview</h1>
-          <p className="text-muted mt-[5px] text-[14px]">
-            {apps.length ? 'Your security posture across every app you protect.' : 'Run your first scan to see your grade.'}
-          </p>
-        </div>
-        {totals.monitored > 0 && (
+      <PageHeading
+        title="Overview"
+        subtitle={apps.length ? 'Your security posture across every app you protect.' : 'Run your first scan to see your grade.'}
+        right={totals.monitored > 0 ? (
           <span className="inline-flex items-center gap-[7px] text-[13px] text-muted border border-border rounded-full px-[11px] py-[5px] bg-card">
             <span className="w-[6px] h-[6px] rounded-full bg-green" />
             Monitoring {totals.monitored} app{totals.monitored === 1 ? '' : 's'}
           </span>
-        )}
-      </div>
+        ) : undefined}
+      />
+
+      {/* Live scan progress — vanishes the instant the scan finishes. */}
+      <OverviewScanCard />
 
       {loading ? (
         <div className="flex flex-col gap-4">
@@ -86,7 +86,7 @@ export default function DashboardScreen() {
               <div className="flex items-center gap-4 min-[720px]:pr-8 min-[720px]:border-r min-[720px]:border-border">
                 <div className="tnum font-semibold leading-none" style={{ fontSize: 52, color: gradeColor }}>{overall}</div>
                 <div>
-                  <SectionLabel>Security posture</SectionLabel>
+                  <span className="inline-flex items-center gap-[6px]"><SectionLabel>Security posture</SectionLabel><GradeHelp /></span>
                   <div className="text-[15px] font-medium mt-[5px]">{postureLine}</div>
                   <div className="text-[13px] text-muted mt-[2px]">{postureSub}</div>
                 </div>
@@ -114,7 +114,7 @@ export default function DashboardScreen() {
                     <button key={s.id} onClick={() => openScan(s)} className="vg-row flex items-center gap-3 px-2 py-[10px] rounded-[8px] text-left cursor-pointer" style={{ borderTop: i === 0 ? undefined : '1px solid var(--color-hairline)' }}>
                       <GradeBadge grade={s.grade} size="sm" />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[14px] font-medium truncate">{scanLabel(s)}</span>
+                        <span className="block text-[14px] font-medium truncate">{repoDisplay(scanLabel(s))}</span>
                         <span className="block text-[12px] text-muted mt-[1px] truncate">{lens} · {s.status} · {timeAgo(s.createdAt)}</span>
                       </span>
                       <Chevron />
@@ -136,7 +136,7 @@ export default function DashboardScreen() {
                     <button key={a.key} onClick={() => openApp(a)} className="vg-row flex items-center gap-3 px-2 py-[10px] rounded-[8px] text-left cursor-pointer" style={{ borderTop: i === 0 ? undefined : '1px solid var(--color-hairline)' }}>
                       <GradeBadge grade={a.grade} size="sm" />
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[14px] font-medium truncate">{a.name}</span>
+                        <span className="block text-[14px] font-medium truncate">{repoDisplay(a.name)}</span>
                         <span className="block text-[12px] text-muted mt-[1px]">
                           {crit > 0 ? <span style={{ color: '#C23B3F' }}>{crit} critical</span> : 'No criticals'}
                         </span>

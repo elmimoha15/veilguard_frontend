@@ -30,7 +30,7 @@ export default function RefundPage() {
           <p>
             If you&apos;re not happy with a paid plan, you can request a full refund within
             <span className="text-ink font-medium"> 14 days of your first payment</span> — no hard feelings.
-            This applies to your initial Guard subscription or Fix Pack purchase.
+            This applies to your initial Guard subscription payment.
           </p>
         </section>
 

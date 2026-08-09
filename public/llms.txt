@@ -47,7 +47,28 @@ Veilguard catches the common, high-impact mistakes behind almost every vibe-code
 - Supabase security checker (RLS): https://veilguard.dev/supabase-security-checker
 - Firebase security rules checker: https://veilguard.dev/firebase-security-checker
 
+## Guides & Answers (/learn)
+Plain-English security guides and answers for non-technical founders who built with AI tools. Hub: https://veilguard.dev/learn
+- Is my Lovable app secure?: https://veilguard.dev/learn/is-my-lovable-app-secure
+- Is my Bolt app secure?: https://veilguard.dev/learn/is-my-bolt-app-secure
+- Is the app I built with Cursor secure?: https://veilguard.dev/learn/is-my-cursor-app-secure
+- Is my Replit app secure?: https://veilguard.dev/learn/is-my-replit-app-secure
+- Is my v0 app secure?: https://veilguard.dev/learn/is-my-v0-app-secure
+- How do I know if my Supabase database is exposed?: https://veilguard.dev/learn/how-do-i-know-if-my-supabase-database-is-exposed
+- Are AI-generated apps safe to launch?: https://veilguard.dev/learn/are-ai-generated-apps-safe-to-launch
+- How to check for exposed API keys: https://veilguard.dev/learn/how-to-check-for-exposed-api-keys
+- Is it safe to take payments on a vibe-coded app?: https://veilguard.dev/learn/is-it-safe-to-take-payments-on-a-vibe-coded-app
+- Security checks before launching your SaaS: https://veilguard.dev/learn/security-checks-before-launching-your-saas
+- Can someone hack an app built with AI?: https://veilguard.dev/learn/can-someone-hack-an-app-built-with-ai
+- The complete security checklist for AI-built apps: https://veilguard.dev/learn/complete-security-checklist-for-ai-built-apps
+- 7 security holes AI coding tools leave behind: https://veilguard.dev/learn/7-security-holes-ai-coding-tools-leave-behind
+- Supabase Row Level Security, explained for non-developers: https://veilguard.dev/learn/supabase-row-level-security-explained-for-non-developers
+- How to secure your AI-built app before launch: https://veilguard.dev/learn/how-to-secure-your-app-before-launch
+- Exposed API keys: what they are, how to find and fix them: https://veilguard.dev/learn/exposed-api-keys-what-they-are-how-to-find-and-fix
+- How to check your app's security: free methods vs Veilguard: https://veilguard.dev/learn/how-to-check-your-apps-security-free-vs-veilguard
+
 ## Links
 - Homepage: https://veilguard.dev
 - Pricing: https://veilguard.dev/#pricing
 - FAQ: https://veilguard.dev/#faq
+- Guides & answers: https://veilguard.dev/learn

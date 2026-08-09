@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
-import { useMonitorEvents, GRADE_TINT, scanLabel, type App } from '@/lib/hooks';
+import { billingHref } from '@/lib/url';
+import { useMonitorEvents, GRADE_TINT, scanLabel, repoDisplay, type App } from '@/lib/hooks';
 import { setAppMonitoring, type Cadence, type AppMonitoring, type ScanDoc, type AppRecord } from '@/lib/scans';
 import { api } from '@/lib/api';
 import { Toggle } from './ui';
@@ -47,7 +48,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
   const hasConfig = !!active.monitoring;
   const hasRepo = !!active.githubRepo;
   const startConfigure = () => {
-    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push('/billing'); return; }
+    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
     setConfiguring(true);
   };
 
@@ -61,7 +62,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
     return true;
   };
   const openRepoPicker = () => {
-    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push('/billing'); return; }
+    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
     setRepoOpen(true);
   };
 
@@ -83,7 +84,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
   };
 
   const pickCadence = async (c: Cadence) => {
-    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push('/billing'); return; }
+    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
     if (c === 'push' && !active?.githubRepo) { toast('Connect a repo to scan on every push', '#E0932F'); return; }
     const ok = await save({ cadence: c });
     if (ok) toast(c === 'off' ? 'Monitoring turned off' : 'Monitoring schedule saved', '#1F9D57');
@@ -98,7 +99,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
         /* Never configured → a minimal, box-less prompt centered on the page. */
         <div className="text-center max-w-[520px] mx-auto">
           <h2 className="font-semibold text-[20px] tracking-[-0.02em]">Set up monitoring</h2>
-          <p className="text-muted text-[15px] mt-2 leading-[1.55]">We’ll automatically re-scan {active.name} and alert you the moment a new hole appears — you only hear from us when something changes.</p>
+          <p className="text-muted text-[15px] mt-2 leading-[1.55]">We’ll automatically re-scan {repoDisplay(active.name)} and alert you the moment a new hole appears — you only hear from us when something changes.</p>
           <button onClick={startConfigure} className="cursor-pointer mt-4 inline-flex items-center gap-[6px] text-ink font-semibold text-[15px] hover:opacity-70 transition-opacity">
             Configure monitoring
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -115,12 +116,12 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
                 <div className="font-semibold text-[15px]">Monitoring is a Pro feature</div>
                 <div className="text-[13.5px] text-muted">Upgrade to auto re-scan this app and get alerted when a new hole appears.</div>
               </div>
-              <button onClick={() => router.push('/billing')} className="vg-press cursor-pointer shrink-0 rounded-[10px] px-[14px] py-2 text-[14px] font-medium bg-ink text-white">Upgrade</button>
+              <button onClick={() => router.push(billingHref())} className="vg-press cursor-pointer shrink-0 rounded-[10px] px-[14px] py-2 text-[14px] font-medium bg-ink text-white">Upgrade</button>
             </div>
           )}
 
           {/* Schedule + email — clean toggles */}
-          <Card className="p-[22px]" style={{ opacity: paid ? (busy ? 0.7 : 1) : 0.6 }}>
+          <Card className="p-5" style={{ opacity: paid ? (busy ? 0.7 : 1) : 0.6 }}>
             <SectionLabel>Automatic re-scans</SectionLabel>
             <div className="mt-2">
               <div className="flex items-start justify-between gap-4 py-[14px]">
@@ -146,7 +147,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
 
           {/* Alerts + timeline */}
           <div className="grid grid-cols-1 min-[820px]:grid-cols-2 gap-4 mt-4">
-            <Card className="p-[22px]">
+            <Card className="p-5">
               <SectionLabel>Alerts</SectionLabel>
               {appEvents.length === 0 ? (
                 <div className="text-[14px] text-muted mt-3">No alerts yet. When an automatic scan finds a new issue, it shows up here.</div>
@@ -185,7 +186,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
               )}
             </Card>
 
-            <Card className="p-[22px]">
+            <Card className="p-5">
               <SectionLabel>Scan timeline</SectionLabel>
               {history.length === 0 ? (
                 <div className="text-[14px] text-muted mt-3">No scans yet.</div>
@@ -201,7 +202,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
                           {i < arr.length - 1 && <span className="flex-1 w-[2px] bg-border my-[2px]" />}
                         </div>
                         <div className="pb-4 min-w-0">
-                          <div className="font-semibold text-[15px] truncate">{title} — {scanLabel(s)}</div>
+                          <div className="font-semibold text-[15px] truncate">{title} — {repoDisplay(scanLabel(s))}</div>
                           <div className="font-mono text-[12.5px] text-faint mt-[2px]">{ago(s.createdAt)} · {s.status === 'done' ? `${s.counts?.critical ?? 0} critical` : s.status}</div>
                         </div>
                       </div>

@@ -38,14 +38,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
                     name: 'Guard',
                     price: '19',
                     priceCurrency: 'USD',
-                    description: 'Unlimited scans and all fixes, auto re-scan on every deploy, instant email alerts, and a deep Supabase & Firebase audit. $19/month.',
-                  },
-                  {
-                    '@type': 'Offer',
-                    name: 'Fix Pack',
-                    price: '19',
-                    priceCurrency: 'USD',
-                    description: 'All fixes for one scan — copy-paste code plus ready-made AI prompts and a downloadable PDF report. $19 once.',
+                    description: 'Repo, upload & URL scans with AI-written fixes, auto re-scan on every deploy, instant email alerts, and a deep Supabase & Firebase audit. $19/month.',
                   },
                 ],
                 featureList: [

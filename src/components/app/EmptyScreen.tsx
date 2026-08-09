@@ -18,12 +18,12 @@ export default function EmptyScreen() {
           <GradeLetter letter="A" color="#1F9D57" size={76} halftone={false} className="vg-pop" />
         </GradeRing>
       </div>
-      <h1 className="font-semibold text-[30px] tracking-[-0.02em] mt-[22px] mb-[6px]">You’re in the clear</h1>
-      <p className="text-[17px] text-muted max-w-[44ch] mx-auto">
+      <h1 className="font-semibold text-[24px] tracking-[-0.02em] mt-[22px] mb-[6px]">You’re in the clear</h1>
+      <p className="text-[15px] text-muted max-w-[46ch] mx-auto leading-[1.55]">
         Every issue is fixed and nothing new has surfaced. We’ll keep watching on every deploy — you’ll
         hear from us only if something changes.
       </p>
-      <button onClick={() => router.push('/apps')} className="vg-press cursor-pointer mt-6 bg-ink text-white rounded-[10px] px-6 py-[14px] font-medium text-[16px]">
+      <button onClick={() => router.push('/apps')} className="vg-press cursor-pointer mt-6 bg-ink text-white rounded-[10px] px-6 py-[12px] font-medium text-[15px]">
         Review fixed findings
       </button>
     </div>

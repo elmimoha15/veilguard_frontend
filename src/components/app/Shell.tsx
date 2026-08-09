@@ -6,10 +6,11 @@ import { useApp } from './state';
 import Logo from '@/components/ui/Logo';
 import { useAuth, isPaid } from '@/lib/auth';
 import { api } from '@/lib/api';
-import { checkUrl } from '@/lib/url';
+import { checkUrl, billingHref } from '@/lib/url';
+import { SUPPORT_MAILTO, LEGAL } from '@/content/site';
 import { RepoPicker } from './RepoPicker';
 import { UploadPicker } from './UploadPicker';
-import { GitHubIcon } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 type NavId = 'dashboard' | 'apps' | 'billing';
 const NAV: { id: NavId; label: string }[] = [
@@ -52,8 +53,6 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const [userMenu, setUserMenu] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
   const [starting, setStarting] = useState(false);
-  // 'choose' = the two-lens picker; 'url' = the URL-input step of the chooser.
-  const [scanKind, setScanKind] = useState<'choose' | 'url'>('choose');
   const [repoOpen, setRepoOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   // Deep scan + folder upload are Pro features (free plan scans URLs only).
@@ -69,7 +68,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   const doLogout = async () => { setUserMenu(false); await logout(); router.replace('/login'); };
 
-  const closeModal = () => { setModal(null); setScanKind('choose'); };
+  const closeModal = () => { setModal(null); };
 
   const confirmAddApp = async () => {
     const c = checkUrl(newAppUrl);
@@ -77,7 +76,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     setStarting(true);
     const res = await api.createScan(c.url!);
     setStarting(false);
-    if (!res.ok || !res.data.scanId) { toast(res.data.error || 'Could not start scan', '#E5484D'); return; }
+    if (!res.ok || !res.data.scanId) {
+      if (res.data.code === 'E_SCAN_LIMIT') { toast(res.data.error || 'Monthly scan limit reached', '#E0932F'); closeModal(); if (!paid) go(billingHref()); }
+      else toast(res.data.error || 'Could not start scan', '#E5484D');
+      return;
+    }
     closeModal(); setNewAppUrl('');
     // Run in the background — a docked progress chip (ScanWatcher) tracks it so the
     // user isn't yanked to a full-screen scanning page.
@@ -87,7 +90,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   const startDeepScan = async (fullName: string): Promise<boolean> => {
     const r = await api.createDeepScan({ githubRepo: fullName });
-    if (!r.ok || !r.data.scanId) { toast(r.data.error || 'Could not start the scan', '#E5484D'); return false; }
+    if (!r.ok || !r.data.scanId) {
+      if (r.data.code === 'E_SCAN_LIMIT') { toast(r.data.error || 'Monthly scan limit reached', '#E0932F'); setRepoOpen(false); if (!paid) go(billingHref()); }
+      else toast(r.data.error || 'Could not start the scan', '#E5484D');
+      return false;
+    }
     setRepoOpen(false);
     setPendingScanId(r.data.scanId);
     toast('Scan started', '#0A0A0A');
@@ -97,7 +104,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const startUploadScan = async (zip: Blob, name: string): Promise<boolean> => {
     const r = await api.createUploadScan(zip, name);
     if (!r.ok || !r.data.scanId) {
-      if (r.status === 402) { toast('Folder upload is a Pro feature — upgrade to scan uploaded code.', '#E0932F'); setUploadOpen(false); go('/billing'); }
+      if (r.status === 402) { toast(r.data.error || 'Folder upload is a Pro feature — upgrade to scan uploaded code.', '#E0932F'); setUploadOpen(false); go(billingHref()); }
+      else if (r.data.code === 'E_SCAN_LIMIT') { toast(r.data.error || 'Monthly scan limit reached', '#E0932F'); setUploadOpen(false); }
       else toast(r.data.error || 'Could not start the scan', '#E5484D');
       return false;
     }
@@ -108,13 +116,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   };
 
   const openUpload = () => {
-    if (!paid) { toast('Folder upload is a Pro feature — upgrade to scan uploaded code.', '#E0932F'); closeModal(); go('/billing'); return; }
+    if (!paid) { toast('Folder upload is a Pro feature — upgrade to scan uploaded code.', '#E0932F'); closeModal(); go(billingHref()); return; }
     closeModal();
     setUploadOpen(true);
   };
 
   const openDeep = () => {
-    if (!paid) { toast('Deep scan is a Pro feature — upgrade to scan your connected code.', '#E0932F'); closeModal(); go('/billing'); return; }
+    if (!paid) { toast('Deep scan is a Pro feature — upgrade to scan your connected code.', '#E0932F'); closeModal(); go(billingHref()); return; }
     closeModal();
     setRepoOpen(true);
   };
@@ -146,14 +154,21 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <Logo size={28} wordmarkClassName="text-ink text-[17px]" />
         </div>
         {navButtons}
-        <button onClick={() => setModal('addApp')} className="vg-press cursor-pointer mt-3 flex items-center gap-[8px] w-full bg-ink text-white rounded-[10px] px-[12px] py-[9px] font-medium text-[14px]">
+        {/* A hairline separates the nav links from the New scan action below them. */}
+        <div className="mx-1 my-[10px] border-t border-border" />
+        <button onClick={() => setModal('addApp')} className="vg-press cursor-pointer flex items-center justify-center gap-[8px] w-full bg-ink text-white rounded-[10px] px-[12px] py-[11px] font-medium text-[14px]">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
           New scan
         </button>
         <div className="mt-auto border border-border bg-bg-soft rounded-[12px] p-[14px]">
           <div className="text-[13px] text-label">Plan</div>
           <div className="font-semibold text-ink text-[15px] mt-[1px] capitalize">{profile?.plan ?? 'free'}</div>
-          <button onClick={() => go('/billing')} className="vg-press cursor-pointer mt-[10px] w-full rounded-[9px] py-2 text-[13px] font-semibold" style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }}>
+          {profile?.usage && profile?.caps && (
+            <div className="text-[12px] text-label mt-[7px] leading-[1.5] font-mono tnum">
+              {profile.usage.scansThisMonth}/{profile.caps.maxScansPerMonth} scans this month
+            </div>
+          )}
+          <button onClick={() => go(billingHref())} className="vg-press cursor-pointer mt-[10px] w-full rounded-[9px] py-2 text-[13px] font-semibold" style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }}>
             {profile?.plan === 'free' || !profile?.plan ? 'Upgrade' : 'Manage billing'}
           </button>
         </div>
@@ -180,6 +195,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
               Settings
             </button>
+            <a href={SUPPORT_MAILTO} className="vg-nav flex items-center gap-[11px] rounded-[9px] px-[11px] py-[9px] text-left font-medium text-[14.5px] text-[#5b5a56] transition-colors cursor-pointer no-underline">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.6 1.4c0 1.7-2.1 2-2.1 3.1M12 17h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              Need help?
+            </a>
             <button onClick={doLogout} className="vg-nav flex items-center gap-[11px] rounded-[9px] px-[11px] py-[9px] text-left font-medium text-[14.5px] text-[#C23B3F] transition-colors cursor-pointer">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               Log out
@@ -197,50 +216,59 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 px-6 pt-8 pb-16">
           <div className="max-w-[1080px] mx-auto">{children}</div>
         </main>
+
+        {/* Legal + support — reachable from every shell page */}
+        <footer className="px-6 py-5 border-t border-border text-center text-[12.5px] text-faint">
+          <a href={LEGAL.privacy} className="hover:text-muted">Privacy</a>
+          <span className="mx-2" aria-hidden>·</span>
+          <a href={LEGAL.terms} className="hover:text-muted">Terms</a>
+          <span className="mx-2" aria-hidden>·</span>
+          <a href={SUPPORT_MAILTO} className="hover:text-muted">Contact</a>
+        </footer>
       </div>
 
       {/* ===== Modals ===== */}
       {modal === 'addApp' && (
-        <ModalOverlay onClose={closeModal}>
-          {scanKind === 'choose' ? (
-            <>
-              <h2 className="font-semibold text-[19px] tracking-[-0.02em] mb-[6px]">New scan</h2>
-              <p className="text-[15px] text-muted mb-[18px]">Two ways to check an app — pick one now, add the other to the same app later.</p>
-              <div className="flex flex-col gap-3">
-                <button onClick={() => setScanKind('url')} className="vg-press vg-card text-left bg-white border border-border rounded-[12px] p-4">
-                  <div className="flex items-center gap-2 font-semibold text-[15px]">
-                    <IconGlobe /> URL scan <span className="font-mono text-[12px] text-faint font-semibold">~60s · no access</span>
-                  </div>
-                  <div className="text-[14px] text-muted mt-1">What an attacker sees from outside: secrets leaked into your JS bundle, an open Supabase, missing security headers, an exposed <code className="font-mono">.env</code>.</div>
-                </button>
-                <button onClick={openDeep} className="vg-press vg-card text-left bg-white border border-border rounded-[12px] p-4">
-                  <div className="flex items-center gap-2 font-semibold text-[15px]"><GitHubIcon size={17} /> Deep scan {knownFree && <ProBadge />} <span className="font-mono text-[12px] text-faint font-semibold">connect a repo</span></div>
-                  <div className="text-[14px] text-muted mt-1">We read your code (and probe your database) for what the outside can’t see: SQL injection, unverified webhooks, unprotected API routes, dependency CVEs.</div>
-                </button>
-                <button onClick={openUpload} className="vg-press vg-card text-left bg-white border border-border rounded-[12px] p-4">
-                  <div className="flex items-center gap-2 font-semibold text-[15px]"><IconFolder /> Upload a folder {knownFree && <ProBadge />}</div>
-                  <div className="text-[14px] text-muted mt-1">No GitHub? Upload your project folder (or a <code className="font-mono">.zip</code>) for the same deep code checks. We scan it in a sandbox and delete it right after — nothing is stored.</div>
-                </button>
-              </div>
-              <button onClick={closeModal} className="vg-press vg-card w-full mt-4 bg-white border border-border rounded-[11px] py-3 font-semibold text-[15px] text-muted">Cancel</button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => setScanKind('choose')} className="flex items-center gap-1 text-[14px] text-muted font-semibold mb-2">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Back
-              </button>
-              <h2 className="font-semibold text-[19px] tracking-[-0.02em] mb-[6px]">URL scan</h2>
-              <p className="text-[15px] text-muted mb-[18px]">Paste your app’s live URL and we’ll grade it in about 60 seconds.</p>
-              <label className="flex items-center gap-[9px] bg-white border border-border rounded-[10px] px-[15px] min-h-[52px] focus-within:border-ink transition-colors">
-                <span className="font-mono text-tertiary text-[16px]">https://</span>
-                <input value={newAppUrl} onChange={(e) => setNewAppUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && confirmAddApp()} placeholder="your-app.com" aria-label="App URL" className="flex-1 border-0 outline-none bg-transparent text-[17px] min-w-0" autoFocus />
+        <ModalOverlay onClose={closeModal} wide>
+          <div className="flex items-start justify-between gap-3 mb-[6px]">
+            <h2 className="font-semibold text-[19px] tracking-[-0.02em] m-0">New scan</h2>
+            <button onClick={closeModal} aria-label="Close" className="vg-press shrink-0 text-tertiary hover:text-ink transition-colors cursor-pointer -mt-1 -mr-1 p-1">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+            </button>
+          </div>
+          <p className="text-[14px] text-muted mb-[18px]">Grade a live URL in ~60 seconds, or run a deeper check on your code.</p>
+
+          {/* URL scan — the free primary action, input inline */}
+          <div className="bg-bg-soft border border-border rounded-[12px] p-4">
+            <div className="flex items-center gap-2 font-semibold text-[15px]"><IconGlobe /> Scan a live URL</div>
+            <div className="text-[13px] text-muted mt-1 mb-3">What an attacker sees from outside — no access needed.</div>
+            <div className="flex gap-[10px]">
+              <label className="flex-1 flex items-center gap-[9px] bg-bg-soft rounded-[10px] px-[13px] min-h-[46px] focus-within:shadow-[0_0_0_2px_#F3C500] transition-shadow">
+                <span className="font-mono text-tertiary text-[14px]">https://</span>
+                <input value={newAppUrl} onChange={(e) => setNewAppUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && confirmAddApp()} placeholder="your-app.com" aria-label="App URL" style={{ outline: 'none' }} className="flex-1 border-0 outline-none bg-transparent text-[15px] min-w-0" autoFocus />
               </label>
-              <div className="flex gap-[10px] mt-[18px]">
-                <button onClick={closeModal} className="vg-press vg-card flex-1 bg-white border border-border rounded-[10px] py-3 font-semibold text-[15px] text-muted">Cancel</button>
-                <button onClick={confirmAddApp} disabled={starting} className="vg-press flex-1 bg-ink text-white rounded-[10px] py-3 font-medium text-[15px] disabled:opacity-70 cursor-pointer">{starting ? 'Starting…' : 'Scan app'}</button>
-              </div>
-            </>
-          )}
+              <button onClick={confirmAddApp} disabled={starting} className="vg-press shrink-0 bg-ink text-white rounded-[10px] px-5 font-medium text-[14px] disabled:opacity-70 cursor-pointer">{starting ? '…' : 'Scan'}</button>
+            </div>
+          </div>
+
+          {/* divider */}
+          <div className="flex items-center gap-3 my-[18px]">
+            <span className="flex-1 h-px bg-border" />
+            <span className="kicker">Deeper checks · Pro</span>
+            <span className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* Pro options — read the actual code */}
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
+            <button onClick={openDeep} className="vg-press vg-card text-left bg-white border border-border rounded-[12px] p-4">
+              <div className="flex items-center gap-2 font-semibold text-[14.5px]"><BrandLogo name="github" size={16} /> GitHub repo {knownFree && <ProBadge />}</div>
+              <div className="text-[13px] text-muted mt-1 leading-[1.5]">Read your code for SQL injection, unverified webhooks, exposed routes, and dependency CVEs.</div>
+            </button>
+            <button onClick={openUpload} className="vg-press vg-card text-left bg-white border border-border rounded-[12px] p-4">
+              <div className="flex items-center gap-2 font-semibold text-[14.5px]"><IconFolder /> Upload a folder {knownFree && <ProBadge />}</div>
+              <div className="text-[13px] text-muted mt-1 leading-[1.5]">No GitHub? Upload your project or a <code className="font-mono">.zip</code> — scanned in a sandbox, deleted right after.</div>
+            </button>
+          </div>
         </ModalOverlay>
       )}
 
@@ -279,6 +307,10 @@ function UserBlock({ open, setOpen, email, onSettings, onLogout }: { open: boole
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
             Settings
           </button>
+          <a href={SUPPORT_MAILTO} className="vg-nav flex items-center gap-[10px] w-full rounded-[9px] px-[11px] py-[10px] text-left text-ink font-medium text-[14px] transition-colors cursor-pointer no-underline">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.6 1.4c0 1.7-2.1 2-2.1 3.1M12 17h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            Need help?
+          </a>
           <button onClick={onLogout} className="vg-nav flex items-center gap-[10px] w-full rounded-[9px] px-[11px] py-[10px] text-left font-medium text-[14px] text-[#C23B3F] transition-colors cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Log out
@@ -297,10 +329,10 @@ function UserBlock({ open, setOpen, email, onSettings, onLogout }: { open: boole
   );
 }
 
-function ModalOverlay({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+function ModalOverlay({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   return (
     <div onClick={onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6 vg-fade" style={{ background: 'rgba(10,10,10,.28)' }}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[420px] bg-card border border-border rounded-[16px] p-[26px] vg-pop shadow-[var(--shadow-pop)]">
+      <div onClick={(e) => e.stopPropagation()} className={`w-full ${wide ? 'max-w-[500px]' : 'max-w-[420px]'} bg-card border border-border rounded-[16px] p-[26px] vg-pop shadow-[var(--shadow-pop)]`}>
         {children}
       </div>
     </div>

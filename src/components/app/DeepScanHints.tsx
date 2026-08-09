@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import type { ScanDoc } from '@/lib/scans';
-import { SupabaseIcon } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 /**
  * Stack-aware nudges for a deep (repo) scan:
@@ -44,7 +44,7 @@ export default function DeepScanHints({ scan }: { scan: ScanDoc | null }) {
     <div className="flex flex-col gap-3 mt-5">
       {showConnect && (
         <div className="vg-card rounded-[14px] p-4 flex items-start gap-3 bg-card border border-border">
-          <span className="shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center bg-ink"><SupabaseIcon size={18} /></span>
+          <span className="shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center bg-ink"><BrandLogo name="supabase" size={18} /></span>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-[15.5px]">This repo uses Supabase — scan your database too</div>
             <div className="text-[14px] text-muted mt-[2px]">Your Row-Level Security rules live on Supabase’s servers, not in the code. Connect Supabase (read-only) to catch the “anyone can read everyone’s data” bugs the code scan can’t see.</div>
@@ -55,7 +55,7 @@ export default function DeepScanHints({ scan }: { scan: ScanDoc | null }) {
 
       {showRescan && (
         <div className="vg-card rounded-[14px] p-4 flex items-start gap-3 bg-card border border-border">
-          <span className="shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center bg-ink"><SupabaseIcon size={18} /></span>
+          <span className="shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center bg-ink"><BrandLogo name="supabase" size={18} /></span>
           <div className="flex-1 min-w-0">
             <div className="font-bold text-[15.5px]">Supabase is connected — include your database</div>
             <div className="text-[14px] text-muted mt-[2px]">Re-run this scan to also read your Supabase schema + RLS policies for one combined grade.</div>

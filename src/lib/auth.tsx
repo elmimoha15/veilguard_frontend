@@ -3,16 +3,17 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
   onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
   signInWithPopup,
+  getAdditionalUserInfo,
+  linkWithPopup,
   GoogleAuthProvider,
   GithubAuthProvider,
   signOut,
   type User,
+  type UserCredential,
 } from 'firebase/auth';
 import { auth } from './firebase';
-import { api, DEV_FAKE_PAID } from './api';
+import { api } from './api';
 
 export interface Profile {
   uid: string;
@@ -20,16 +21,44 @@ export interface Profile {
   plan?: string;
   onboarded?: boolean;
   connections?: Record<string, unknown>;
+  // Billing (server-set via the Polar webhook; surfaced by /me for the UI).
+  status?: 'active' | 'past_due' | 'canceled' | 'expired';
+  currentPeriodEnd?: string;
+  cancelAtPeriodEnd?: boolean;
+  // Usage computed server-side from the user's scans (accurate + persistent).
+  usage?: { scansThisMonth: number };
+  caps?: { maxScansPerMonth: number };
+  // Onboarding answers (client-written to the user's own doc) — for segmentation.
+  onboarding?: { builtWith?: string; backend?: string; handles?: string[]; codeComfort?: string; scanTarget?: string; shipFrequency?: string };
+  alertEmail?: string;
+  onboardedAt?: string;
+  // Account-wide notification defaults (client-written to the user's own doc).
+  notifications?: { email: boolean; critical: boolean; deploy: boolean; summary: boolean };
 }
 
 /**
- * THE single client-side paid check. Any non-free plan unlocks every paid
- * feature (connections, deep scan, folder upload, monitoring, fixes). This only
- * drives the UI — the backend independently enforces every gate. `DEV_FAKE_PAID`
- * unlocks locally against the emulator.
+ * THE single client-side paid check: the Guard plan unlocks every paid feature
+ * (connections, deep scan, folder upload, monitoring, all fixes). The webhook
+ * keeps `plan==='guard'` through grace + a scheduled cancel and drops it to
+ * 'free' only when access truly ends. This only drives the UI — the backend
+ * independently enforces every gate.
  */
 export function isPaid(profile: Profile | null | undefined): boolean {
-  return (profile?.plan ?? 'free') !== 'free' || DEV_FAKE_PAID;
+  return (profile?.plan ?? 'free') === 'guard';
+}
+
+/** Which provider the user last successfully signed in with (localStorage). */
+export type LastProvider = 'google' | 'github';
+const LAST_PROVIDER_KEY = 'vg_last_provider';
+
+export function rememberProvider(which: LastProvider): void {
+  try { window.localStorage.setItem(LAST_PROVIDER_KEY, which); } catch { /* SSR / disabled storage */ }
+}
+export function getLastProvider(): LastProvider | null {
+  try {
+    const v = window.localStorage.getItem(LAST_PROVIDER_KEY);
+    return v === 'google' || v === 'github' ? v : null;
+  } catch { return null; }
 }
 
 interface AuthCtx {
@@ -37,10 +66,11 @@ interface AuthCtx {
   profile: Profile | null;
   loading: boolean;
   refreshProfile: () => Promise<Profile | null>;
-  signUpEmail: (email: string, password: string) => Promise<void>;
-  logInEmail: (email: string, password: string) => Promise<void>;
-  google: () => Promise<void>;
-  github: () => Promise<void>;
+  /** Sign in with Google/GitHub (popup). Returns the credential for new-user detection. */
+  google: () => Promise<UserCredential>;
+  github: () => Promise<UserCredential>;
+  /** Link a Google/GitHub sign-in to the current account (account linking). */
+  link: (which: 'google' | 'github') => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -73,25 +103,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [refreshProfile]);
 
-  const signUpEmail = useCallback(async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth(), email, password);
-  }, []);
-  const logInEmail = useCallback(async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth(), email, password);
-  }, []);
   const google = useCallback(async () => {
-    await signInWithPopup(auth(), new GoogleAuthProvider());
+    return signInWithPopup(auth(), new GoogleAuthProvider());
   }, []);
   const github = useCallback(async () => {
-    await signInWithPopup(auth(), new GithubAuthProvider());
+    return signInWithPopup(auth(), new GithubAuthProvider());
   }, []);
+  const link = useCallback(async (which: 'google' | 'github') => {
+    const u = auth().currentUser;
+    if (!u) throw new Error('not signed in');
+    const provider = which === 'google' ? new GoogleAuthProvider() : new GithubAuthProvider();
+    await linkWithPopup(u, provider);
+    // Linking mutates currentUser in place (not via onAuthStateChanged), so pull
+    // the fresh user + profile so the UI reflects the new sign-in method/email.
+    await u.reload();
+    setUser(auth().currentUser);
+    await refreshProfile();
+  }, [refreshProfile]);
   const logout = useCallback(async () => {
     await signOut(auth());
   }, []);
 
   return (
-    <Ctx.Provider value={{ user, profile, loading, refreshProfile, signUpEmail, logInEmail, google, github, logout }}>
+    <Ctx.Provider value={{ user, profile, loading, refreshProfile, google, github, link, logout }}>
       {children}
     </Ctx.Provider>
   );
+}
+
+/** Was this credential a brand-new account (first-ever sign-in)? */
+export function isNewUser(cred: UserCredential): boolean {
+  return getAdditionalUserInfo(cred)?.isNewUser ?? false;
 }

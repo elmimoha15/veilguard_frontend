@@ -5,11 +5,12 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 import { GradeLetter } from './ui';
+import { GradeHelp } from './GradeHelp';
 import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
 import { toUiFinding, toUiCounts, GRADE_COLOR } from '@/lib/adapters';
-import { scanLabel } from '@/lib/hooks';
+import { scanLabel, repoDisplay } from '@/lib/hooks';
 import { SEV_TINT, SEV_COLOR } from './data';
 
 const HERO: Record<string, { label: string; labelColor: string; headline: string }> = {
@@ -58,7 +59,7 @@ export default function ResultsScreen() {
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="max-w-[960px] mx-auto flex items-center gap-[11px]">
           <Logo size={32} wordmarkClassName="text-[17px]" />
-          <span className="ml-auto font-mono text-[13.5px] text-label">{scan ? scanLabel(scan) : '…'}</span>
+          <span className="ml-auto font-mono text-[13.5px] text-label">{scan ? repoDisplay(scanLabel(scan)) : '…'}</span>
         </div>
       </div>
 
@@ -68,6 +69,7 @@ export default function ResultsScreen() {
           <GradeLetter letter={grade ?? '…'} color={grade ? GRADE_COLOR[grade] : '#B0B0AC'} size={130} className="inline-block vg-pop" />
           <div className="mt-1 inline-flex items-center gap-[7px] font-mono text-[13px] tracking-[0.1em]" style={{ color: hero?.labelColor ?? '#8a6d00' }}>
             {running ? 'SCANNING…' : (hero?.label ?? 'RESULT')}
+            {!running && <GradeHelp />}
           </div>
           <h1 className="font-semibold text-[clamp(24px,3.2vw,30px)] tracking-[-0.02em] mt-[14px]">
             {running ? 'Grading your app…' : (hero?.headline ?? 'Scan complete.')}

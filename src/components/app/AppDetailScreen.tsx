@@ -5,12 +5,14 @@ import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
-import { useApps, findActiveApp, GRADE_TINT, timeAgo, type App } from '@/lib/hooks';
+import { useApps, findActiveApp, GRADE_TINT, timeAgo, repoDisplay, type App } from '@/lib/hooks';
 import { saveApps, upsertApp, type ScanDoc } from '@/lib/scans';
 import { api } from '@/lib/api';
-import { checkUrl } from '@/lib/url';
+import { GradeHelp } from './GradeHelp';
+import { checkUrl, billingHref } from '@/lib/url';
 import { GRADE_COLOR } from '@/lib/adapters';
 import { GradeRing } from './ui';
+import { Card, SectionLabel, GradeBadge } from './primitives';
 import { RepoPicker } from './RepoPicker';
 import FindingsScreen from './FindingsScreen';
 import MonitoringScreen from './MonitoringScreen';
@@ -46,6 +48,7 @@ export default function AppDetailScreen() {
 
   const [repoOpen, setRepoOpen] = useState(false);
   const [urlOpen, setUrlOpen] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
 
   const openResult = (scanId: string) => { if (app) setActiveSite(app.host); router.push(`/scan?scan=${scanId}`); };
   const resume = (scanId: string) => { if (app) setActiveSite(app.host); router.push(`/scanning?scanId=${scanId}`); };
@@ -101,10 +104,17 @@ export default function AppDetailScreen() {
 
   const grade = app.latest?.grade;
   const latest = app.latest;
+  const downloadReport = async () => {
+    if (!latest) return;
+    setReportBusy(true);
+    const r = await api.downloadReport(latest.id);
+    setReportBusy(false);
+    if (!r.ok) toast(r.error || 'Could not generate the report', '#E5484D');
+  };
   const c = latest?.counts;
   const warnings = (c?.high ?? 0) + (c?.medium ?? 0) + (c?.low ?? 0);
   const cadence = app.monitoring?.cadence ?? 'off';
-  const sub = app.url || (app.githubRepo ? `github.com/${app.githubRepo}` : app.host);
+  const sub = app.url || (app.githubRepo ? `github.com/${repoDisplay(app.githubRepo)}` : app.host);
 
   // Which tab this hub shows (from ?tab=); Findings/Monitoring are now tabs here
   // rather than separate pages. Switching tabs replaces the URL so back works.
@@ -119,7 +129,7 @@ export default function AppDetailScreen() {
   // are one-shot so fall back to the New-scan chooser.
   const rescan = () => {
     if (latest?.type === 'deep' && app.githubRepo) {
-      if (!paid) { toast('Deep scan is a Pro feature — upgrade to re-scan your code.', '#E0932F'); router.push('/billing'); return; }
+      if (!paid) { toast('Deep scan is a Pro feature — upgrade to re-scan your code.', '#E0932F'); router.push(billingHref()); return; }
       void startDeep(app.githubRepo);
       return;
     }
@@ -134,10 +144,19 @@ export default function AppDetailScreen() {
       {/* Header */}
       <div className="flex items-start justify-between flex-wrap gap-4 mb-5">
         <div className="min-w-0">
-          <h1 className="font-semibold text-[24px] tracking-[-0.02em] m-0 truncate">{app.name}</h1>
-          <p className="text-muted mt-[6px] text-[15.5px] font-mono truncate max-w-[420px]">{sub}</p>
+          <h1 className="font-semibold text-[24px] tracking-[-0.02em] m-0 truncate">{repoDisplay(app.name)}</h1>
+          <p className="text-muted mt-[6px] text-[14px] font-mono truncate max-w-[420px]">{sub}</p>
         </div>
-        <span className="shrink-0 w-12 h-12 rounded-[12px] flex items-center justify-center font-semibold text-[24px] tnum" style={{ background: grade ? GRADE_TINT[grade].bg : '#F2F2EF', color: grade ? GRADE_TINT[grade].fg : '#9B9B96' }}>{grade ?? '…'}</span>
+        <div className="flex items-center gap-3 shrink-0">
+          {latest?.status === 'done' && (
+            <button onClick={downloadReport} disabled={reportBusy} style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }} className="vg-press cursor-pointer rounded-[10px] px-[14px] py-[9px] text-[13.5px] font-semibold disabled:opacity-60 inline-flex items-center gap-[7px]">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M12 4v10m0 0l-4-4m4 4l4-4M5 19h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              {reportBusy ? 'Preparing…' : 'Download report (PDF)'}
+            </button>
+          )}
+          <GradeHelp />
+          <GradeBadge grade={grade} size="lg" />
+        </div>
       </div>
 
       {/* Tabs — everything about this app lives here */}
@@ -162,37 +181,38 @@ export default function AppDetailScreen() {
       <>
       {/* Latest scan */}
       {latest ? (
-        <div className="vg-surface p-[26px] flex items-center gap-[22px] flex-wrap">
+        <Card className="p-6 flex items-center gap-[22px] flex-wrap">
           <GradeRing size={112} pct={gradePct(grade)} color={grade ? GRADE_COLOR[grade] : '#B0B0AC'} strokeWidth={9}>
             <span className="font-semibold text-[46px] tnum" style={{ color: grade ? GRADE_COLOR[grade] : '#B0B0AC' }}>{grade ?? '…'}</span>
           </GradeRing>
           <div className="min-w-0 flex-1">
-            <div className="kicker">Latest scan</div>
-            <div className="text-[16px] text-ink font-semibold mt-[6px]">
+            <SectionLabel>Latest scan</SectionLabel>
+            <div className="text-[15px] text-ink font-semibold mt-[6px]">
               {latest.status === 'done' ? `${c?.critical ?? 0} critical · ${warnings} warnings · ${c?.passed ?? 0} passed` : latest.status}
             </div>
             <div className="text-[13px] text-muted mt-[2px]">{timeAgo(latest.createdAt)}</div>
             <div className="flex items-center gap-[10px] mt-4">
               <button onClick={() => goTab('findings', latest.id)} className="vg-press cursor-pointer bg-ink text-white font-medium text-[14px] rounded-[10px] px-[16px] py-[9px]">View findings</button>
-              <button onClick={rescan} className="vg-press cursor-pointer bg-white border border-border text-ink font-medium text-[14px] rounded-[10px] px-[16px] py-[9px] inline-flex items-center gap-[7px]">
+              <button onClick={rescan} style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }} className="vg-press cursor-pointer font-medium text-[14px] rounded-[10px] px-[16px] py-[9px] inline-flex items-center gap-[7px]">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 Rescan
               </button>
             </div>
           </div>
-        </div>
+        </Card>
       ) : (
-        <div className="vg-surface p-8 text-center">
-          <p className="text-muted text-[15.5px] mb-4">No scans yet for this app.</p>
-          <button onClick={() => setModal('addApp')} className="vg-press cursor-pointer bg-ink text-white font-medium rounded-[10px] px-6 py-3">Run a scan</button>
-        </div>
+        <Card className="p-8 text-center">
+          <p className="text-muted text-[14px] mb-4">No scans yet for this app.</p>
+          <button onClick={() => setModal('addApp')} className="vg-press cursor-pointer bg-ink text-white font-medium rounded-[10px] px-6 py-[11px] text-[14px]">Run a scan</button>
+        </Card>
       )}
 
       {/* Scan history */}
-      <div className="vg-surface p-[22px] mt-4">
-        <div className="font-semibold text-[14px] mb-[14px]">Scan history</div>
+      <Card className="p-5 mt-4">
+        <SectionLabel>Scan history</SectionLabel>
+        <div className="mt-3">
         {app.scans.length === 0 ? (
-          <div className="text-[14.5px] text-muted">No scans recorded yet.</div>
+          <div className="text-[14px] text-muted">No scans recorded yet.</div>
         ) : (
           <div className="flex flex-col">
             {app.scans.map((s, i) => {
@@ -217,11 +237,12 @@ export default function AppDetailScreen() {
             })}
           </div>
         )}
-        <button onClick={() => setModal('addApp')} className="vg-press cursor-pointer w-full mt-4 inline-flex items-center justify-center gap-[7px] bg-bg-soft border border-border rounded-[10px] py-[11px] font-medium text-[14.5px] text-muted">
+        <button onClick={() => setModal('addApp')} className="vg-press cursor-pointer w-full mt-4 inline-flex items-center justify-center gap-[7px] bg-bg-soft border border-border rounded-[10px] py-[11px] font-medium text-[14px] text-muted">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
           New scan
         </button>
-      </div>
+        </div>
+      </Card>
       </>
       )}
 
@@ -259,15 +280,15 @@ function UrlLinkModal({ app, onClose, onSubmit }: { app: App; onClose: () => voi
   return createPortal(
     <div onClick={onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: 'rgba(10,10,10,.5)', backdropFilter: 'blur(3px)' }}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[440px] bg-card rounded-[12px] p-7 vg-pop shadow-[0_30px_70px_-24px_rgba(0,0,0,.6)]">
-        <h2 className="font-semibold text-[20px] tracking-[-0.02em] mb-[6px]">Add a URL scan</h2>
-        <p className="text-[15.5px] text-muted mb-[18px]">Add the live URL for <span className="font-semibold">{app.name}</span> to also grade it from the outside.</p>
-        <label className="flex items-center gap-[9px] bg-bg-soft border-2 border-border rounded-xl px-[15px] min-h-[56px] focus-within:border-yellow">
-          <span className="font-mono text-tertiary text-[16px]">https://</span>
-          <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onSubmit(url)} placeholder="your-app.com" aria-label="App URL" className="flex-1 border-0 outline-none bg-transparent text-[17px] min-w-0" autoFocus />
+        <h2 className="font-semibold text-[19px] tracking-[-0.02em] mb-[6px]">Add a URL scan</h2>
+        <p className="text-[14px] text-muted mb-[18px]">Add the live URL for <span className="font-semibold">{repoDisplay(app.name)}</span> to also grade it from the outside.</p>
+        <label className="flex items-center gap-[9px] bg-bg-soft rounded-[10px] px-[13px] min-h-[46px] focus-within:shadow-[0_0_0_2px_#F3C500] transition-shadow">
+          <span className="font-mono text-tertiary text-[14px]">https://</span>
+          <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && onSubmit(url)} placeholder="your-app.com" aria-label="App URL" style={{ outline: 'none' }} className="flex-1 border-0 outline-none bg-transparent text-[15px] min-w-0" autoFocus />
         </label>
         <div className="flex gap-[10px] mt-5">
-          <button onClick={onClose} className="vg-press cursor-pointer flex-1 bg-card border border-border rounded-[10px] py-[13px] font-medium text-[15.5px] text-muted">Cancel</button>
-          <button onClick={() => onSubmit(url)} className="vg-press cursor-pointer flex-1 bg-ink text-white rounded-[10px] py-[13px] font-medium text-[15.5px]">Scan URL</button>
+          <button onClick={onClose} className="vg-press vg-card cursor-pointer flex-1 bg-white border border-border rounded-[10px] py-[12px] font-medium text-[15px] text-muted">Cancel</button>
+          <button onClick={() => onSubmit(url)} className="vg-press cursor-pointer flex-1 bg-ink text-white rounded-[10px] py-[12px] font-medium text-[15px]">Scan URL</button>
         </div>
       </div>
     </div>,

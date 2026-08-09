@@ -1,82 +1,76 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
-import { useAuth } from '@/lib/auth';
+import { useAuth, isNewUser, rememberProvider, getLastProvider, type LastProvider } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { LEGAL } from '@/content/site';
 import Logo from '@/components/ui/Logo';
-import { Spinner } from './ui';
 
-type Mode = 'signup' | 'login' | 'forgot';
+type Mode = 'signup' | 'login';
 
-const COPY: Record<Exclude<Mode, 'forgot'>, { title: string; sub: string; cta: string; switch: string; to: Mode }> = {
-  signup: { title: 'Create your account', sub: 'Grade your app and unlock every fix.', cta: 'Create account', switch: 'Have an account? Log in', to: 'login' },
-  login: { title: 'Welcome back', sub: 'Log in to your Veilguard dashboard.', cta: 'Log in', switch: 'New here? Sign up', to: 'signup' },
+const COPY: Record<Mode, { title: string; sub: string; switch: string; to: Mode }> = {
+  signup: { title: 'Create your account', sub: 'Grade your app and unlock every fix.', switch: 'Have an account? Log in', to: 'login' },
+  login: { title: 'Welcome back', sub: 'Log in to your Veilguard dashboard.', switch: 'New here? Sign up', to: 'signup' },
 };
-
-/** After any successful auth: claim a pre-signup scan, then route by onboarded. */
-async function afterAuth(router: ReturnType<typeof useRouter>, refreshProfile: () => Promise<{ onboarded?: boolean } | null>) {
-  const pending = typeof window !== 'undefined' ? localStorage.getItem('vg_pending_scan') : null;
-  if (pending) {
-    await api.claimScan(pending).catch(() => {});
-    localStorage.removeItem('vg_pending_scan');
-  }
-  const profile = await refreshProfile();
-  router.replace(profile?.onboarded ? '/dashboard' : '/onboarding');
-}
 
 export default function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const { toast } = useApp();
-  const { signUpEmail, logInEmail, google, github, refreshProfile } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { user, profile, google, github, refreshProfile, logout } = useAuth();
+  const [busy, setBusy] = useState<'google' | 'github' | null>(null);
   const [error, setError] = useState('');
+  const [last, setLast] = useState<LastProvider | null>(null);
+  const routed = useRef(false);
 
-  const run = async (fn: () => Promise<void>) => {
+  // Read the last-used provider after mount (avoids SSR/hydration mismatch).
+  useEffect(() => { setLast(getLastProvider()); }, []);
+
+  // Route any already-signed-in user away from the auth pages (e.g. they opened
+  // /login in a fresh tab while a session exists).
+  useEffect(() => {
+    if (routed.current || busy || !user || !profile) return;
+    routed.current = true;
+    router.replace(profile.onboarded ? '/dashboard' : '/onboarding');
+  }, [user, profile, busy, router]);
+
+  const start = async (which: 'google' | 'github') => {
+    setBusy(which);
     setError('');
-    setLoading(true);
     try {
-      await fn();
-      await afterAuth(router, refreshProfile);
+      const cred = await (which === 'google' ? google() : github());
+
+      // On the LOGIN page, a brand-new social user has no account yet — undo the
+      // just-created account and send them to sign up instead of letting them in.
+      if (mode === 'login' && isNewUser(cred)) {
+        try { await cred.user.delete(); } catch { await logout().catch(() => {}); }
+        toast('You don’t have an account yet — sign up to continue', '#E0932F');
+        router.replace('/signup');
+        return; // keep busy through the navigation
+      }
+
+      rememberProvider(which);
+
+      // Claim a pre-signup anonymous scan, then route by onboarding state.
+      const pending = typeof window !== 'undefined' ? localStorage.getItem('vg_pending_scan') : null;
+      if (pending) { await api.claimScan(pending).catch(() => {}); localStorage.removeItem('vg_pending_scan'); }
+      const p = await refreshProfile();
+      routed.current = true;
+      router.replace(p?.onboarded ? '/dashboard' : '/onboarding');
     } catch (e) {
-      setError(friendly((e as { code?: string })?.code) || 'Something went wrong.');
-      setLoading(false);
+      const code = (e as { code?: string })?.code ?? '';
+      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') { setBusy(null); return; }
+      setError(
+        code === 'auth/account-exists-with-different-credential'
+          ? 'You already signed up with a different method — use that one.'
+          : 'Sign-in failed — please try again.',
+      );
+      setBusy(null);
     }
   };
 
-  if (mode === 'forgot') {
-    return (
-      <div className="vg-fade">
-        <div className="flex flex-col items-center text-center mb-[26px]">
-          <div className="mb-[26px]"><Logo size={30} wordmarkClassName="text-[20px]" /></div>
-          <h1 className="font-bold text-[26px] tracking-[-0.02em] m-0">Reset your password</h1>
-          <p className="text-[16px] text-muted mt-2">We&apos;ll email you a secure reset link.</p>
-        </div>
-        <Label>Email</Label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} aria-label="Email" className="w-full bg-white border border-border-2 rounded-[10px] px-[14px] py-[13px] text-[16px] outline-none focus:border-ink" />
-        <button
-          onClick={async () => { await api.sendReset(email).catch(() => {}); toast('If that email has an account, a reset link is on its way.', '#1F9D57'); router.push('/login'); }}
-          className="vg-press w-full mt-[14px] bg-yellow text-ink font-bold text-[16px] rounded-[10px] py-[14px]"
-        >
-          Send reset link
-        </button>
-        <button onClick={() => router.push('/login')} className="w-full mt-[14px] bg-transparent text-muted text-[15px] font-semibold">Back to log in</button>
-      </div>
-    );
-  }
-
   const c = COPY[mode];
-  const submitEmail = () => run(async () => {
-    if (mode === 'signup') {
-      await signUpEmail(email, password);
-      void api.sendVerification().catch(() => {}); // branded verify email, non-blocking
-    } else {
-      await logInEmail(email, password);
-    }
-  });
 
   return (
     <div className="vg-fade">
@@ -86,54 +80,48 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         <p className="text-[16px] text-muted mt-2">{c.sub}</p>
       </div>
 
-      <div className="flex flex-col gap-[9px]">
-        <button onClick={() => run(google)} disabled={loading} className="vg-press vg-card flex items-center justify-center gap-[10px] bg-white border border-border-2 rounded-[10px] py-3 text-[15.5px] font-semibold">
-          <GoogleIcon /> Continue with Google
-        </button>
-        <button onClick={() => run(github)} disabled={loading} className="vg-press vg-card flex items-center justify-center gap-[10px] bg-white border border-border-2 rounded-[10px] py-3 text-[15.5px] font-semibold">
-          <GithubIcon /> Continue with GitHub
-        </button>
+      <div className="flex flex-col gap-[10px]">
+        <ProviderButton onClick={() => start('google')} disabled={busy !== null} busy={busy === 'google'} lastUsed={last === 'google'} icon={<GoogleIcon />} label="Continue with Google" />
+        <ProviderButton onClick={() => start('github')} disabled={busy !== null} busy={busy === 'github'} lastUsed={last === 'github'} icon={<GithubIcon />} label="Continue with GitHub" />
       </div>
 
-      <div className="flex items-center gap-3 my-[18px] text-faint text-[13px]"><span className="flex-1 h-px bg-[#EBEBE8]" />OR<span className="flex-1 h-px bg-[#EBEBE8]" /></div>
+      {error && <div className="mt-4 text-[14px] text-red font-semibold text-center">{error}</div>}
 
-      <Label>Email</Label>
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@company.com" aria-label="Email" className="w-full bg-white border border-border-2 rounded-[10px] px-[14px] py-3 text-[16px] outline-none focus:border-ink" />
-      <div className="mt-[13px]"><Label>Password</Label></div>
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" aria-label="Password" onKeyDown={(e) => e.key === 'Enter' && submitEmail()} className="w-full bg-white border border-border-2 rounded-[10px] px-[14px] py-3 text-[16px] outline-none focus:border-ink" />
+      <p className="text-[13px] text-faint text-center mt-5 leading-[1.5]">
+        We only use Google or GitHub to sign you in — no passwords to remember.
+      </p>
 
-      {error && <div className="mt-3 text-[14px] text-red font-semibold">{error}</div>}
-
-      <button onClick={submitEmail} disabled={loading} className="vg-press w-full mt-4 bg-yellow text-ink font-bold text-[16px] rounded-[10px] py-[14px] flex items-center justify-center gap-[9px] disabled:opacity-70">
-        {loading && <Spinner dark />}
-        {c.cta}
-      </button>
-
-      <div className="text-center mt-[18px] text-[14.5px]">
-        <button onClick={() => router.push(`/${c.to}`)} className="bg-none text-ink font-bold">{c.switch}</button>
+      <div className="text-center mt-[22px] text-[14.5px]">
+        <button onClick={() => router.push(`/${c.to}`)} className="bg-none text-ink font-bold cursor-pointer">{c.switch}</button>
       </div>
-      <div className="text-center mt-[10px]">
-        <button onClick={() => router.push('/forgot')} className="bg-none text-[#9B9B96] text-[14px] font-medium">Forgot password?</button>
-      </div>
+
+      <p className="text-[12px] text-faint text-center mt-4 leading-[1.5]">
+        By continuing you agree to our{' '}
+        <a href={LEGAL.terms} className="underline hover:text-muted">Terms</a> and{' '}
+        <a href={LEGAL.privacy} className="underline hover:text-muted">Privacy Policy</a>.
+      </p>
     </div>
   );
 }
 
-function friendly(code?: string): string {
-  switch (code) {
-    case 'auth/email-already-in-use': return 'That email is already registered — try logging in.';
-    case 'auth/invalid-email': return 'That doesn’t look like a valid email.';
-    case 'auth/weak-password': return 'Password must be at least 6 characters.';
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found': return 'Wrong email or password.';
-    case 'auth/popup-closed-by-user': return 'Sign-in was cancelled.';
-    default: return '';
-  }
-}
-
-function Label({ children }: { children: React.ReactNode }) {
-  return <label className="block text-[14px] font-semibold mb-[6px]">{children}</label>;
+function ProviderButton({
+  onClick, disabled, busy, lastUsed, icon, label,
+}: { onClick: () => void; disabled: boolean; busy: boolean; lastUsed: boolean; icon: React.ReactNode; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="vg-press vg-card relative flex items-center justify-center gap-[10px] bg-white border border-border-2 rounded-[10px] py-[13px] text-[15.5px] font-semibold disabled:opacity-70 cursor-pointer"
+    >
+      {icon}
+      {busy ? 'Signing in…' : label}
+      {lastUsed && !busy && (
+        <span className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[11px] font-semibold rounded-full px-[8px] py-[2px]" style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }}>
+          Last used
+        </span>
+      )}
+    </button>
+  );
 }
 
 function GoogleIcon() {

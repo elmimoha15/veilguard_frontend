@@ -6,8 +6,9 @@ import { useApp } from './state';
 import { SEV_META, SEV_COLOR, SEV_TINT } from './data';
 import { subscribeFinding, type BackendFinding } from '@/lib/scans';
 import { toUiFinding } from '@/lib/adapters';
-import { api, DEV_FAKE_PAID } from '@/lib/api';
-import { useAuth, isPaid } from '@/lib/auth';
+import { api } from '@/lib/api';
+import { billingHref } from '@/lib/url';
+import { SectionLabel } from './primitives';
 
 export default function FindingDetailScreen() {
   const router = useRouter();
@@ -15,10 +16,9 @@ export default function FindingDetailScreen() {
   const scanId = params.get('scan') ?? '';
   const findingId = params.get('id') ?? '';
   const { toast } = useApp();
-  const { profile, loading: authLoading } = useAuth();
-  const paid = isPaid(profile); // paid users get the fix content
   const [raw, setRaw] = useState<(BackendFinding & { id: string }) | null | 'loading'>('loading');
-  const [unlock, setUnlock] = useState<{ fix?: string; fixPrompt?: string } | null>(null);
+  const [unlock, setUnlock] = useState<{ fix?: string; fixPrompt?: string; explanation?: string } | null>(null);
+  const [fixLoaded, setFixLoaded] = useState(false);
   const [copied, setCopied] = useState<'code' | 'prompt' | null>(null);
 
   const missingIds = !scanId || !findingId;
@@ -28,29 +28,31 @@ export default function FindingDetailScreen() {
     return subscribeFinding(scanId, findingId, (f) => setRaw(f));
   }, [scanId, findingId]);
 
-  // Paid users fetch the (client-locked) fix from the server, which gates on the
-  // stored plan (402 for free). firestore.rules still deny the private fix doc to
-  // every client — this is the only read path. DEV_FAKE_PAID unlocks on the emulator.
-  // Fetch the fix as soon as we know the user is paid — do NOT wait for the finding
-  // doc to resolve, so a paid user never sees the "Unlock" upsell flash before it.
+  // Always ask the server for the fix — the SERVER decides entitlement: Guard
+  // gets every fix, a free user gets only this scan's teaser (others → 402).
+  // firestore.rules still deny the private fix doc to every client, so this
+  // endpoint is the only read path. We don't gate on the client-side plan, so a
+  // free user's teaser unlocks correctly and a paid user never flashes the upsell.
   useEffect(() => {
-    if (!paid || !scanId || !findingId) return;
+    if (!scanId || !findingId) return;
     let cancelled = false;
     api.findingFix(scanId, findingId).then((res) => {
-      if (!cancelled && res.ok) setUnlock({ fix: res.data.fix, fixPrompt: res.data.fixPrompt });
+      if (cancelled) return;
+      if (res.ok) setUnlock({ fix: res.data.fix, fixPrompt: res.data.fixPrompt, explanation: res.data.explanation });
+      setFixLoaded(true);
     });
     return () => { cancelled = true; };
-  }, [scanId, findingId, paid]);
+  }, [scanId, findingId]);
 
   if (missingIds || raw === null) {
     return (
-      <div className="max-w-[840px] vg-fade">
+      <div className="vg-fade">
         <BackLink onClick={() => router.back()} />
         <div className="text-center text-muted py-16">Finding not found.</div>
       </div>
     );
   }
-  if (raw === 'loading') return <div className="vg-skel h-[300px] max-w-[840px]" />;
+  if (raw === 'loading') return <div className="vg-skel h-[300px]" />;
 
   const f = toUiFinding(raw);
   const meta = SEV_META[f.sev];
@@ -65,14 +67,9 @@ export default function FindingDetailScreen() {
   const unlocked = !!(unlock && (unlock.fix || unlock.fixPrompt));
 
   return (
-    <div className="vg-fade max-w-[840px]">
+    <div className="vg-fade">
       <BackLink onClick={() => router.back()} />
 
-      {DEV_FAKE_PAID && (
-        <div className="mb-4 rounded-[10px] px-4 py-2 text-[13.5px] font-semibold" style={{ background: '#ffe9a8', border: '1px solid #d9b64e', color: '#7a5b00' }}>
-          DEV: fake paid mode — fixes are unlocked via a dev-only server endpoint. The real paywall is unchanged.
-        </div>
-      )}
 
       {/* ── header: severity + meta + title + plain-english lead ── */}
       <div className="flex items-center gap-2 flex-wrap mb-[14px]">
@@ -84,16 +81,16 @@ export default function FindingDetailScreen() {
         {f.cwe && <Chip mono>{f.cwe}</Chip>}
       </div>
 
-      <h1 className="font-semibold text-[24px] tracking-[-0.02em] leading-[1.15]">{f.title}</h1>
-      <p className="text-[16.5px] text-muted leading-[1.55] mt-2 max-w-[64ch]">{meta.sevHint}</p>
+      <h1 className="font-semibold text-[24px] tracking-[-0.02em] leading-[1.15] max-w-[64ch]">{f.title}</h1>
+      <p className="text-[15px] text-muted leading-[1.55] mt-2 max-w-[64ch]">{meta.sevHint}</p>
 
       {/* ── the risk + where ── */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-[14px] mt-6">
-        <InfoCard label="WHY IT MATTERS">
-          <p className="m-0 text-[16px] leading-[1.6] text-[#3b3a37]">{f.what}</p>
+        <InfoCard label="Why it matters">
+          <p className="m-0 text-[15px] leading-[1.6] text-[#3b3a37]">{f.what}</p>
         </InfoCard>
-        <InfoCard label="WHERE WE FOUND IT">
-          <p className="m-0 text-[15px] leading-[1.6] text-[#3b3a37] font-mono break-words">{f.where || f.cat}</p>
+        <InfoCard label="Where we found it">
+          <p className="m-0 text-[14px] leading-[1.6] text-[#3b3a37] font-mono break-words">{f.where || f.cat}</p>
           {f.evidence && (
             <pre className="m-0 mt-3 p-3 bg-bg-soft border border-border rounded-lg font-mono text-[13px] leading-[1.6] text-faint overflow-x-auto whitespace-pre-wrap break-words">{f.evidence}</pre>
           )}
@@ -103,14 +100,23 @@ export default function FindingDetailScreen() {
       {/* ── how to fix ── */}
       <div className="mt-8 mb-[14px]">
         <div className="flex items-center gap-[10px]">
-          <span className="font-semibold text-[18px] tracking-[-0.02em]">How to fix it</span>
+          <span className="font-semibold text-[16px] tracking-[-0.02em]">How to fix it</span>
           <span className="flex-1 h-px" style={{ background: 'var(--color-hairline)' }} />
         </div>
-        <p className="text-[14.5px] text-muted mt-[6px]">A plain, copy-paste fix — or a prompt you can hand straight to your AI builder.</p>
+        <p className="text-[14px] text-muted mt-[6px]">A plain, copy-paste fix — or a prompt you can hand straight to your AI builder.</p>
       </div>
 
       {unlocked ? (
         <div className="flex flex-col gap-3">
+          {unlock!.explanation && (
+            <div className="vg-surface p-5" style={{ borderColor: 'rgba(31,157,87,.35)' }}>
+              <div className="inline-flex items-center gap-[7px] font-mono text-[11.5px] tracking-[0.1em] mb-[10px]" style={{ color: SEV_TINT.PASSED.fg }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M12 3l2.2 5.3L20 9.2l-4 3.9 1 5.9L12 16.9 7 19l1-5.9L4 9.2l5.8-.9L12 3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>
+                TAILORED TO YOUR CODE
+              </div>
+              <p className="m-0 text-[15px] leading-[1.6] text-[#3b3a37]">{unlock!.explanation}</p>
+            </div>
+          )}
           {unlock!.fixPrompt && (
             <div className="relative overflow-hidden bg-ink rounded-[12px] p-[22px]">
               <div aria-hidden className="absolute inset-0 bg-dots-dark" />
@@ -133,26 +139,26 @@ export default function FindingDetailScreen() {
             </div>
           )}
         </div>
-      ) : paid || authLoading ? (
-        /* Paid: the fix is being fetched — show a neutral placeholder, never the upsell. */
+      ) : !fixLoaded ? (
+        /* Fetching entitlement/fix — neutral placeholder, never the upsell. */
         <div className="overflow-hidden vg-surface px-6 py-9 flex flex-col items-center text-center gap-3">
           <span className="w-6 h-6 rounded-full vg-spin" style={{ border: '2px solid #E2E2DF', borderTopColor: '#0A0A0A' }} />
           <div className="text-muted text-[15px] font-semibold">Preparing your fix…</div>
         </div>
       ) : (
-        /* Locked (free only): fix content is server-only. */
+        /* Locked (free, non-teaser): fix content is server-only until Guard. */
         <div className="overflow-hidden vg-surface">
           <div className="flex flex-col items-center text-center gap-[14px] px-6 py-9">
             <span className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(243,197,0,.16)' }}>
               <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="4.5" y="10.5" width="15" height="10" rx="2.2" stroke="#8a6d00" strokeWidth="1.7" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" stroke="#8a6d00" strokeWidth="1.7" strokeLinecap="round" /></svg>
             </span>
             <div>
-              <h3 className="text-ink font-semibold text-[18px] tracking-[-0.01em]">Unlock the fix</h3>
-              <p className="text-muted text-[15px] leading-[1.55] mt-[6px] max-w-[46ch] mx-auto">
+              <h3 className="text-ink font-semibold text-[16px] tracking-[-0.01em]">Unlock the fix</h3>
+              <p className="text-muted text-[14px] leading-[1.55] mt-[6px] max-w-[46ch] mx-auto">
                 You’ll get the exact copy-paste fix and a ready-made AI prompt for this issue — plus every other fix and continuous monitoring.
               </p>
             </div>
-            <button onClick={() => router.push('/billing')} className="vg-press cursor-pointer bg-ink text-white font-medium text-[16px] rounded-[10px] px-7 py-[13px]">Upgrade to unlock</button>
+            <button onClick={() => router.push(billingHref())} className="vg-press cursor-pointer bg-ink text-white font-medium text-[15px] rounded-[10px] px-7 py-[13px]">Upgrade to unlock</button>
             <div className="flex items-center gap-4 text-faint text-[13px] font-mono mt-1">
               <span>Copy-paste fix</span>
               <span>AI prompt</span>
@@ -185,7 +191,7 @@ function Chip({ children, mono }: { children: React.ReactNode; mono?: boolean })
 function InfoCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="vg-surface p-5">
-      <div className="font-mono text-[11.5px] tracking-[0.12em] text-faint mb-3">{label}</div>
+      <SectionLabel className="mb-3">{label}</SectionLabel>
       {children}
     </div>
   );

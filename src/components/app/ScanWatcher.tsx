@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
+import { useAuth } from '@/lib/auth';
 import { subscribeScan, type ScanDoc } from '@/lib/scans';
-import { scanLabel } from '@/lib/hooks';
+import { scanLabel, repoDisplay } from '@/lib/hooks';
 
 /**
  * Watches the scan the user most recently started (`pendingScanId`) and shows a
@@ -17,13 +18,25 @@ import { scanLabel } from '@/lib/hooks';
 export default function ScanWatcher() {
   const router = useRouter();
   const { pendingScanId, setPendingScanId } = useApp();
+  const { refreshProfile } = useAuth();
   const [tracked, setTracked] = useState<{ id: string; doc: ScanDoc } | null>(null);
+  // Which scan we've already refreshed the profile for, so the usage meter updates
+  // exactly once per scan (the moment it lands) without a manual page reload.
+  const refreshedFor = useRef<string | null>(null);
 
   useEffect(() => {
     if (!pendingScanId) return;
     const id = pendingScanId;
-    return subscribeScan(id, (doc) => { if (doc) setTracked({ id, doc }); });
-  }, [pendingScanId]);
+    return subscribeScan(id, (doc) => {
+      if (!doc) return;
+      setTracked({ id, doc });
+      // On terminal (done/error) → pull fresh usage so the meter reflects it live.
+      if ((doc.status === 'done' || doc.status === 'error') && refreshedFor.current !== id) {
+        refreshedFor.current = id;
+        void refreshProfile();
+      }
+    });
+  }, [pendingScanId, refreshProfile]);
 
   // Only render for the current pending scan (guards the brief window after a new
   // scan starts but before its first snapshot arrives).
@@ -32,7 +45,7 @@ export default function ScanWatcher() {
   const { id, doc } = tracked;
   const p = doc.progress;
   const pct = p && p.total > 0 ? Math.min(100, Math.round((p.done / p.total) * 100)) : 0;
-  const label = scanLabel(doc);
+  const label = repoDisplay(scanLabel(doc));
 
   const dismiss = () => setPendingScanId(null);
   const view = () => { setPendingScanId(null); router.push(`/scan?scan=${id}`); };

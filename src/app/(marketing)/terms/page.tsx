@@ -61,8 +61,8 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg! font-bold text-ink mb-3">5. Subscriptions &amp; billing</h2>
           <p>
-            The Guard plan is a subscription that renews automatically until cancelled; the Fix Pack is a
-            one-time purchase. You can cancel a subscription at any time — your access continues until the end
+            The Guard plan is a subscription that renews automatically until cancelled. You can cancel a
+            subscription at any time — your access continues until the end
             of the current billing period, and you will not be charged again. Prices are shown at checkout and
             may change with notice for future billing periods. Refunds are governed by our{' '}
             <Link href="/refund" className="text-yellow-dark hover:text-ink underline underline-offset-2">Refund Policy</Link>.

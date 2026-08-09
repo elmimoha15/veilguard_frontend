@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GradeLetter } from './ui';
+import { GradeHelp } from './GradeHelp';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
 import { toUiFinding, toUiCounts } from '@/lib/adapters';
-import { scanLabel, useApps } from '@/lib/hooks';
+import { scanLabel, repoDisplay, useApps } from '@/lib/hooks';
 import { SEV_COLOR, SEV_TINT } from './data';
 import DeepScanHints from './DeepScanHints';
 
@@ -67,9 +68,12 @@ export default function ScanResultScreen() {
         <div className="flex justify-center">
           <GradeLetter letter={grade ?? '…'} color={grade ? GRADE_HEX[grade] : '#B0B0AC'} size={130} className="vg-pop" />
         </div>
-        <div className="font-mono text-[13px] tracking-[0.1em] mt-1" style={{ color: hero?.labelColor ?? '#9B9B96' }}>{hero?.label ?? 'RESULT'}</div>
+        <div className="flex items-center justify-center gap-[6px] mt-1">
+          <span className="font-mono text-[13px] tracking-[0.1em]" style={{ color: hero?.labelColor ?? '#9B9B96' }}>{hero?.label ?? 'RESULT'}</span>
+          <GradeHelp />
+        </div>
         <h1 className="font-semibold text-[24px] tracking-[-0.02em] mt-[10px] mb-1">{hero?.headline ?? 'Scan complete.'}</h1>
-        <div className="text-[15px] text-muted mb-[16px]">Just scanned {scan ? scanLabel(scan) : '…'}</div>
+        <div className="text-[15px] text-muted mb-[16px]">Just scanned {scan ? repoDisplay(scanLabel(scan)) : '…'}</div>
         <div className="flex gap-[8px] flex-wrap justify-center">
           <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[6px] text-[14px] font-semibold tnum" style={{ background: SEV_TINT.CRITICAL.bg, color: SEV_TINT.CRITICAL.fg }}><span className="w-[7px] h-[7px] rounded-full" style={{ background: SEV_COLOR.CRITICAL }} />{counts.critical} critical</span>
           <span className="inline-flex items-center gap-[7px] rounded-full px-[13px] py-[6px] text-[14px] font-semibold tnum" style={{ background: SEV_TINT.WARNING.bg, color: SEV_TINT.WARNING.fg }}><span className="w-[7px] h-[7px] rounded-full" style={{ background: SEV_COLOR.WARNING }} />{counts.warnings} warnings</span>
@@ -79,10 +83,10 @@ export default function ScanResultScreen() {
 
       {/* CTA row */}
       <div className="flex items-center gap-3 mt-5 flex-wrap">
-        <button onClick={openFindings} className="vg-press cursor-pointer bg-ink text-white font-medium text-[16px] rounded-[10px] px-[24px] py-[13px]">
+        <button onClick={openFindings} className="vg-press cursor-pointer bg-ink text-white font-medium text-[15px] rounded-[10px] px-[20px] py-[11px]">
           View all <span className="tnum">{findings.length}</span> findings
         </button>
-        <button onClick={() => router.push('/dashboard')} className="vg-press cursor-pointer bg-card border border-border text-muted font-medium text-[16px] rounded-[10px] px-[20px] py-[13px]">Back to overview</button>
+        <button onClick={() => router.push('/dashboard')} className="vg-press cursor-pointer bg-card border border-border text-muted font-medium text-[15px] rounded-[10px] px-[18px] py-[11px]">Back to overview</button>
       </div>
 
       {/* stack-aware nudges (connect Supabase / Firebase-rules note) */}
@@ -91,13 +95,13 @@ export default function ScanResultScreen() {
       {/* top findings preview */}
       {top.length > 0 && (
         <div className="mt-6">
-          <div className="font-semibold text-[14px] mb-3 text-muted">Top issues</div>
+          <div className="kicker mb-3">Top issues</div>
           <div className="flex flex-col gap-[10px]">
             {top.map((f) => (
               <button key={f.id} onClick={() => router.push(`/finding?scan=${scanId}&id=${f.id}`)} className="vg-card vg-press cursor-pointer flex items-center gap-[14px] vg-surface px-[18px] py-4 text-left">
                 <span className="shrink-0 w-[9px] h-[9px] rounded-full" style={{ background: f.color }} />
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-[16.5px]">{f.title}</div>
+                  <div className="font-semibold text-[15px]">{f.title}</div>
                   <div className="font-mono text-[12.5px] text-faint mt-[2px]">{f.cat}{f.where ? ` · ${f.where}` : ''}</div>
                 </div>
                 <span className="shrink-0 text-[13px] font-semibold px-[11px] py-[5px] rounded-full" style={{ background: `${f.color}1e`, color: f.color }}>{f.sev}</span>

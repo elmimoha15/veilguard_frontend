@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import Logo from '@/components/ui/Logo';
 import { SCANNERS } from '@/content/scanners';
+import { LEGAL, SUPPORT_MAILTO } from '@/content/site';
 
 const PRODUCT_LINKS = [
   { href: '/#scan', label: 'Scan' },
   { href: '/#how', label: 'How it works' },
   { href: '/#risks', label: 'What goes wrong' },
+  { href: '/learn', label: 'Guides & answers' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/#faq', label: 'FAQ' },
 ];
@@ -62,7 +64,12 @@ export default function Footer() {
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-[11px] tracking-[0.08em] uppercase text-white/40">
           <p>© 2026 Veilguard Studio</p>
-          <p>Privacy-first · Read-only · Your code stays yours</p>
+          <nav className="flex items-center gap-4">
+            <Link href={LEGAL.privacy} className="hover:text-white/70 transition-colors">Privacy</Link>
+            <Link href={LEGAL.terms} className="hover:text-white/70 transition-colors">Terms</Link>
+            <Link href={LEGAL.refund} className="hover:text-white/70 transition-colors">Refund</Link>
+            <a href={SUPPORT_MAILTO} className="hover:text-white/70 transition-colors">Contact</a>
+          </nav>
         </div>
       </div>
     </footer>

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useGitHubRepos } from '@/lib/hooks';
+import { useGitHubRepos, repoDisplay } from '@/lib/hooks';
 import { type GitHubRepo } from '@/lib/api';
-import { GitHubIcon } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 /**
  * Shared GitHub-repo chooser for starting a Deep scan. Used by the top-bar
@@ -77,10 +77,10 @@ export function RepoPicker({
                 <div className="vg-surface overflow-hidden">
                   {filtered.map((r, i) => (
                     <div key={r.fullName} className="vg-row flex items-center gap-3 px-[14px] py-[11px]" style={{ borderTop: i === 0 ? undefined : '1px solid var(--color-hairline)' }}>
-                      <GitHubIcon size={18} className="shrink-0 text-ink" />
+                      <BrandLogo name="github" size={18} className="shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-[14.5px] truncate flex items-center gap-[6px]">
-                          {r.fullName}
+                          {repoDisplay(r.fullName)}
                           {r.private && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-tertiary shrink-0"><title>Private</title><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.8" /></svg>}
                         </div>
                         <div className="font-mono text-[12px] text-faint truncate">{r.language ?? 'repo'}</div>
@@ -107,7 +107,7 @@ export function RepoPicker({
 export function ConnectPrompt({ onConnect }: { onConnect: () => void }) {
   return (
     <div className="bg-card border border-border rounded-[12px] p-10 text-center">
-      <div className="w-14 h-14 rounded-[12px] bg-ink flex items-center justify-center text-white mx-auto mb-3"><GitHubIcon size={26} /></div>
+      <div className="w-14 h-14 rounded-[12px] bg-ink flex items-center justify-center text-white mx-auto mb-3"><BrandLogo name="github" size={26} invert /></div>
       <h2 className="font-semibold text-[20px]">Connect GitHub to run a Deep scan</h2>
       <p className="text-muted text-[15.5px] mt-1 mb-5 max-w-[440px] mx-auto">Read-only access — we clone your repo into a temporary sandbox, scan it, and delete it. We never store your code.</p>
       <button onClick={onConnect} className="vg-press bg-ink text-white font-semibold rounded-[10px] px-6 py-3">Connect GitHub in Settings</button>

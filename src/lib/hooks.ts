@@ -230,6 +230,17 @@ export function scanLabel(scan: Pick<ScanDoc, 'type' | 'target'> & { sources?: {
   }
 }
 
+/**
+ * DISPLAY-ONLY: strip the "owner/" prefix from a repo label so the UI shows just
+ * the repo name (e.g. "owner/my-app" → "my-app"). Leaves hosts and other labels
+ * (no "/") untouched. Never use this where the value feeds an API call, grouping
+ * key, or the registry — the full "owner/repo" must be preserved there.
+ */
+export function repoDisplay(label: string | undefined): string {
+  if (!label) return '';
+  return label.includes('/') ? label.split('/').slice(1).join('/') : label;
+}
+
 /** Compact relative time — "just now", "5m ago", "2h ago", "3d ago", or a date. */
 export function timeAgo(iso?: string): string {
   if (!iso) return '';

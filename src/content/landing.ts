@@ -211,7 +211,7 @@ export const PLANS: Plan[] = [
     cadence: '/month',
     blurb: 'Stay safe as you keep shipping.',
     features: [
-      'Unlimited scans + all fixes',
+      'Repo, upload & URL scans + AI-written fixes',
       'Auto re-scan on every deploy',
       'Instant email alerts',
       'Deep Supabase & Firebase audit',
@@ -220,20 +220,6 @@ export const PLANS: Plan[] = [
     ctaHref: '#scan',
     featured: true,
     badge: 'Most popular',
-  },
-  {
-    name: 'Fix Pack',
-    price: '$19',
-    cadence: 'once',
-    blurb: 'Fix everything from one scan.',
-    features: [
-      'All fixes for one scan',
-      'Copy-paste code + AI prompts',
-      'Downloadable PDF report',
-      'No subscription',
-    ],
-    cta: 'Unlock fixes',
-    ctaHref: '#scan',
   },
 ];
 

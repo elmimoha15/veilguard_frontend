@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Eyebrow from '@/components/ui/Eyebrow';
 import FadeIn from '@/components/ui/FadeIn';
-import { BRAND_ICON } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { SCANNERS } from '@/content/scanners';
 
 export default function Scanners() {
@@ -19,7 +19,6 @@ export default function Scanners() {
 
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {SCANNERS.map((s, i) => {
-            const Icon = BRAND_ICON[s.brand];
             return (
               <FadeIn key={s.slug} delay={i * 0.05} className="h-full">
                 <Link
@@ -27,7 +26,7 @@ export default function Scanners() {
                   className="card-lift flex items-center gap-3.5 rounded-[16px] border border-border bg-card p-5 h-full"
                 >
                   <span className="flex items-center justify-center w-12 h-12 rounded-[13px] bg-bg-soft ring-1 ring-black/[0.03]">
-                    <Icon size={28} />
+                    <BrandLogo name={s.brand} size={28} />
                   </span>
                   <span className="min-w-0">
                     <span className="block font-bold text-ink">{s.tool}</span>

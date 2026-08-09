@@ -1,6 +1,7 @@
 import Eyebrow from '@/components/ui/Eyebrow';
 import ScanForm from '@/components/ui/ScanForm';
-import { BRAND_ICON, type BrandKey } from '@/components/ui/BrandIcons';
+import { type BrandKey } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { TRUST_LINE } from '@/content/landing';
 
 /**
@@ -46,7 +47,6 @@ export default function Hero() {
 
         {/* Floating brand logos */}
         {ORBIT.map(({ key, top, left, delay }) => {
-          const Icon = BRAND_ICON[key];
           return (
             <div
               key={key}
@@ -54,7 +54,7 @@ export default function Hero() {
               className="hidden md:flex animate-float pointer-events-none absolute items-center justify-center w-[56px] h-[56px] rounded-full bg-white shadow-[0_12px_30px_rgba(0,0,0,0.13)] ring-1 ring-black/[0.04]"
               style={{ top, left, animationDelay: delay }}
             >
-              <Icon size={30} />
+              <BrandLogo name={key} size={30} />
             </div>
           );
         })}
@@ -80,13 +80,12 @@ export default function Hero() {
           {/* Compact logo row for mobile, where the orbiting chips are hidden */}
           <ul className="mt-10 flex md:hidden flex-wrap items-center justify-center gap-3">
             {ORBIT.map(({ key }) => {
-              const Icon = BRAND_ICON[key];
               return (
                 <li
                   key={key}
                   className="flex items-center justify-center w-11 h-11 rounded-full bg-bg-soft ring-1 ring-black/[0.04]"
                 >
-                  <Icon size={24} />
+                  <BrandLogo name={key} size={24} />
                 </li>
               );
             })}

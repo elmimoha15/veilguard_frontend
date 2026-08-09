@@ -65,7 +65,7 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
   const diffReady = !!prevScanId && prev.id === prevScanId;
 
   if (!selected) {
-    return <div className="text-center text-muted py-16 text-[16px]">Run a scan to see findings.</div>;
+    return <div className="text-center text-muted py-16 text-[15px]">Run a scan to see findings.</div>;
   }
 
   const findings = rawItems.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
@@ -107,8 +107,8 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
           const n = findings.filter((f) => f.sev === sec.sev).length;
           return (
             <div key={sec.sev}>
-              <div className="tnum text-[22px] font-semibold leading-none" style={{ color: n ? SEV_COLOR[sec.sev] : '#B0B0AC' }}>{n}</div>
-              <div className="text-[12px] text-muted mt-[5px]">{sec.label}</div>
+              <div className="tnum text-[20px] font-semibold leading-none" style={{ color: n ? SEV_COLOR[sec.sev] : '#B0B0AC' }}>{n}</div>
+              <div className="text-[12px] text-muted mt-[6px]">{sec.label}</div>
             </div>
           );
         })}
@@ -120,13 +120,13 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
       {errored ? (
         <div className="vg-surface p-8 text-center">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" className="mx-auto mb-2"><path d="M12 9v4m0 4h.01M10.3 3.9 2 18a1.7 1.7 0 0 0 1.5 2.5h17A1.7 1.7 0 0 0 22 18L13.7 3.9a1.7 1.7 0 0 0-3 0Z" stroke={SEV_COLOR.WARNING} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-          <div className="font-semibold text-[17px]">This scan errored</div>
-          <p className="text-muted text-[15px] mt-1 font-mono">{selected.error || 'The target could not be reached.'}</p>
+          <div className="font-semibold text-[16px]">This scan errored</div>
+          <p className="text-muted text-[14px] mt-1 font-mono">{selected.error || 'The target could not be reached.'}</p>
         </div>
       ) : running && findings.length === 0 ? (
-        <div className="text-center text-muted py-16 text-[16px]">Scanning… findings will appear here live.</div>
+        <div className="text-center text-muted py-16 text-[15px]">Scanning… findings will appear here live.</div>
       ) : totalShown === 0 ? (
-        <div className="text-center text-muted py-16 text-[16px]">No issues found.</div>
+        <div className="text-center text-muted py-16 text-[15px]">No issues found.</div>
       ) : (
         <div className="flex flex-col gap-6">
           {SECTIONS.map((sec) => {

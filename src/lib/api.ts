@@ -6,7 +6,6 @@ import { auth } from './firebase';
  * (NEXT_PUBLIC_BACKEND_URL). The ID token is attached automatically.
  */
 const BASE = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8787';
-export const DEV_FAKE_PAID = process.env.NEXT_PUBLIC_DEV_FAKE_PAID === 'true';
 
 /**
  * MOCK connection targets for local dev. In mock mode (emulator) the backend
@@ -19,6 +18,42 @@ export const MOCK_SUPABASE_POLICIES = 'test-fixtures/supabase-broken-rls';
 export async function getIdToken(): Promise<string | null> {
   const u = auth().currentUser;
   return u ? u.getIdToken() : null;
+}
+
+/**
+ * POST a small JSON body and download the PDF the backend streams back. Bypasses
+ * the JSON `call()` helper (binary response); triggers a browser download and
+ * returns a plain `{ ok, error? }` so callers can toast on failure.
+ */
+async function downloadPdf(path: string, body: Record<string, unknown>, fallbackName: string): Promise<{ ok: boolean; error?: string }> {
+  const token = await getIdToken();
+  if (!token) return { ok: false, error: 'not signed in' };
+  let res: Response;
+  try {
+    res = await fetch(`${BASE}${path}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return { ok: false, error: 'backend unreachable — is the backend running?' };
+  }
+  if (!res.ok) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    return { ok: false, error: data.error || 'Could not generate the report' };
+  }
+  const blob = await res.blob();
+  const cd = res.headers.get('content-disposition') || '';
+  const name = cd.match(/filename="?([^"]+)"?/)?.[1] || fallbackName;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return { ok: true };
 }
 
 type AuthMode = 'required' | 'optional' | 'none';
@@ -36,6 +71,19 @@ export interface GitHubRepo {
   language?: string;
   pushedAt?: string;
   defaultBranch?: string;
+}
+
+/** A billing transaction (order) from POST /billingTransactions. Money in integer cents. */
+export interface Txn {
+  id: string;
+  date: string; // ISO
+  amount: number; // cents
+  currency: string;
+  status: string;
+  paid: boolean;
+  reason: string; // Polar billingReason (subscription_create | subscription_cycle | …)
+  invoiceNumber: string | null;
+  hasInvoice: boolean;
 }
 
 async function call<T = Record<string, unknown>>(
@@ -67,20 +115,20 @@ export const api = {
   me: () => call('POST', '/me', { auth: 'required' }),
 
   createScan: (url: string) =>
-    call<{ scanId?: string; error?: string }>('POST', '/createScan', {
+    call<{ scanId?: string; error?: string; code?: string }>('POST', '/createScan', {
       body: { target: { type: 'url', value: url } },
       auth: 'optional',
     }),
 
   createDeepScan: (sources: { github?: boolean; githubRepo?: string; supabase?: boolean; url?: string }) =>
-    call<{ scanId?: string; error?: string }>('POST', '/createDeepScan', { body: sources, auth: 'required' }),
+    call<{ scanId?: string; error?: string; code?: string }>('POST', '/createDeepScan', { body: sources, auth: 'required' }),
 
   /**
    * Upload a folder (as a single .zip Blob) for a Pro white-box scan. Bypasses
    * the JSON `call()` helper: the body is a raw zip, not JSON. `name` is a short
    * display label for the project. 402 = not on a paid plan.
    */
-  createUploadScan: async (zip: Blob, name: string): Promise<ApiResult<{ scanId?: string; error?: string }>> => {
+  createUploadScan: async (zip: Blob, name: string): Promise<ApiResult<{ scanId?: string; error?: string; code?: string }>> => {
     const token = await getIdToken();
     if (!token) return { ok: false, status: 401, data: { error: 'not signed in' } };
     let res: Response;
@@ -123,23 +171,47 @@ export const api = {
   disconnect: (provider: 'github' | 'supabase') =>
     call<{ error?: string }>('POST', '/disconnect', { body: { provider }, auth: 'required' }),
 
-  /** Begin an upgrade. Fake mode → { mode:'fake', plan }; real Polar (later) → { mode:'polar', url }. */
-  billingCheckout: (plan: string) =>
-    call<{ mode?: 'fake' | 'polar'; url?: string; plan?: string; error?: string }>('POST', '/billing/checkout', { body: { plan }, auth: 'required' }),
+  /** Permanently delete the signed-in account + all its data. Irreversible. */
+  deleteAccount: () =>
+    call<{ ok?: boolean; error?: string }>('POST', '/account/delete', { auth: 'required' }),
 
-  /** FAKE upgrade: set the plan server-side (backend refuses unless FAKE_BILLING is on). */
-  billingConfirm: (plan: string) =>
-    call<{ plan?: string; error?: string }>('POST', '/billing/confirm', { body: { plan }, auth: 'required' }),
+  /** Permanently delete ONE app + all its scans/findings/fixes/monitoring. Irreversible.
+   *  Identify the app by any of appId / githubRepo / url. Connections are kept. */
+  deleteApp: (target: { appId?: string; githubRepo?: string; url?: string }) =>
+    call<{ ok?: boolean; error?: string }>('POST', '/app/delete', { body: target, auth: 'required' }),
 
-  /** Fetch the paid fix content for a finding (402 for free users). */
+  /** Download a branded PDF security report for one scan (owner-only, entitlement-gated). */
+  downloadReport: (scanId: string) => downloadPdf('/scanReport', { scanId }, 'veilguard-report.pdf'),
+  /** Download a branded account-wide summary PDF (all your apps + grades). */
+  downloadAccountReport: () => downloadPdf('/accountReport', {}, 'veilguard-account-summary.pdf'),
+
+  /** Start a real Polar checkout for the Guard subscription → { url } to redirect to.
+   *  `next` is an in-app path to return to after payment (validated server-side). */
+  createCheckout: (next?: string) =>
+    call<{ url?: string; error?: string }>('POST', '/createCheckout', { body: { next }, auth: 'required' }),
+
+  /** Open the hosted Polar customer portal (update payment method) → { url }. */
+  billingPortal: () =>
+    call<{ url?: string; error?: string }>('POST', '/billingPortal', { auth: 'required' }),
+
+  /** The caller's billing history (orders), newest first. Empty for free/no-orders. */
+  billingTransactions: () =>
+    call<{ transactions?: Txn[]; error?: string }>('POST', '/billingTransactions', { auth: 'required' }),
+
+  /** Downloadable invoice URL for one of the caller's orders. `pending` = still generating. */
+  billingInvoice: (orderId: string) =>
+    call<{ url?: string; pending?: boolean; error?: string }>('POST', '/billingInvoice', { body: { orderId }, auth: 'required' }),
+
+  /** Schedule cancellation at period end (keeps Guard until currentPeriodEnd). */
+  billingCancel: () =>
+    call<{ ok?: boolean; error?: string }>('POST', '/billingCancel', { auth: 'required' }),
+
+  /** Reverse a scheduled cancellation. */
+  billingReactivate: () =>
+    call<{ ok?: boolean; error?: string }>('POST', '/billingReactivate', { auth: 'required' }),
+
+  /** Fetch fix content for a finding. Guard → any; free → the teaser only (else 402).
+   *  `explanation` is present only for Claude-tailored (deep) fixes. */
   findingFix: (scanId: string, findingId: string) =>
-    call<{ fix?: string; fixPrompt?: string; error?: string }>('POST', '/findingFix', { body: { scanId, findingId }, auth: 'required' }),
-
-  /** DEV-ONLY: preview the unlocked fix (backend refuses unless dev flag + emulator). */
-  unlockedFinding: (scanId: string, findingId: string) =>
-    call<{ fix?: string; fixPrompt?: string; error?: string }>(
-      'GET',
-      `/dev/unlockedFinding?scanId=${encodeURIComponent(scanId)}&findingId=${encodeURIComponent(findingId)}`,
-      { auth: 'required' },
-    ),
+    call<{ fix?: string; fixPrompt?: string; explanation?: string; error?: string }>('POST', '/findingFix', { body: { scanId, findingId }, auth: 'required' }),
 };

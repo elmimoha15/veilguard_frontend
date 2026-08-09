@@ -45,6 +45,33 @@ export function SectionLabel({ children, className }: { children: React.ReactNod
   return <div className={cn('kicker', className)}>{children}</div>;
 }
 
+/**
+ * The one page-title block — every app screen uses this so heading size, subtitle
+ * scale, and spacing never drift. Matches Overview: 24px/600 title, 14px muted
+ * subtitle, optional right-aligned slot (status pill / actions), 24px bottom gap.
+ */
+export function PageHeading({
+  title,
+  subtitle,
+  right,
+  className,
+}: {
+  title: React.ReactNode;
+  subtitle?: React.ReactNode;
+  right?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn('flex items-end justify-between flex-wrap gap-3 mb-6', className)}>
+      <div>
+        <h1 className="text-[24px] font-semibold tracking-[-0.02em] m-0">{title}</h1>
+        {subtitle && <p className="text-muted mt-[5px] text-[14px] max-w-[68ch]">{subtitle}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
 /** A single metric cell: big tabular number over a muted label. */
 export function Metric({
   value,

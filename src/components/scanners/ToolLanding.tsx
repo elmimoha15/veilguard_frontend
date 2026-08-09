@@ -3,7 +3,7 @@ import Eyebrow from '@/components/ui/Eyebrow';
 import FadeIn from '@/components/ui/FadeIn';
 import Pill from '@/components/ui/Pill';
 import ScanForm from '@/components/ui/ScanForm';
-import { BRAND_ICON } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 import { STEPS, TRUST_LINE } from '@/content/landing';
 import { SCANNERS, type ScannerPage } from '@/content/scanners';
 
@@ -15,7 +15,6 @@ const BASE = 'https://veilguard.dev';
  * sharing one consistent design. Emits BreadcrumbList + FAQPage JSON-LD.
  */
 export default function ToolLanding({ page }: { page: ScannerPage }) {
-  const Icon = BRAND_ICON[page.brand];
   const others = SCANNERS.filter((s) => s.slug !== page.slug);
 
   const breadcrumbLd = {
@@ -60,7 +59,7 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
             </nav>
 
             <span className="flex items-center justify-center w-[68px] h-[68px] rounded-[20px] bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]">
-              <Icon size={38} />
+              <BrandLogo name={page.brand} size={38} />
             </span>
             <Eyebrow className="mt-6 text-yellow-dark">{page.eyebrow}</Eyebrow>
             <h1 className="mt-4 max-w-[20ch]">{page.h1}</h1>
@@ -178,7 +177,6 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
           </FadeIn>
           <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((s) => {
-              const OtherIcon = BRAND_ICON[s.brand];
               return (
                 <li key={s.slug}>
                   <Link
@@ -186,7 +184,7 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
                     className="card-lift flex items-center gap-3 rounded-[14px] border border-border bg-card p-4"
                   >
                     <span className="flex items-center justify-center w-10 h-10 rounded-[12px] bg-bg-soft">
-                      <OtherIcon size={24} />
+                      <BrandLogo name={s.brand} size={24} />
                     </span>
                     <span className="font-semibold text-ink">{s.tool} security scanner</span>
                     <span aria-hidden className="ml-auto text-yellow-dark">→</span>

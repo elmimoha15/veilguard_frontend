@@ -6,7 +6,7 @@ import { GradeRing } from './ui';
 import { useApp } from './state';
 import { useAuth } from '@/lib/auth';
 import { subscribeScan, type ScanDoc } from '@/lib/scans';
-import { scanLabel } from '@/lib/hooks';
+import { scanLabel, repoDisplay } from '@/lib/hooks';
 
 // Black-box (URL) vs white-box (deep/repo) phase labels. The deep flow clones
 // the repo first, so its first step is honest about that — the user always sees
@@ -191,7 +191,7 @@ export default function ScanningScreen() {
         {/* Repo/target name + phase list share ONE fixed-width column so the name
             is centered directly over the steps. */}
         <div className="w-[300px] mt-7">
-          <div className="font-mono text-[15px] text-label text-center truncate">{scan ? scanLabel(scan) : 'Starting…'}</div>
+          <div className="font-mono text-[15px] text-label text-center truncate">{scan ? repoDisplay(scanLabel(scan)) : 'Starting…'}</div>
           <div className="flex flex-col gap-[9px] mt-[22px] text-left">
             {phases.map((_, i) => {
               const l = line(i);

@@ -1,4 +1,5 @@
-import { BRANDS, BRAND_ICON } from '@/components/ui/BrandIcons';
+import { BRANDS } from '@/components/ui/BrandIcons';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 export default function PlatformStrip() {
   return (
@@ -9,10 +10,9 @@ export default function PlatformStrip() {
         </p>
         <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-8 gap-y-4">
           {BRANDS.map(({ key, name }) => {
-            const Icon = BRAND_ICON[key];
             return (
               <li key={key} className="flex items-center gap-2.5">
-                <Icon size={26} />
+                <BrandLogo name={key} size={26} />
                 <span className="text-[18px] font-bold tracking-[-0.02em] text-[#3b3a37]">
                   {name}
                 </span>

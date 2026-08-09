@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { type App, appKind, GRADE_TINT } from '@/lib/hooks';
-import { GitHubIcon } from '@/components/ui/BrandIcons';
+import { type App, appKind, GRADE_TINT, repoDisplay } from '@/lib/hooks';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
 type Kind = 'Repo' | 'URL' | 'Upload';
 const KIND_STYLE: Record<Kind, { bg: string; fg: string }> = {
@@ -12,7 +12,7 @@ const KIND_STYLE: Record<Kind, { bg: string; fg: string }> = {
 };
 
 function KindIcon({ kind }: { kind: Kind }) {
-  if (kind === 'Repo') return <GitHubIcon size={11} className="text-ink" />;
+  if (kind === 'Repo') return <BrandLogo name="github" size={11} />;
   if (kind === 'URL') return <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" /><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" stroke="currentColor" strokeWidth="1.8" /></svg>;
   return <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>;
 }
@@ -32,7 +32,7 @@ export function AppSelect({ apps, activeKey, onSelect }: { apps: App[]; activeKe
     return (
       <div className="inline-flex items-center gap-[10px] bg-card border border-border rounded-[12px] px-4 py-[9px]">
         <GradeSquare grade={active.grade} />
-        <span className="text-[15px] font-semibold truncate max-w-[240px]">{active.name}</span>
+        <span className="text-[15px] font-semibold truncate max-w-[240px]">{repoDisplay(active.name)}</span>
         <KindBadge kind={appKind(active)} />
       </div>
     );
@@ -43,7 +43,7 @@ export function AppSelect({ apps, activeKey, onSelect }: { apps: App[]; activeKe
       <button onClick={() => setOpen((v) => !v)} className="vg-press flex items-center gap-[10px] bg-card border border-border rounded-[12px] px-4 py-[9px] min-w-[280px]">
         <GradeSquare grade={active.grade} />
         <span className="flex-1 text-left min-w-0">
-          <span className="block text-[15px] font-semibold truncate">{active.name}</span>
+          <span className="block text-[15px] font-semibold truncate">{repoDisplay(active.name)}</span>
           <span className="block font-mono text-[11.5px] text-faint">{appKind(active)} · tap to switch app</span>
         </span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-faint"><path d="M8 10l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -60,7 +60,7 @@ export function AppSelect({ apps, activeKey, onSelect }: { apps: App[]; activeKe
                 <button key={a.key} onClick={() => { onSelect(a); setOpen(false); }} className="flex items-center gap-[10px] w-full rounded-[10px] px-[10px] py-[9px] text-left hover:bg-bg-soft" style={{ background: on ? 'rgba(243,197,0,.12)' : undefined }}>
                   <GradeSquare grade={a.grade} />
                   <span className="flex-1 min-w-0">
-                    <span className="block text-[14.5px] font-semibold truncate">{a.name}</span>
+                    <span className="block text-[14.5px] font-semibold truncate">{repoDisplay(a.name)}</span>
                   </span>
                   <KindBadge kind={appKind(a)} />
                   {on && <svg width="15" height="15" viewBox="0 0 24 24" fill="none" className="shrink-0" style={{ color: '#8a6d00' }}><path d="M5 12.5l4 4 10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
