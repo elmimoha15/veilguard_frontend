@@ -22,7 +22,8 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${BASE}/` },
-      { '@type': 'ListItem', position: 2, name: `${page.tool} security scanner`, item: `${BASE}/${page.slug}` },
+      { '@type': 'ListItem', position: 2, name: 'Scanners', item: `${BASE}/scanners` },
+      { '@type': 'ListItem', position: 3, name: `${page.tool} security scanner`, item: `${BASE}/scanners/${page.slug}` },
     ],
   };
 
@@ -53,6 +54,8 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
             <nav aria-label="Breadcrumb" className="mb-7">
               <ol className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.06em] uppercase text-faint">
                 <li><Link href="/" className="hover:text-yellow-dark transition-colors">Home</Link></li>
+                <li aria-hidden>/</li>
+                <li><Link href="/scanners" className="hover:text-yellow-dark transition-colors">Scanners</Link></li>
                 <li aria-hidden>/</li>
                 <li className="text-muted" aria-current="page">{page.tool} scanner</li>
               </ol>
@@ -111,6 +114,25 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
             <Eyebrow className="text-yellow">{'// THE GAP'}</Eyebrow>
             <h2 className="mt-4 text-white">{page.whyHeading}</h2>
             <p className="mt-5 text-[17px] leading-[1.6] text-white/70">{page.why}</p>
+            {page.sources && page.sources.length > 0 && (
+              <div className="mt-7">
+                <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/40">Sources</p>
+                <ul className="mt-3 space-y-1.5">
+                  {page.sources.map((s) => (
+                    <li key={s.href}>
+                      <a
+                        href={s.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[13.5px] leading-[1.5] text-white/60 hover:text-white underline decoration-white/25 underline-offset-2 transition-colors"
+                      >
+                        {s.label} ↗
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </FadeIn>
         </div>
       </section>
@@ -180,7 +202,7 @@ export default function ToolLanding({ page }: { page: ScannerPage }) {
               return (
                 <li key={s.slug}>
                   <Link
-                    href={`/${s.slug}`}
+                    href={`/scanners/${s.slug}`}
                     className="card-lift flex items-center gap-3 rounded-[14px] border border-border bg-card p-4"
                   >
                     <span className="flex items-center justify-center w-10 h-10 rounded-[12px] bg-bg-soft">

@@ -1,22 +1,22 @@
 import type { Metadata } from 'next';
 import Hero from '@/components/sections/Hero';
 import PlatformStrip from '@/components/sections/PlatformStrip';
-import Problem from '@/components/sections/Problem';
-import BreachTypes from '@/components/sections/BreachTypes';
+import StatBand from '@/components/sections/StatBand';
+import ScanTypes from '@/components/sections/ScanTypes';
 import RealBreaches from '@/components/sections/RealBreaches';
-import HowItWorks from '@/components/sections/HowItWorks';
 import FindAndFix from '@/components/sections/FindAndFix';
 import Monitor from '@/components/sections/Monitor';
 import Scanners from '@/components/sections/Scanners';
 import Pricing from '@/components/sections/Pricing';
 import Faq from '@/components/sections/Faq';
+import LearnStrip from '@/components/sections/LearnStrip';
 import FinalCta from '@/components/sections/FinalCta';
 import { FAQS } from '@/content/landing';
 
 export const metadata: Metadata = {
   // Keyword-led title for search; the emotional hook lives in the H1 and OG tags
   // (set in the root layout). Both describe the same page — no cannibalization.
-  title: { absolute: 'Veilguard — AI App Security Scanner, Graded in 60s' },
+  title: { absolute: 'Veilguard: AI App Security Scanner, Graded in 60s' },
   alternates: { canonical: '/' },
 };
 
@@ -39,15 +39,15 @@ export default function Home() {
       />
       <Hero />
       <PlatformStrip />
-      <Problem />
-      <BreachTypes />
-      <RealBreaches />
-      <HowItWorks />
+      <ScanTypes />
+      <StatBand />
       <FindAndFix />
       <Monitor />
+      <RealBreaches />
       <Scanners />
       <Pricing />
       <Faq />
+      <LearnStrip />
       <FinalCta />
     </>
   );

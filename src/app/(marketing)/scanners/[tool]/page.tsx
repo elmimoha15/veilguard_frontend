@@ -19,12 +19,12 @@ export async function generateMetadata({
   const page = getScanner(tool);
   if (!page) return {};
 
-  const url = `https://veilguard.dev/${page.slug}`;
+  const url = `https://veilguard.dev/scanners/${page.slug}`;
   return {
     title: { absolute: page.metaTitle },
     description: page.metaDescription,
     keywords: page.keywords,
-    alternates: { canonical: `/${page.slug}` },
+    alternates: { canonical: `/scanners/${page.slug}` },
     openGraph: {
       type: 'website',
       url,

@@ -17,7 +17,7 @@ export default function Pricing() {
           </p>
         </FadeIn>
 
-        <div className="mt-12 grid gap-5 lg:grid-cols-3 lg:items-stretch">
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 max-w-[820px] mx-auto items-stretch">
           {PLANS.map((p, i) => {
             const featured = p.featured;
             return (
@@ -57,7 +57,17 @@ export default function Pricing() {
                   <ul className="space-y-3 flex-1">
                     {p.features.map((f) => (
                       <li key={f} className="flex items-start gap-2.5 text-[14.5px]">
-                        <span className="mt-0.5 text-green font-bold" aria-hidden>✓</span>
+                        <svg
+                          aria-hidden
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          className="mt-[2px] shrink-0"
+                        >
+                          <circle cx="12" cy="12" r="10" fill={featured ? 'rgba(31,157,87,0.22)' : '#EAF6EF'} />
+                          <path d="M8 12.5l2.5 2.5 5.5-5.5" stroke="#1F9D57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
                         <span className={featured ? 'text-white/85' : 'text-ink'}>{f}</span>
                       </li>
                     ))}

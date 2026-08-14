@@ -30,11 +30,11 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://veilguard.dev'),
   title: {
-    default: 'Veilguard — Is your app safe to charge people money?',
+    default: 'Veilguard: Is your app safe to charge people money?',
     template: '%s | Veilguard',
   },
   description:
-    'Built your app with Lovable, Bolt, Cursor, Replit or v0? Paste your link and get a plain-English security grade in 60 seconds — plus the exact fixes. Free, no signup.',
+    'Built your app with Lovable, Bolt, Cursor, Replit or v0? Paste your link and get a plain-English security grade in 60 seconds, plus the exact fixes. Free, no signup.',
   keywords: [
     'app security scanner', 'is my app secure', 'Lovable security', 'Bolt security',
     'Cursor app security', 'Replit security', 'v0 security', 'Supabase RLS check',
@@ -45,14 +45,14 @@ export const metadata: Metadata = {
     siteName: 'Veilguard',
     type: 'website',
     locale: 'en_US',
-    title: 'Veilguard — Is your app safe to charge people money?',
+    title: 'Veilguard: Is your app safe to charge people money?',
     description:
       'Paste your app link and get a plain-English security grade in 60 seconds, plus the exact fixes. Free, no signup.',
-    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Veilguard — a plain-English security grade for apps built with AI' }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'Veilguard: a plain-English security grade for apps built with AI' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Veilguard — Is your app safe to charge people money?',
+    title: 'Veilguard: Is your app safe to charge people money?',
     description:
       'Paste your app link and get a plain-English security grade in 60 seconds, plus the exact fixes. Free, no signup.',
     images: ['/og-image.png'],

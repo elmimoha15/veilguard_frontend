@@ -39,36 +39,45 @@ The free scan only looks at what is already public — what an attacker can see 
 Veilguard catches the common, high-impact mistakes behind almost every vibe-coded breach — a strong first line of defense and safety net. For a high-risk or regulated product it is a foundation to pair with a professional audit, not a replacement for one.
 
 ## Per-tool scanners
-- Lovable security scanner: https://veilguard.dev/lovable-security-scanner
-- Bolt.new security scanner: https://veilguard.dev/bolt-security-scanner
-- Replit security scanner: https://veilguard.dev/replit-security-scanner
-- v0 (Vercel) security scanner: https://veilguard.dev/v0-security-scanner
-- Cursor security scanner: https://veilguard.dev/cursor-security-scanner
-- Supabase security checker (RLS): https://veilguard.dev/supabase-security-checker
-- Firebase security rules checker: https://veilguard.dev/firebase-security-checker
+- Lovable security scanner: https://veilguard.dev/scanners/lovable
+- Bolt.new security scanner: https://veilguard.dev/scanners/bolt
+- Replit security scanner: https://veilguard.dev/scanners/replit
+- v0 (Vercel) security scanner: https://veilguard.dev/scanners/v0
+- Cursor security scanner: https://veilguard.dev/scanners/cursor
+- Supabase security checker (RLS): https://veilguard.dev/scanners/supabase
+- Firebase security rules checker: https://veilguard.dev/scanners/firebase
 
-## Guides & Answers (/learn)
-Plain-English security guides and answers for non-technical founders who built with AI tools. Hub: https://veilguard.dev/learn
-- Is my Lovable app secure?: https://veilguard.dev/learn/is-my-lovable-app-secure
-- Is my Bolt app secure?: https://veilguard.dev/learn/is-my-bolt-app-secure
-- Is the app I built with Cursor secure?: https://veilguard.dev/learn/is-my-cursor-app-secure
-- Is my Replit app secure?: https://veilguard.dev/learn/is-my-replit-app-secure
-- Is my v0 app secure?: https://veilguard.dev/learn/is-my-v0-app-secure
-- How do I know if my Supabase database is exposed?: https://veilguard.dev/learn/how-do-i-know-if-my-supabase-database-is-exposed
-- Are AI-generated apps safe to launch?: https://veilguard.dev/learn/are-ai-generated-apps-safe-to-launch
-- How to check for exposed API keys: https://veilguard.dev/learn/how-to-check-for-exposed-api-keys
-- Is it safe to take payments on a vibe-coded app?: https://veilguard.dev/learn/is-it-safe-to-take-payments-on-a-vibe-coded-app
-- Security checks before launching your SaaS: https://veilguard.dev/learn/security-checks-before-launching-your-saas
-- Can someone hack an app built with AI?: https://veilguard.dev/learn/can-someone-hack-an-app-built-with-ai
-- The complete security checklist for AI-built apps: https://veilguard.dev/learn/complete-security-checklist-for-ai-built-apps
-- 7 security holes AI coding tools leave behind: https://veilguard.dev/learn/7-security-holes-ai-coding-tools-leave-behind
-- Supabase Row Level Security, explained for non-developers: https://veilguard.dev/learn/supabase-row-level-security-explained-for-non-developers
-- How to secure your AI-built app before launch: https://veilguard.dev/learn/how-to-secure-your-app-before-launch
-- Exposed API keys: what they are, how to find and fix them: https://veilguard.dev/learn/exposed-api-keys-what-they-are-how-to-find-and-fix
-- How to check your app's security: free methods vs Veilguard: https://veilguard.dev/learn/how-to-check-your-apps-security-free-vs-veilguard
+## Guides (/guides)
+Plain-English, how-to security guides for non-technical founders who built with AI tools. Hub: https://veilguard.dev/guides
+- The complete security checklist for AI-built apps: https://veilguard.dev/guides/complete-security-checklist-for-ai-built-apps
+- 7 security holes AI coding tools leave behind: https://veilguard.dev/guides/7-security-holes-ai-coding-tools-leave-behind
+- Supabase Row Level Security, explained for non-developers: https://veilguard.dev/guides/supabase-row-level-security-explained-for-non-developers
+- How to secure your AI-built app before launch: https://veilguard.dev/guides/how-to-secure-your-app-before-launch
+- Are AI-generated apps safe to launch?: https://veilguard.dev/guides/are-ai-generated-apps-safe-to-launch
+- Security checks before launching your SaaS: https://veilguard.dev/guides/security-checks-before-launching-your-saas
+- Is it safe to take payments on a vibe-coded app?: https://veilguard.dev/guides/is-it-safe-to-take-payments-on-a-vibe-coded-app
+- How to check your app's security: free methods vs Veilguard: https://veilguard.dev/guides/how-to-check-your-apps-security-free-vs-veilguard
+
+## Security topics (/security)
+The specific security holes AI-built apps leak through, each with what it is, how to check, and how to fix. Hub: https://veilguard.dev/security
+- Exposed API keys & secrets in the browser: https://veilguard.dev/security/exposed-api-keys
+- Public databases & missing Row-Level Security: https://veilguard.dev/security/open-database-rls
+- Broken access control / IDOR: https://veilguard.dev/security/idor
+- Fake "payment succeeded" / unverified webhooks: https://veilguard.dev/security/unverified-webhooks
+- Public file storage / leaked uploads: https://veilguard.dev/security/public-storage-buckets
+- SQL injection, in plain English: https://veilguard.dev/security/sql-injection
+- Weak or missing authentication: https://veilguard.dev/security/broken-auth
+- Missing security headers & open CORS: https://veilguard.dev/security/security-headers-cors
+- The Lovable RLS exposure (CVE-2025-48757): https://veilguard.dev/security/lovable-rls-cve
+- Why ~45% of AI-generated code ships insecure: https://veilguard.dev/security/ai-code-vulnerability-rate
+- How to check for exposed API keys: https://veilguard.dev/security/how-to-check-for-exposed-api-keys
+- How do I know if my Supabase database is exposed?: https://veilguard.dev/security/how-do-i-know-if-my-supabase-database-is-exposed
+- Can someone hack an app built with AI?: https://veilguard.dev/security/can-someone-hack-an-app-built-with-ai
 
 ## Links
 - Homepage: https://veilguard.dev
+- Scanners: https://veilguard.dev/scanners
+- Guides: https://veilguard.dev/guides
+- Security topics: https://veilguard.dev/security
 - Pricing: https://veilguard.dev/#pricing
 - FAQ: https://veilguard.dev/#faq
-- Guides & answers: https://veilguard.dev/learn

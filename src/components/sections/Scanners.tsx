@@ -12,17 +12,17 @@ export default function Scanners() {
           <Eyebrow className="text-yellow-dark">{'// SECURITY SCANNERS'}</Eyebrow>
           <h2 className="mt-4">A security scanner for every AI builder.</h2>
           <p className="mt-4 text-[17px] leading-[1.55] text-muted">
-            Whatever you built with — Lovable, Bolt, Replit, v0 or Cursor — and whatever it runs on,
+            Whatever you built with, Lovable, Bolt, Replit, v0 or Cursor, and whatever it runs on,
             we know where that stack tends to leak. Pick your tool for a scan tuned to it.
           </p>
         </FadeIn>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
           {SCANNERS.map((s, i) => {
             return (
-              <FadeIn key={s.slug} delay={i * 0.05} className="h-full">
+              <FadeIn key={s.slug} delay={i * 0.05} className="w-full sm:w-[calc(50%-6px)] lg:w-[calc(33.333%-8px)]">
                 <Link
-                  href={`/${s.slug}`}
+                  href={`/scanners/${s.slug}`}
                   className="card-lift flex items-center gap-3.5 rounded-[16px] border border-border bg-card p-5 h-full"
                 >
                   <span className="flex items-center justify-center w-12 h-12 rounded-[13px] bg-bg-soft ring-1 ring-black/[0.03]">

@@ -4,26 +4,27 @@
    scoped `.app-theme` can retint the whole signed-in app while the marketing
    site keeps these :root values untouched. See `.app-theme` below. */
 @theme {
-  /* ---- Neutrals ------------------------------------------------------- */
-  --color-bg: #ECEBE7;          /* page background (warm off-white)        */
-  --color-bg-soft: #F4F3EF;     /* light section background                */
+  /* ---- Neutrals (cool light-gray marketing canvas, unified w/ app) ---- */
+  --color-bg: #F4F4F3;          /* page background (cool light gray)       */
+  --color-bg-soft: #FBFBFA;     /* soft inset / code fills                 */
   --color-card: #FFFFFF;        /* white cards                            */
 
-  --color-ink: #1E1D1B;         /* body text + dark sections + buttons     */
-  --color-ink-tile: #111010;    /* near-black brand-board tiles            */
-  --color-panel: #2a2926;       /* dark sidebar cards / popovers           */
-  --color-muted: #5b5a56;       /* secondary body text                     */
-  --color-label: #8b8a86;       /* form labels / meta captions             */
-  --color-tertiary: #9a9994;    /* placeholder / prefix text               */
-  --color-faint: #a4a39e;       /* captions / code comments                */
+  --color-ink: #0A0A0A;         /* body text + dark panels + buttons       */
+  --color-ink-tile: #0A0A0A;    /* near-black tiles                        */
+  --color-panel: #1A1A18;       /* dark accent panels                      */
+  --color-muted: #6E6E6A;       /* secondary body text                     */
+  --color-label: #8B8A86;       /* labels / meta captions                  */
+  --color-tertiary: #B0B0AC;    /* placeholder / prefix text               */
+  --color-faint: #A4A39E;       /* captions / code comments                */
 
-  --color-border: #EAE9E4;      /* card border on light                    */
-  --color-border-2: #E4E3DE;    /* input / free-plan border                */
-  --color-border-3: #E6E5E0;    /* fix-pack border                         */
+  --color-border: #E8E7E3;      /* one hairline border everywhere          */
+  --color-border-2: #E8E7E3;
+  --color-border-3: #E8E7E3;
+  --color-hairline: #EFEEEA;    /* softer inner row dividers               */
 
-  /* ---- Brand ---------------------------------------------------------- */
-  --color-yellow: #F3C500;      /* primary accent                          */
-  --color-yellow-dark: #8a7400; /* link hover / eyebrow on light           */
+  /* ---- Accent (SaaS yellow; single token flips all accent utilities) ---- */
+  --color-yellow: #F3C500;      /* primary accent (yellow)                 */
+  --color-yellow-dark: #8A6D00; /* accent text/eyebrow on light            */
 
   /* ---- Grade / status ------------------------------------------------- */
   --color-green: #1FB86B;       /* grade A / pass                          */
@@ -204,6 +205,115 @@
   transform: translateY(-4px);
   box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.25);
 }
+
+/* ------------------------------------------------------------------ */
+/* ElevenLabs-style marketing layer                                    */
+/* Light-gray rounded "panel" blocks + a restrained (600-weight)       */
+/* heading, used only on the marketing landing for an airy, calm feel. */
+/* ------------------------------------------------------------------ */
+.el-panel {
+  background: #EFEFEE;
+  border: 1px solid #E6E5E1;
+  border-radius: 28px;
+}
+.el-h {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+}
+/* White soft-shadow card on the light canvas (Sendr-style feature/mock cards). */
+.el-card {
+  background: #FFFFFF;
+  border: 1px solid #E8E7E3;
+  border-radius: 20px;
+  box-shadow: 0 1px 2px rgba(23, 23, 22, 0.04), 0 8px 24px -16px rgba(23, 23, 22, 0.12);
+}
+/* Dark rounded section panel (Sendr's dark bands). */
+.el-dark {
+  background: #0A0A0A;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 28px;
+}
+/* Warm yellow radial glow for dark sections + footer. */
+.glow-amber {
+  background: radial-gradient(60% 70% at 50% 0%, rgba(243, 197, 0, 0.28), rgba(243, 197, 0, 0.10) 42%, transparent 72%);
+}
+.glow-amber-tr {
+  background: radial-gradient(52% 62% at 84% 0%, rgba(243, 197, 0, 0.22), rgba(243, 197, 0, 0.08) 45%, transparent 68%);
+}
+/* Small floating callout chip layered over a hero product screenshot. */
+.el-chip {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #E8E7E3;
+  border-radius: 999px;
+  box-shadow: 0 10px 30px -12px rgba(23, 23, 22, 0.25);
+  backdrop-filter: blur(6px);
+}
+
+/* ------------------------------------------------------------------ */
+/* MagicBento (React Bits) — dark interactive bento, Veilguard yellow   */
+/* Rendered inside a dark section on the light page. `--glow-color` is  */
+/* set per card by the component to "243, 197, 0".                      */
+/* ------------------------------------------------------------------ */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  width: 100%;
+}
+@media (min-width: 640px) { .card-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) {
+  .card-grid { grid-template-columns: repeat(4, 1fr); }
+  .magic-bento-card:nth-child(3) { grid-column: span 2; grid-row: span 2; }
+  .magic-bento-card:nth-child(4) { grid-column: 1 / span 2; grid-row: 2 / span 2; }
+  .magic-bento-card:nth-child(6) { grid-column: 4; grid-row: 3; }
+}
+
+.magic-bento-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  min-height: 190px;
+  padding: 22px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: #131211;
+  overflow: hidden;
+  transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  --glow-x: 50%; --glow-y: 50%; --glow-intensity: 0; --glow-radius: 220px;
+}
+.magic-bento-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.16); box-shadow: 0 18px 44px -24px rgba(0,0,0,0.7); }
+
+.magic-bento-card__header { display: flex; position: relative; z-index: 2; justify-content: space-between; }
+.magic-bento-card__content { display: flex; flex-direction: column; position: relative; z-index: 2; }
+.magic-bento-card__label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.45); }
+.magic-bento-card__title { font-weight: 600; font-size: 17px; line-height: 1.2; margin: 0 0 6px; color: #FFFFFF; letter-spacing: -0.01em; }
+.magic-bento-card__description { font-size: 13.5px; line-height: 1.5; color: rgba(255,255,255,0.62); margin: 0; }
+
+/* Border glow that follows the cursor (yellow). */
+.magic-bento-card--border-glow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: radial-gradient(var(--glow-radius) circle at var(--glow-x) var(--glow-y),
+    rgba(var(--glow-color, 243,197,0), calc(var(--glow-intensity) * 0.9)) 0%,
+    rgba(var(--glow-color, 243,197,0), calc(var(--glow-intensity) * 0.4)) 30%,
+    transparent 60%);
+  border-radius: inherit;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+.magic-bento-card--border-glow:hover { box-shadow: 0 18px 44px -24px rgba(0,0,0,0.7), 0 0 26px rgba(243,197,0,0.10); }
+
+.particle-container { position: relative; overflow: hidden; }
+.global-spotlight { mix-blend-mode: screen; will-change: transform, opacity; z-index: 200 !important; pointer-events: none; }
+.bento-section { position: relative; user-select: none; }
 
 /* ------------------------------------------------------------------ */
 /* Animations                                                          */

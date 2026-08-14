@@ -3,6 +3,7 @@ import Eyebrow from '@/components/ui/Eyebrow';
 import ScanForm from '@/components/ui/ScanForm';
 import { TRUST_LINE } from '@/content/landing';
 import { SITE, type Article } from '@/content/learn/types';
+import { articleHub } from '@/content/learn';
 
 /** Consistent mono kicker per content type (ignores per-article `category` styling). */
 const KICKER: Record<Article['type'], string> = {
@@ -10,6 +11,7 @@ const KICKER: Record<Article['type'], string> = {
   guide: '// GUIDE',
   comparison: '// COMPARE',
   research: '// RESEARCH',
+  security: '// SECURITY',
 };
 
 /** Split a body string into paragraphs on blank lines. */
@@ -24,7 +26,10 @@ function paras(body: string): string[] {
  * depth → key takeaways → FAQ → soft scan CTA.
  */
 export default function ArticlePage({ article }: { article: Article }) {
-  const url = `${SITE}${'/learn'}/${article.slug}`;
+  const hub = articleHub(article.slug); // 'guides' | 'security'
+  const hubLabel = hub === 'security' ? 'Security' : 'Guides';
+  const hubBase = `/${hub}`;
+  const url = `${SITE}${hubBase}/${article.slug}`;
 
   const articleLd = {
     '@context': 'https://schema.org',
@@ -41,7 +46,7 @@ export default function ArticlePage({ article }: { article: Article }) {
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE}/` },
-      { '@type': 'ListItem', position: 2, name: 'Learn', item: `${SITE}/learn` },
+      { '@type': 'ListItem', position: 2, name: hubLabel, item: `${SITE}${hubBase}` },
       { '@type': 'ListItem', position: 3, name: article.title, item: url },
     ],
   };
@@ -65,7 +70,7 @@ export default function ArticlePage({ article }: { article: Article }) {
           <ol className="flex flex-wrap items-center gap-1.5 font-mono text-[11px] tracking-[0.06em] uppercase text-faint">
             <li><Link href="/" className="hover:text-yellow-dark transition-colors">Home</Link></li>
             <li aria-hidden>/</li>
-            <li><Link href="/learn" className="hover:text-yellow-dark transition-colors">Learn</Link></li>
+            <li><Link href={hubBase} className="hover:text-yellow-dark transition-colors">{hubLabel}</Link></li>
             <li aria-hidden>/</li>
             <li className="text-muted" aria-current="page">{article.title}</li>
           </ol>
@@ -142,6 +147,22 @@ export default function ArticlePage({ article }: { article: Article }) {
           </div>
         )}
 
+        {/* Sources */}
+        {article.sources && article.sources.length > 0 && (
+          <div className="mt-11">
+            <h2 className="text-[19px]">Sources</h2>
+            <ul className="mt-4 flex flex-col gap-2 text-[14.5px] leading-[1.5]">
+              {article.sources.map((s) => (
+                <li key={s.href}>
+                  <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-ink underline decoration-border underline-offset-2 transition-colors">
+                    {s.label} ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* FAQ */}
         {article.faqs && article.faqs.length > 0 && (
           <div className="mt-11">
@@ -190,7 +211,7 @@ export default function ArticlePage({ article }: { article: Article }) {
       <section className="bg-yellow bg-dots-ink text-ink">
         <div className="mx-auto max-w-[1160px] px-6 py-[clamp(52px,7vw,88px)] flex flex-col items-center text-center">
           <h2 className="text-[clamp(26px,4vw,44px)] max-w-[20ch]">Run a free security scan</h2>
-          <p className="mt-3 max-w-[52ch] text-[16px] text-ink/70">Paste your app&apos;s link and get a plain-English A–F grade in about 60 seconds — plus the exact fix for every issue.</p>
+          <p className="mt-3 max-w-[52ch] text-[16px] text-ink/70">Paste your app&apos;s link and get a plain-English A–F grade in about 60 seconds, plus the exact fix for every issue.</p>
           <div className="mt-8 w-full flex justify-center"><ScanForm tone="onYellow" /></div>
           <p className="mt-5 font-mono text-[11px] tracking-[0.06em] uppercase text-ink/70">{TRUST_LINE}</p>
         </div>

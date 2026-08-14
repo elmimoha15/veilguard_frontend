@@ -3,7 +3,7 @@ import type { BrandKey } from '@/components/ui/BrandIcons';
 /**
  * Per-tool SEO landing pages. Each targets a distinct keyword cluster
  * ("Lovable security scanner", "Supabase RLS checker", …) with unique,
- * non-thin copy — the on-page content, checks, and FAQ all differ per tool so
+ * non-thin copy, the on-page content, checks, and FAQ all differ per tool so
  * every page earns its own ranking rather than reading as a template clone.
  */
 export interface Check {
@@ -32,17 +32,19 @@ export interface ScannerPage {
   why: string;
   /** Objection-handling FAQ (also emitted as FAQPage schema) */
   faqs: { q: string; a: string }[];
+  /** Real, linkable sources for any stat/CVE/breach referenced on the page. */
+  sources?: { label: string; href: string }[];
 }
 
 export const SCANNERS: ScannerPage[] = [
   {
-    slug: 'lovable-security-scanner',
+    slug: 'lovable',
     tool: 'Lovable',
     brand: 'lovable',
     eyebrow: '// LOVABLE SECURITY SCANNER',
-    metaTitle: 'Lovable Security Scanner — Check Your App Free | Veilguard',
+    metaTitle: 'Lovable Security Scanner, Check Your App Free | Veilguard',
     metaDescription:
-      'Built your app with Lovable? Scan it free for exposed keys, open Supabase rules and auth holes — a plain-English A–F grade in 60 seconds, plus the exact fixes.',
+      'Built your app with Lovable? Scan it free for exposed keys, open Supabase rules and auth holes, a plain-English A–F grade in 60 seconds, plus the exact fixes.',
     keywords: [
       'Lovable security',
       'Lovable app security',
@@ -53,12 +55,12 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Is your Lovable app safe to charge people money?',
     intro:
-      'Lovable ships you a working app in minutes — and it almost always wires straight into Supabase. That is exactly where the dangerous mistakes hide: row-level security left wide open, API keys shipped to the browser, and logins with no real lock on the door. Veilguard scans your live Lovable app the way an attacker would, grades it A to F, and hands you the exact fix for every issue.',
+      'Lovable ships you a working app in minutes, and it almost always wires straight into Supabase. That is exactly where the dangerous mistakes hide: row-level security left wide open, API keys shipped to the browser, and logins with no real lock on the door. Veilguard scans your live Lovable app the way an attacker would, grades it A to F, and hands you the exact fix for every issue.',
     checksHeading: 'What Veilguard checks in a Lovable app',
     checks: [
       {
         title: 'Supabase row-level security left open',
-        body: 'The single most common — and most damaging — Lovable issue. If RLS is off or a policy reads USING(true), anyone can read every customer’s data. We catch it and give you the exact policy to paste.',
+        body: 'The single most common, and most damaging, Lovable issue. If RLS is off or a policy reads USING(true), anyone can read every customer’s data. We catch it and give you the exact policy to paste.',
         severity: 'critical',
       },
       {
@@ -83,34 +85,44 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         title: 'Missing HTTPS & security headers',
-        body: 'No HSTS, clickjacking protection or content-type guards — the basics attackers probe for first.',
+        body: 'No HSTS, clickjacking protection or content-type guards, the basics attackers probe for first.',
         severity: 'warning',
       },
     ],
     whyHeading: 'Why Lovable apps ship exposed',
     why:
-      'Lovable is built to make your app work, not to make it safe — and it never tells you what it left open. Supabase ships new tables with permissive defaults, and the CVE-2025-48757 disclosure showed how a single inverted access-control rule exposed 170 Lovable-built apps at once. The founder has no idea anything is wrong until someone else finds it. Veilguard is the check nobody built into the tool.',
+      'Lovable is built to make your app work, not to make it safe, and it never tells you what it left open. The pattern is industry-wide: Veracode’s 2025 GenAI Code Security Report found AI picks the insecure way to write code 45% of the time. In Lovable’s case, CVE-2025-48757 (CVSS 9.3) showed how Supabase projects generated with row-level security off left 170+ live apps readable by anyone with the public key. The founder has no idea until someone else finds it. Veilguard is the check nobody built into the tool.',
+    sources: [
+      {
+        label: 'CVE-2025-48757: Lovable RLS breakdown exposed 170+ apps (CVSS 9.3)',
+        href: 'https://securityonline.info/cve-2025-48757-lovables-row-level-security-breakdown-exposes-sensitive-data-across-hundreds-of-projects/',
+      },
+      {
+        label: 'Veracode 2025 GenAI Code Security Report: AI chooses insecure code 45% of the time',
+        href: 'https://www.veracode.com/resources/analyst-reports/2025-genai-code-security-report/',
+      },
+    ],
     faqs: [
       {
         q: 'Does Veilguard work with Lovable and Supabase?',
-        a: 'Yes — that combination is our specialty. Broken Supabase row-level security is the number-one critical issue we find in Lovable apps, and we give you the exact SQL policy to fix it.',
+        a: 'Yes, that combination is our specialty. Broken Supabase row-level security is the number-one critical issue we find in Lovable apps, and we give you the exact SQL policy to fix it.',
       },
       {
         q: 'Do I have to connect my Lovable project?',
-        a: 'No. The free scan only looks at your live app from the outside — what an attacker already sees. For a deeper audit you can optionally connect Supabase or GitHub with read-only access, and your source is never stored.',
+        a: 'No. The free scan only looks at your live app from the outside, what an attacker already sees. For a deeper audit you can optionally connect Supabase or GitHub with read-only access, and your source is never stored.',
       },
       {
-        q: 'I’m not technical — can I actually fix what it finds?',
+        q: 'I’m not technical, can I actually fix what it finds?',
         a: 'Yes. Every fix is either copy-paste code and SQL, or a ready-made prompt you hand straight to Lovable to apply for you. You don’t need to read the code.',
       },
     ],
   },
   {
-    slug: 'bolt-security-scanner',
+    slug: 'bolt',
     tool: 'Bolt',
     brand: 'bolt',
     eyebrow: '// BOLT.NEW SECURITY SCANNER',
-    metaTitle: 'Bolt.new Security Scanner — Check Your App | Veilguard',
+    metaTitle: 'Bolt.new Security Scanner, Check Your App | Veilguard',
     metaDescription:
       'Shipped an app with Bolt.new? Scan it free for exposed keys, open database rules and auth gaps. Get a plain-English A–F security grade in 60 seconds, plus fixes.',
     keywords: [
@@ -122,7 +134,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Is your Bolt.new app safe to launch?',
     intro:
-      'Bolt.new turns a prompt into a full-stack app in one sitting — frontend, backend and database wired together for you. The speed is the point, but nobody stops to check what got left open: environment secrets bundled into the client, a database anyone can query, and payment flows with no verification. Veilguard scans your live Bolt app from the outside, grades it A to F, and shows you the exact fix for each hole.',
+      'Bolt.new turns a prompt into a full-stack app in one sitting, frontend, backend and database wired together for you. The speed is the point, but nobody stops to check what got left open: environment secrets bundled into the client, a database anyone can query, and payment flows with no verification. Veilguard scans your live Bolt app from the outside, grades it A to F, and shows you the exact fix for each hole.',
     checksHeading: 'What Veilguard checks in a Bolt.new app',
     checks: [
       {
@@ -132,7 +144,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         title: 'Database rules left wide open',
-        body: 'Supabase RLS or Firebase rules that let any visitor read or write your tables — the fastest path to a full data leak.',
+        body: 'Supabase RLS or Firebase rules that let any visitor read or write your tables, the fastest path to a full data leak.',
         severity: 'critical',
       },
       {
@@ -158,11 +170,11 @@ export const SCANNERS: ScannerPage[] = [
     ],
     whyHeading: 'Why Bolt.new apps ship exposed',
     why:
-      'Bolt optimizes for a working prototype in minutes, so it makes the pragmatic choices that get an app running — permissive defaults, secrets wherever they are convenient, and no verification on money flows. Those choices are fine for a demo and dangerous the moment real customers and real payments show up. Veilguard catches them before your launch does.',
+      'Bolt optimizes for a working prototype in minutes, so it makes the pragmatic choices that get an app running, permissive defaults, secrets wherever they are convenient, and no verification on money flows. Those choices are fine for a demo and dangerous the moment real customers and real payments show up. Veilguard catches them before your launch does.',
     faqs: [
       {
         q: 'Can Veilguard scan a Bolt.new app?',
-        a: 'Yes. Paste your deployed Bolt URL and we scan it from the outside — no install, no signup. If your app uses Supabase or Firebase, we run a deeper database-rules audit too.',
+        a: 'Yes. Paste your deployed Bolt URL and we scan it from the outside, no install, no signup. If your app uses Supabase or Firebase, we run a deeper database-rules audit too.',
       },
       {
         q: 'What’s the most common problem in Bolt apps?',
@@ -175,13 +187,13 @@ export const SCANNERS: ScannerPage[] = [
     ],
   },
   {
-    slug: 'replit-security-scanner',
+    slug: 'replit',
     tool: 'Replit',
     brand: 'replit',
     eyebrow: '// REPLIT SECURITY SCANNER',
-    metaTitle: 'Replit Security Scanner — Check Your App Free | Veilguard',
+    metaTitle: 'Replit Security Scanner, Check Your App Free | Veilguard',
     metaDescription:
-      'Built and deployed with Replit Agent? Scan your app free for exposed secrets, open database rules and auth holes — an A–F security grade in 60 seconds, plus fixes.',
+      'Built and deployed with Replit Agent? Scan your app free for exposed secrets, open database rules and auth holes, an A–F security grade in 60 seconds, plus fixes.',
     keywords: [
       'Replit security',
       'Replit Agent security',
@@ -191,7 +203,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Is your Replit app safe for real users?',
     intro:
-      'Replit Agent writes your app and deploys it in the same breath, so the gap between “idea” and “live on the internet” is minutes. That is powerful — and it means security review never happens. Secrets end up readable, the database is left open, and the app is public before anyone checks it. Veilguard scans your live Replit deployment, grades it A to F, and gives you the exact fix for every issue it finds.',
+      'Replit Agent writes your app and deploys it in the same breath, so the gap between “idea” and “live on the internet” is minutes. That is powerful, and it means security review never happens. Secrets end up readable, the database is left open, and the app is public before anyone checks it. Veilguard scans your live Replit deployment, grades it A to F, and gives you the exact fix for every issue it finds.',
     checksHeading: 'What Veilguard checks in a Replit app',
     checks: [
       {
@@ -201,7 +213,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         title: 'Open database access',
-        body: 'Replit DB, Supabase or Postgres left readable or writable by any visitor — the top cause of vibe-coded data leaks.',
+        body: 'Replit DB, Supabase or Postgres left readable or writable by any visitor, the top cause of vibe-coded data leaks.',
         severity: 'critical',
       },
       {
@@ -211,7 +223,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         title: 'Injection risks',
-        body: 'User input passed straight into database queries or shell commands — classic SQL injection the Agent doesn’t guard against.',
+        body: 'User input passed straight into database queries or shell commands, classic SQL injection the Agent doesn’t guard against.',
         severity: 'warning',
       },
       {
@@ -227,7 +239,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     whyHeading: 'Why Replit apps ship exposed',
     why:
-      'When building and deploying are a single action, there is no natural moment to ask “is this safe to be public?” Replit Agent makes reasonable functional choices, but it does not harden your app or warn you about what it left open. Veilguard adds the missing checkpoint — after you ship, before anyone gets hurt.',
+      'When building and deploying are a single action, there is no natural moment to ask “is this safe to be public?” Replit Agent makes reasonable functional choices, but it does not harden your app or warn you about what it left open. Veilguard adds the missing checkpoint, after you ship, before anyone gets hurt.',
     faqs: [
       {
         q: 'Does Veilguard work with Replit deployments?',
@@ -235,7 +247,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         q: 'Will it catch secrets committed to my Repl?',
-        a: 'With a read-only GitHub connection, yes — we scan your git history for keys and tokens that were committed and are still exposed, then tell you exactly which to rotate.',
+        a: 'With a read-only GitHub connection, yes, we scan your git history for keys and tokens that were committed and are still exposed, then tell you exactly which to rotate.',
       },
       {
         q: 'Do I need to understand the fixes?',
@@ -244,11 +256,11 @@ export const SCANNERS: ScannerPage[] = [
     ],
   },
   {
-    slug: 'v0-security-scanner',
+    slug: 'v0',
     tool: 'v0',
     brand: 'v0',
     eyebrow: '// V0 SECURITY SCANNER',
-    metaTitle: 'v0 Security Scanner — Check Your App Free | Veilguard',
+    metaTitle: 'v0 Security Scanner, Check Your App Free | Veilguard',
     metaDescription:
       'Built your app with v0 by Vercel? Scan it free for exposed keys, open database rules and auth gaps. Get a plain-English A–F grade in 60 seconds, plus the exact fixes.',
     keywords: [
@@ -260,7 +272,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Is your v0 app safe to charge people money?',
     intro:
-      'v0 turns a prompt into a polished Next.js app, and it is easy to wire in Supabase or Neon and push it live on Vercel the same day. The UI looks production-ready — but looking finished and being safe are not the same thing. Server actions, environment variables and database rules are where the real risk sits. Veilguard scans your live v0 app, grades it A to F, and hands you the exact fix for every issue.',
+      'v0 turns a prompt into a polished Next.js app, and it is easy to wire in Supabase or Neon and push it live on Vercel the same day. The UI looks production-ready, but looking finished and being safe are not the same thing. Server actions, environment variables and database rules are where the real risk sits. Veilguard scans your live v0 app, grades it A to F, and hands you the exact fix for every issue.',
     checksHeading: 'What Veilguard checks in a v0 app',
     checks: [
       {
@@ -296,7 +308,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     whyHeading: 'Why v0 apps ship exposed',
     why:
-      'v0 is exceptional at generating interfaces, and that polish is exactly what hides the risk: an app that looks done reads as safe. But the security-critical parts — who is allowed to do what, and which secrets reach the browser — are decisions v0 makes for convenience, not safety. Veilguard reviews those decisions for you before your customers do.',
+      'v0 is exceptional at generating interfaces, and that polish is exactly what hides the risk: an app that looks done reads as safe. But the security-critical parts, who is allowed to do what, and which secrets reach the browser, are decisions v0 makes for convenience, not safety. Veilguard reviews those decisions for you before your customers do.',
     faqs: [
       {
         q: 'Can Veilguard scan a v0 (Vercel) app?',
@@ -304,7 +316,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         q: 'Does it check Next.js server actions and API routes?',
-        a: 'With a read-only GitHub connection we check for authorization gaps in server actions and routes — a common way v0 apps let the wrong user do privileged things.',
+        a: 'With a read-only GitHub connection we check for authorization gaps in server actions and routes, a common way v0 apps let the wrong user do privileged things.',
       },
       {
         q: 'How are the fixes delivered?',
@@ -313,13 +325,13 @@ export const SCANNERS: ScannerPage[] = [
     ],
   },
   {
-    slug: 'cursor-security-scanner',
+    slug: 'cursor',
     tool: 'Cursor',
     brand: 'cursor',
     eyebrow: '// CURSOR SECURITY SCANNER',
-    metaTitle: 'Cursor Security Scanner — Check Your App Free | Veilguard',
+    metaTitle: 'Cursor Security Scanner, Check Your App Free | Veilguard',
     metaDescription:
-      'Building with Cursor’s AI? Scan your app free for exposed secrets, injection, open database rules and auth holes — a plain-English A–F grade in 60 seconds, plus fixes.',
+      'Building with Cursor’s AI? Scan your app free for exposed secrets, injection, open database rules and auth holes, a plain-English A–F grade in 60 seconds, plus fixes.',
     keywords: [
       'Cursor security',
       'Cursor AI security',
@@ -329,7 +341,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Is the app you built with Cursor actually secure?',
     intro:
-      'Cursor makes you fast — it writes whole features on request and accepts them with a keystroke. But AI-written code carries AI-written mistakes, and nearly half of it ships with a security vulnerability. Injection, exposed secrets and open database rules slip in between commits without anyone noticing. Veilguard scans the live app you built with Cursor, grades it A to F, and shows you the exact fix for each problem.',
+      'Cursor makes you fast, it writes whole features on request and accepts them with a keystroke. But AI-written code carries AI-written mistakes, and nearly half of it ships with a security vulnerability. Injection, exposed secrets and open database rules slip in between commits without anyone noticing. Veilguard scans the live app you built with Cursor, grades it A to F, and shows you the exact fix for each problem.',
     checksHeading: 'What Veilguard checks in a Cursor-built app',
     checks: [
       {
@@ -339,7 +351,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         title: 'Injection vulnerabilities',
-        body: 'User input passed unsanitized into SQL, shell commands or queries — the injection bugs AI code introduces most often.',
+        body: 'User input passed unsanitized into SQL, shell commands or queries, the injection bugs AI code introduces most often.',
         severity: 'critical',
       },
       {
@@ -365,7 +377,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     whyHeading: 'Why Cursor-built apps ship exposed',
     why:
-      'Cursor is brilliant at producing code that works, and reviewing every line it writes defeats the point of moving fast. So security issues accumulate quietly across dozens of accepted suggestions. You don’t need to read all that code — Veilguard reads the result for you and tells you, in plain English, what to fix.',
+      'Cursor is brilliant at producing code that works, and reviewing every line it writes defeats the point of moving fast. So security issues accumulate quietly across dozens of accepted suggestions. You don’t need to read all that code, Veilguard reads the result for you and tells you, in plain English, what to fix.',
     faqs: [
       {
         q: 'Does Veilguard scan apps built with Cursor?',
@@ -373,7 +385,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         q: 'Isn’t AI-generated code already safe?',
-        a: 'Independent research finds that close to half of AI-generated code contains a security vulnerability. Cursor optimizes for working code, not hardened code — the gap is exactly what Veilguard checks.',
+        a: 'Independent research finds that close to half of AI-generated code contains a security vulnerability. Cursor optimizes for working code, not hardened code, the gap is exactly what Veilguard checks.',
       },
       {
         q: 'How do I apply the fixes?',
@@ -382,11 +394,11 @@ export const SCANNERS: ScannerPage[] = [
     ],
   },
   {
-    slug: 'supabase-security-checker',
+    slug: 'supabase',
     tool: 'Supabase',
     brand: 'supabase',
     eyebrow: '// SUPABASE SECURITY CHECKER',
-    metaTitle: 'Supabase Security Checker — RLS & Rules | Veilguard',
+    metaTitle: 'Supabase Security Checker, RLS & Rules | Veilguard',
     metaDescription:
       'Check your Supabase project free for open row-level security, exposed keys and public buckets. Get a plain-English A–F grade in 60 seconds, plus the exact RLS fixes.',
     keywords: [
@@ -399,7 +411,7 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Is your Supabase database actually locked down?',
     intro:
-      'Supabase gives your app a real Postgres database in seconds — and leaves it to you to decide who can read and write it. That decision is row-level security, and it is the single most common place vibe-coded apps get breached. A table with RLS off, or a policy that reads USING(true), means anyone on the internet can read every row. Veilguard checks your live Supabase-backed app, grades it A to F, and hands you the exact policy to paste.',
+      'Supabase gives your app a real Postgres database in seconds, and leaves it to you to decide who can read and write it. That decision is row-level security, and it is the single most common place vibe-coded apps get breached. A table with RLS off, or a policy that reads USING(true), means anyone on the internet can read every row. Veilguard checks your live Supabase-backed app, grades it A to F, and hands you the exact policy to paste.',
     checksHeading: 'What Veilguard checks in your Supabase project',
     checks: [
       {
@@ -409,12 +421,12 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         title: 'Policies that read USING(true)',
-        body: 'A policy that always evaluates true is the same as no policy at all — it just looks protected. This is the exact pattern behind real Supabase breaches.',
+        body: 'A policy that always evaluates true is the same as no policy at all, it just looks protected. This is the exact pattern behind real Supabase breaches.',
         severity: 'critical',
       },
       {
         title: 'auth.uid() IS NOT NULL bypass',
-        body: 'Policies that only check a user is logged in — not that the row belongs to them — let any signed-in user read everyone’s data.',
+        body: 'Policies that only check a user is logged in, not that the row belongs to them, let any signed-in user read everyone’s data.',
         severity: 'critical',
       },
       {
@@ -435,7 +447,17 @@ export const SCANNERS: ScannerPage[] = [
     ],
     whyHeading: 'Why Supabase projects end up exposed',
     why:
-      'Supabase is secure by design — but only if you write the right policies, and AI builders like Lovable and Bolt frequently don’t. The database ships permissive so you can move fast, and the danger is invisible: the app works perfectly whether or not RLS is correct. The Moltbook breach leaked 1.5 million API keys from exactly this mistake. Veilguard tells you which tables are open and gives you the SQL to close them.',
+      'Supabase is secure by design, but only if you write the right policies, and AI builders like Lovable and Bolt frequently don’t. Because the public anon key sits in the browser, any table without correct row-level security is readable by anyone who opens developer tools. The danger is invisible: the app works perfectly whether or not RLS is correct. CVE-2025-48757 (CVSS 9.3) showed exactly this, missing RLS left 170+ AI-built Supabase apps readable without logging in. Veilguard tells you which tables are open and gives you the SQL to close them.',
+    sources: [
+      {
+        label: 'Supabase: Row Level Security (official docs)',
+        href: 'https://supabase.com/docs/guides/database/postgres/row-level-security',
+      },
+      {
+        label: 'CVE-2025-48757: missing RLS exposed 170+ AI-built Supabase apps (CVSS 9.3)',
+        href: 'https://securityonline.info/cve-2025-48757-lovables-row-level-security-breakdown-exposes-sensitive-data-across-hundreds-of-projects/',
+      },
+    ],
     faqs: [
       {
         q: 'How does Veilguard check my Supabase RLS?',
@@ -443,7 +465,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         q: 'What is the most common Supabase mistake?',
-        a: 'Row-level security that is off or effectively open — a table with RLS disabled, or a policy that reads USING(true) or only checks auth.uid() IS NOT NULL. All three let the wrong people read your data.',
+        a: 'Row-level security that is off or effectively open, a table with RLS disabled, or a policy that reads USING(true) or only checks auth.uid() IS NOT NULL. All three let the wrong people read your data.',
       },
       {
         q: 'Will you give me the fix, not just the problem?',
@@ -452,11 +474,11 @@ export const SCANNERS: ScannerPage[] = [
     ],
   },
   {
-    slug: 'firebase-security-checker',
+    slug: 'firebase',
     tool: 'Firebase',
     brand: 'firebase',
     eyebrow: '// FIREBASE SECURITY CHECKER',
-    metaTitle: 'Firebase Security Rules Checker — Free Scan | Veilguard',
+    metaTitle: 'Firebase Security Rules Checker, Free Scan | Veilguard',
     metaDescription:
       'Check your Firebase security rules free for open read/write access, weak auth and exposed config. Get a plain-English A–F grade in 60 seconds, plus the exact fixes.',
     keywords: [
@@ -469,17 +491,17 @@ export const SCANNERS: ScannerPage[] = [
     ],
     h1: 'Are your Firebase security rules leaving the door open?',
     intro:
-      'Firebase makes it trivial to store and sync data straight from the browser — which means your security rules are the only thing standing between a stranger and your entire database. AI builders love to start with allow read, write: if true just to get things working, and that line quietly ships to production. Veilguard checks your live Firebase-backed app, grades it A to F, and gives you the exact rules to lock it down.',
+      'Firebase makes it trivial to store and sync data straight from the browser, which means your security rules are the only thing standing between a stranger and your entire database. AI builders love to start with allow read, write: if true just to get things working, and that line quietly ships to production. Veilguard checks your live Firebase-backed app, grades it A to F, and gives you the exact rules to lock it down.',
     checksHeading: 'What Veilguard checks in your Firebase project',
     checks: [
       {
         title: 'allow read, write: if true',
-        body: 'The rule that makes your entire database public. It’s the default starting point and the number-one Firebase mistake — we flag it immediately.',
+        body: 'The rule that makes your entire database public. It’s the default starting point and the number-one Firebase mistake, we flag it immediately.',
         severity: 'critical',
       },
       {
         title: 'Auth-only rules without ownership checks',
-        body: 'Rules that only require a user to be signed in — not that the document is theirs — let any logged-in user read and edit everyone’s data.',
+        body: 'Rules that only require a user to be signed in, not that the document is theirs, let any logged-in user read and edit everyone’s data.',
         severity: 'critical',
       },
       {
@@ -505,7 +527,17 @@ export const SCANNERS: ScannerPage[] = [
     ],
     whyHeading: 'Why Firebase projects end up exposed',
     why:
-      'Because Firebase talks directly to the browser, a weak rule isn’t a small mistake — it’s a fully open database on the public internet. The permissive starter rules are meant to be temporary, but when an AI builds your app there’s no one to remember to tighten them. Veilguard reads your rules the way an attacker would and tells you, in plain English, exactly what to change.',
+      'Because Firebase talks directly to the browser, a weak rule isn’t a small mistake, it’s a fully open database on the public internet. The permissive starter rules (allow read, write: if true) are meant to be temporary, but when an AI builds your app there’s no one to remember to tighten them, and Veracode’s 2025 research found AI writes the insecure version 45% of the time. Veilguard reads your rules the way an attacker would and tells you, in plain English, exactly what to change.',
+    sources: [
+      {
+        label: 'Firebase: Security Rules (official docs)',
+        href: 'https://firebase.google.com/docs/rules',
+      },
+      {
+        label: 'Veracode 2025 GenAI Code Security Report: AI chooses insecure code 45% of the time',
+        href: 'https://www.veracode.com/resources/analyst-reports/2025-genai-code-security-report/',
+      },
+    ],
     faqs: [
       {
         q: 'Can Veilguard check my Firebase security rules?',
@@ -513,7 +545,7 @@ export const SCANNERS: ScannerPage[] = [
       },
       {
         q: 'What’s the worst Firebase rule to leave in?',
-        a: 'allow read, write: if true — it makes your whole database public. Auth-only rules without an ownership check are a close second, since any signed-in user can then reach everyone’s data.',
+        a: 'allow read, write: if true, it makes your whole database public. Auth-only rules without an ownership check are a close second, since any signed-in user can then reach everyone’s data.',
       },
       {
         q: 'Do I get the corrected rules?',

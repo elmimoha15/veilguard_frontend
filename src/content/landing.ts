@@ -3,7 +3,7 @@
  * Copy follows the approved content brief; visuals follow the design file.
  */
 
-export const TRUST_LINE = 'Free — no signup · Your code stays yours · Results in ~60s';
+export const TRUST_LINE = 'Free · No signup · Your code stays yours · Results in ~60s';
 
 /* ---- Problem stats -------------------------------------------------- */
 export const STATS = [
@@ -13,14 +13,14 @@ export const STATS = [
     source: 'Veracode, 2025',
   },
   {
-    value: '1.5M',
-    label: 'API keys leaked from a single vibe-coded app — from one database rule nobody checked',
-    source: 'Moltbook breach, 2026',
+    value: '170+',
+    label: 'live apps exposed by one class of Lovable misconfiguration, with row-level security left off',
+    source: 'CVE-2025-48757',
   },
   {
-    value: 'under 60 min',
-    label: 'for an attacker to go from finding your app to owning your data',
-    source: 'Industry average',
+    value: '2.74x',
+    label: 'more vulnerabilities in AI-generated code than in code written by humans',
+    source: 'Veracode, 2025',
   },
 ];
 
@@ -36,8 +36,8 @@ export const BREACH_TYPES: BreachType[] = [
   {
     title: 'Your database is set to “public”',
     means:
-      'Row-level security or Firebase rules left open means the app works for everyone — including strangers who never signed up.',
-    cost: 'Every customer’s data — names, emails, orders — readable by anyone who opens your site’s network tab.',
+      'Row-level security or Firebase rules left open means the app works for everyone, including strangers who never signed up.',
+    cost: 'Every customer’s data, names, emails, orders, readable by anyone who opens your site’s network tab.',
     seen: 'Lovable · Moltbook · Tea',
   },
   {
@@ -49,24 +49,24 @@ export const BREACH_TYPES: BreachType[] = [
   {
     title: 'The lock is on the browser, not the door',
     means: 'When the “are you allowed?” check runs in the browser, the visitor is the one holding the key.',
-    cost: 'People bypass your paywall by editing one value in the console — you keep the users and lose the revenue.',
+    cost: 'People bypass your paywall by editing one value in the console, you keep the users and lose the revenue.',
     seen: 'Enrichlead',
   },
   {
     title: 'Anyone can fake “payment succeeded”',
     means: 'Payment webhooks that skip signature checks trust any request that shows up looking official.',
-    cost: 'Free lifetime access for anyone who reads your API docs — and fraudulent orders polluting your data.',
+    cost: 'Free lifetime access for anyone who reads your API docs, and fraudulent orders polluting your data.',
   },
   {
     title: 'Your uploads are a public folder',
-    means: 'Storage buckets set public expose every file your users upload — often with no link required.',
+    means: 'Storage buckets set public expose every file your users upload, often with no link required.',
     cost: 'ID photos, invoices and private images sitting in the open, ready to be scraped and dumped.',
     seen: 'Tea',
   },
   {
     title: 'User input runs as code',
     means: 'Unsanitized input passed into a database query lets an attacker rewrite that query.',
-    cost: 'Your database gets dumped — or wiped — by a single carefully crafted request.',
+    cost: 'Your database gets dumped, or wiped, by a single carefully crafted request.',
   },
 ];
 
@@ -87,7 +87,7 @@ export const REAL_BREACHES: RealBreach[] = [
     when: 'March 2025',
     tag: 'Built with Cursor',
     story:
-      'A founder proudly shipped a SaaS with “zero hand-written code” — and all the security logic in the browser. Within 72 hours, users worked out they could unlock the paid plan by changing a single value in the console.',
+      'A founder proudly shipped a SaaS with “zero hand-written code”, and all the security logic in the browser. Within 72 hours, users worked out they could unlock the paid plan by changing a single value in the console.',
     damage: 'Paywall bypassed, API keys maxed out, database flooded with junk.',
     source: 'Tech Startups',
     href: 'https://techstartups.com/2025/03/26/when-vibe-coding-goes-wrong/',
@@ -97,7 +97,7 @@ export const REAL_BREACHES: RealBreach[] = [
     when: 'May 2025',
     tag: 'CVE-2025-48757',
     story:
-      'Researchers scanned live Lovable-built apps and found 170+ where anyone could pull full user lists, payment records and API keys straight from the database using the public key — no login required.',
+      'Researchers scanned live Lovable-built apps and found 170+ where anyone could pull full user lists, payment records and API keys straight from the database using the public key, no login required.',
     damage: 'Names, emails, addresses, payment data and developer keys exposed across 303 endpoints.',
     source: 'The Register',
     href: 'https://www.theregister.com/2026/02/27/lovable_app_vulnerabilities/',
@@ -107,7 +107,7 @@ export const REAL_BREACHES: RealBreach[] = [
     when: 'July 2025',
     tag: 'Firebase misconfig',
     story:
-      'A storage bucket left wide open leaked 72,000 images — including 13,000 selfies and photo IDs — plus more than a million private messages. The files were dumped on 4chan within days.',
+      'A storage bucket left wide open leaked 72,000 images, including 13,000 selfies and photo IDs, plus more than a million private messages. The files were dumped on 4chan within days.',
     damage: 'Driver’s licenses and DMs used to dox and harass users, followed by lawsuits.',
     source: 'NPR',
     href: 'https://www.npr.org/2025/08/02/nx-s1-5483886/tea-app-breach-hacked-whisper-networks',
@@ -117,7 +117,7 @@ export const REAL_BREACHES: RealBreach[] = [
     when: 'January 2026',
     tag: 'RLS never enabled',
     story:
-      'An AI-built social network exposed its entire database — 1.5 million auth tokens, 35,000 emails and private messages — to anyone holding the public API key. Row-level security had simply never been turned on.',
+      'An AI-built social network exposed its entire database, 1.5 million auth tokens, 35,000 emails and private messages, to anyone holding the public API key. Row-level security had simply never been turned on.',
     damage: '1.5M API tokens and 35,000 emails exposed to the public internet.',
     source: 'Wiz',
     href: 'https://www.techgines.com/post/vibe-coding-security-shadow-builders-exposed-apps',
@@ -135,7 +135,7 @@ export const STEPS = [
   {
     n: '01',
     title: 'Scan',
-    body: 'Paste your app’s link. No install, no signup — just the URL you already share with customers.',
+    body: 'Paste your app’s link. No install, no signup, just the URL you already share with customers.',
   },
   {
     n: '02',
@@ -145,7 +145,7 @@ export const STEPS = [
   {
     n: '03',
     title: 'Fix',
-    body: 'The exact fix for each issue — copy-paste code or a ready-made prompt for your AI. Then we keep watching.',
+    body: 'The exact fix for each issue, copy-paste code or a ready-made prompt for your AI. Then we keep watching.',
   },
 ];
 
@@ -227,18 +227,38 @@ export const PLANS: Plan[] = [
 export const FAQS = [
   {
     q: 'Do you see or store my code?',
-    a: 'The free scan only looks at your live app from the outside — exactly what an attacker already sees. Deeper checks are opt-in, read-only, and your source is never stored.',
+    a: 'The free scan only looks at your live app from the outside, exactly what an attacker already sees. Deeper checks are opt-in, read-only, and your source is never stored.',
   },
   {
-    q: 'I’m not technical — will I understand the results?',
+    q: 'I’m not technical, will I understand the results?',
     a: 'Yes. Every finding is written in plain English, and each fix is either copy-paste code or a ready-made prompt you can hand to your AI.',
   },
   {
     q: 'Does it work with Lovable and Supabase?',
-    a: 'Yes — that’s our specialty. Broken Supabase row-level security is the #1 critical issue we find in vibe-coded apps.',
+    a: 'Yes, that’s our specialty. Broken Supabase row-level security is the #1 critical issue we find in vibe-coded apps.',
   },
   {
     q: 'Is the scan really free?',
     a: 'Yes. The grade and full issue list cost nothing and need no account. You only pay when you want the fixes or ongoing monitoring.',
+  },
+  {
+    q: 'Is my Lovable app secure?',
+    a: 'Not automatically. A Lovable app built on Supabase is only safe if Row-Level Security is switched on for every table, and it often isn’t, which can leave your database readable by anyone holding the public key. Paste your URL and Veilguard checks it in about 60 seconds, free.',
+  },
+  {
+    q: 'How do I know if my Supabase database is exposed?',
+    a: 'The quickest check: open your live app, press F12, and watch the Network tab for requests to a *.supabase.co address. If data comes back before you log in, it’s readable by anyone. Veilguard runs this and dozens of other Row-Level Security checks for you and shows exactly which tables are open.',
+  },
+  {
+    q: 'Can someone hack an app built with AI?',
+    a: 'Yes, and usually without any real “hacking.” Most AI-built apps leak data through misconfiguration, not clever attacks: open databases, secret keys shipped to the browser, or permission checks that run in the browser instead of on the server. They’re easy to find and easy to fix once you know where they are.',
+  },
+  {
+    q: 'Is it safe to take payments on a vibe-coded app?',
+    a: 'Only if your payment webhooks verify their signature and your pricing and access checks run on the server, not in the browser. AI tools often skip both, which lets people fake a “payment succeeded” event or unlock paid features by editing one value. Veilguard flags these before you charge real customers.',
+  },
+  {
+    q: 'Do I need to code to use Veilguard?',
+    a: 'No. Paste your app’s link and you get a plain-English A–F grade with every issue explained in everyday language, plus a copy-paste fix or a ready-made prompt for your AI tool. If you can ship an app, you can fix what we find.',
   },
 ];

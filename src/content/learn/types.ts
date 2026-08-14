@@ -1,5 +1,5 @@
 /**
- * Content library ("/learn") — data-driven, SEO + AEO/GEO pages. Each `Article`
+ * Content library ("/learn"), data-driven, SEO + AEO/GEO pages. Each `Article`
  * renders through <ArticlePage>. Structure is tuned for AI citation: one H1
  * question → a direct answer up top → H2/H3 depth → bullets → key takeaways →
  * FAQ → soft scan CTA.
@@ -10,7 +10,7 @@
  * that contains one so it's easy to find before go-live.
  */
 
-export type ArticleType = 'question' | 'guide' | 'comparison' | 'research';
+export type ArticleType = 'question' | 'guide' | 'comparison' | 'research' | 'security';
 
 /** A body block within a section. `body` supports `\n\n` paragraph breaks. */
 export interface ArticleSection {
@@ -36,7 +36,7 @@ export interface RelatedLink {
 }
 
 export interface Article {
-  /** URL: /learn/<slug> */
+  /** URL: /guides/<slug> */
   slug: string;
   type: ArticleType;
   /** Display group on the /learn index (e.g. "Answers", "Guides"). */
@@ -50,7 +50,7 @@ export interface Article {
   metaDescription: string;
   keywords?: string[];
 
-  /** The single H1 — phrase it as the question the page answers. */
+  /** The single H1, phrase it as the question the page answers. */
   h1: string;
   /** 2–4 sentence direct answer, shown in a highlighted block near the top. */
   directAnswer: string;
@@ -63,10 +63,13 @@ export interface Article {
   keyTakeaways: string[];
   faqs?: ArticleFaq[];
 
-  /** 2–4 related /learn pages + builder pages. */
+  /** 2–4 related hub pages + tool pages. */
   related?: RelatedLink[];
-  /** The most relevant per-tool builder page, surfaced as a CTA. */
+  /** The most relevant per-tool scanner page, surfaced as a CTA. */
   builder?: { label: string; href: string };
+
+  /** Real, linkable sources for any stat/CVE/breach/standard referenced. */
+  sources?: { label: string; href: string }[];
 
   /** True if the copy contains any [SOURCE NEEDED] / [DATA NEEDED] placeholder. */
   hasPlaceholders?: boolean;
