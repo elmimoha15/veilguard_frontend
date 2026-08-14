@@ -62,9 +62,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       const code = (e as { code?: string })?.code ?? '';
       if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') { setBusy(null); return; }
       setError(
-        code === 'auth/account-exists-with-different-credential'
-          ? 'You already signed up with a different method — use that one.'
-          : 'Sign-in failed — please try again.',
+        // The linking flow guides the user to their existing provider with a
+        // specific, friendly message — surface it verbatim.
+        code === 'auth/use-existing-provider'
+          ? (e as Error).message
+          : code === 'auth/account-exists-with-different-credential'
+            ? 'That email is already registered — continue with your original provider (Google or GitHub).'
+            : 'Sign-in failed — please try again.',
       );
       setBusy(null);
     }

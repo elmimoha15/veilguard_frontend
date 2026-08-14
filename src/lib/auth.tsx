@@ -6,14 +6,72 @@ import {
   signInWithPopup,
   getAdditionalUserInfo,
   linkWithPopup,
+  linkWithCredential,
+  fetchSignInMethodsForEmail,
   GoogleAuthProvider,
   GithubAuthProvider,
   signOut,
   type User,
   type UserCredential,
+  type AuthError,
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { api } from './api';
+
+type Which = 'google' | 'github';
+const providerLabel = (w: Which) => (w === 'google' ? 'Google' : 'GitHub');
+const newProvider = (w: Which) => (w === 'google' ? new GoogleAuthProvider() : new GithubAuthProvider());
+const credFromError = (w: Which, err: AuthError) =>
+  w === 'google' ? GoogleAuthProvider.credentialFromError(err) : GithubAuthProvider.credentialFromError(err);
+
+/**
+ * Sign in with a provider, and gracefully resolve the classic
+ * `auth/account-exists-with-different-credential` case (same email already
+ * registered with the OTHER provider). We re-authenticate with the existing
+ * provider, then LINK the just-attempted credential — so afterwards the user can
+ * sign in with EITHER Google or GitHub interchangeably, never a dead end.
+ *
+ * We only offer two OAuth providers, so the "existing" one is simply the other
+ * (and `fetchSignInMethodsForEmail` — which returns [] under email-enumeration
+ * protection — is used only as a confirming hint, never a hard dependency).
+ */
+async function signInWithLinking(which: Which): Promise<UserCredential> {
+  try {
+    return await signInWithPopup(auth(), newProvider(which));
+  } catch (e) {
+    const err = e as AuthError;
+    if (err.code !== 'auth/account-exists-with-different-credential') throw err;
+
+    const email = (err.customData?.email as string | undefined) ?? undefined;
+    const pending = credFromError(which, err);
+    if (!email || !pending) throw err;
+
+    const other: Which = which === 'google' ? 'github' : 'google';
+    let existing: Which = other;
+    try {
+      const methods = await fetchSignInMethodsForEmail(auth(), email);
+      if (methods.length) existing = methods.includes('google.com') ? 'google' : methods.includes('github.com') ? 'github' : other;
+    } catch { /* enumeration-protection or offline → fall back to `other` */ }
+
+    // Re-authenticate with the account's existing provider (hint the email so the
+    // right account is chosen), then link the credential the user just tried.
+    const existingProvider = newProvider(existing);
+    existingProvider.setCustomParameters({ login_hint: email });
+    let result: UserCredential;
+    try {
+      result = await signInWithPopup(auth(), existingProvider);
+    } catch {
+      // Second popup was blocked/closed — guide instead of dead-ending.
+      const guide = new Error(
+        `This email is already registered with ${providerLabel(existing)}. Continue with ${providerLabel(existing)} to sign in.`,
+      ) as Error & { code?: string };
+      guide.code = 'auth/use-existing-provider';
+      throw guide;
+    }
+    try { await linkWithCredential(result.user, pending); } catch { /* already linked / benign */ }
+    return result;
+  }
+}
 
 export interface Profile {
   uid: string;
@@ -103,12 +161,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [refreshProfile]);
 
-  const google = useCallback(async () => {
-    return signInWithPopup(auth(), new GoogleAuthProvider());
-  }, []);
-  const github = useCallback(async () => {
-    return signInWithPopup(auth(), new GithubAuthProvider());
-  }, []);
+  const google = useCallback(() => signInWithLinking('google'), []);
+  const github = useCallback(() => signInWithLinking('github'), []);
   const link = useCallback(async (which: 'google' | 'github') => {
     const u = auth().currentUser;
     if (!u) throw new Error('not signed in');
