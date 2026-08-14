@@ -1,7 +1,13 @@
+import type { Metadata } from 'next';
 import { AppStateProvider } from '@/components/app/state';
 import { ConfettiOverlay, ToastStack } from '@/components/app/ui';
 import ScanWatcher from '@/components/app/ScanWatcher';
+import FeedbackWidget from '@/components/app/FeedbackWidget';
 import { AuthProvider } from '@/lib/auth';
+
+// De-index the entire signed-in app group in one place (safety net so no app
+// screen is ever crawled/indexed, current or future). Marketing is separate.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /**
  * The signed-in product app. Deliberately renders none of the marketing chrome
@@ -19,6 +25,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="app-theme min-h-screen bg-bg text-ink">
           {children}
           <ScanWatcher />
+          <FeedbackWidget />
           <ToastStack />
           <ConfettiOverlay />
         </div>

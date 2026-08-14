@@ -48,6 +48,12 @@ export function RepoPicker({
             <p className="text-[15px] text-muted mb-4">GitHub isn’t connected yet.</p>
             <button onClick={onNeedsConnect} className="vg-press bg-ink text-white font-semibold rounded-[10px] px-5 py-3 text-[15px]">Connect GitHub in Settings</button>
           </div>
+        ) : error === 'needs-reconnect' ? (
+          <div className="text-center py-6">
+            <p className="text-[15px] text-ink font-semibold mb-1">Your GitHub connection needs refreshing</p>
+            <p className="text-[14.5px] text-muted mb-4 max-w-[380px] mx-auto">We lost access to your repositories — this usually means the connection was revoked or expired. Reconnect and we’ll pick right back up.</p>
+            <button onClick={onNeedsConnect} className="vg-press bg-ink text-white font-semibold rounded-[10px] px-5 py-3 text-[15px]">Reconnect GitHub</button>
+          </div>
         ) : (
           <>
             <label className="shrink-0 flex items-center gap-[9px] bg-bg-soft border border-border rounded-[10px] px-[14px] mb-3 focus-within:border-ink transition-colors">

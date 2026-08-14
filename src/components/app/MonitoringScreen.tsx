@@ -8,6 +8,7 @@ import { billingHref } from '@/lib/url';
 import { useMonitorEvents, GRADE_TINT, scanLabel, repoDisplay, type App } from '@/lib/hooks';
 import { setAppMonitoring, type Cadence, type AppMonitoring, type ScanDoc, type AppRecord } from '@/lib/scans';
 import { api } from '@/lib/api';
+import { startFailure } from '@/lib/scanError';
 import { Toggle } from './ui';
 import { Card, SectionLabel } from './primitives';
 import { RepoPicker } from './RepoPicker';
@@ -55,7 +56,13 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
   // Attach/scan a repo so an app becomes push-monitorable (same flow as the New-scan chooser).
   const startDeep = async (fullName: string): Promise<boolean> => {
     const r = await api.createDeepScan({ githubRepo: fullName });
-    if (!r.ok || !r.data.scanId) { toast(r.data.error || 'Could not start the scan', '#E5484D'); return false; }
+    if (!r.ok || !r.data.scanId) {
+      if (r.data.error) console.error('[monitoring] deep scan start failed:', r.data.error);
+      if (r.status === 409) { toast('Your GitHub connection needs refreshing — reconnect it in Settings, then try again.', '#C23B3F'); setRepoOpen(false); router.push('/settings'); }
+      else if (r.status === 502) { toast('We couldn’t verify that repo with GitHub. Give it a moment and try again.', '#C23B3F'); }
+      else toast(startFailure(r.status, r.data).message, '#C23B3F');
+      return false;
+    }
     setRepoOpen(false);
     setPendingScanId(r.data.scanId);
     router.push(`/scanning?scanId=${r.data.scanId}`);

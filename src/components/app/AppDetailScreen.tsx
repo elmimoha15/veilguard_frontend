@@ -7,6 +7,7 @@ import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
 import { useApps, findActiveApp, GRADE_TINT, timeAgo, repoDisplay, type App } from '@/lib/hooks';
 import { saveApps, upsertApp, type ScanDoc } from '@/lib/scans';
+import { scanFailure, startFailure } from '@/lib/scanError';
 import { api } from '@/lib/api';
 import { GradeHelp } from './GradeHelp';
 import { checkUrl, billingHref } from '@/lib/url';
@@ -54,12 +55,20 @@ export default function AppDetailScreen() {
   const resume = (scanId: string) => { if (app) setActiveSite(app.host); router.push(`/scanning?scanId=${scanId}`); };
   const afterStart = (scanId: string) => { setPendingScanId(scanId); resume(scanId); };
 
+  // Friendly toast for a failed scan-start (never the raw error; that's logged).
+  const startToast = (status: number, data: { error?: string; code?: string }) => {
+    if (data.error) console.error('[app detail] scan start failed:', data.error);
+    const f = startFailure(status, data);
+    toast(f.message, f.tone === 'user' && !f.upsell ? '#8a6d00' : '#C23B3F');
+    if (f.upsell && !paid) router.push(billingHref());
+  };
+
   const runUrl = async () => {
     if (!app) return;
     const c = checkUrl(app.url ?? '');
     if (!c.ok) { setUrlOpen(true); return; }
     const r = await api.createScan(c.url!);
-    if (!r.ok || !r.data.scanId) { toast(r.data.error || 'Could not start scan', '#E5484D'); return; }
+    if (!r.ok || !r.data.scanId) { startToast(r.status, r.data); return; }
     afterStart(r.data.scanId);
   };
 
@@ -68,7 +77,7 @@ export default function AppDetailScreen() {
     const c = checkUrl(raw);
     if (!c.ok) { toast(c.error!, '#E5484D'); return; }
     const r = await api.createScan(c.url!);
-    if (!r.ok || !r.data.scanId) { toast(r.data.error || 'Could not start scan', '#E5484D'); return; }
+    if (!r.ok || !r.data.scanId) { startToast(r.status, r.data); return; }
     if (user) await saveApps(user.uid, upsertApp(records, { url: c.url!, githubRepo: app.githubRepo, name: app.name }));
     setUrlOpen(false);
     afterStart(r.data.scanId);
@@ -77,7 +86,13 @@ export default function AppDetailScreen() {
   const startDeep = async (fullName: string): Promise<boolean> => {
     if (!app) return false;
     const r = await api.createDeepScan({ githubRepo: fullName });
-    if (!r.ok || !r.data.scanId) { toast(r.data.error || 'Could not start the scan', '#E5484D'); return false; }
+    if (!r.ok || !r.data.scanId) {
+      if (r.data.error) console.error('[app detail] deep scan start failed:', r.data.error);
+      if (r.status === 409) { toast('Your GitHub connection needs refreshing — reconnect it in Settings, then try again.', '#C23B3F'); setRepoOpen(false); router.push('/settings'); }
+      else if (r.status === 502) { toast('We couldn’t verify that repo with GitHub. Give it a moment and try again.', '#C23B3F'); }
+      else startToast(r.status, r.data);
+      return false;
+    }
     if (user) await saveApps(user.uid, upsertApp(records, { url: app.url, githubRepo: fullName, name: app.name }));
     setRepoOpen(false);
     afterStart(r.data.scanId);
@@ -118,9 +133,15 @@ export default function AppDetailScreen() {
 
   // Which tab this hub shows (from ?tab=); Findings/Monitoring are now tabs here
   // rather than separate pages. Switching tabs replaces the URL so back works.
+  // Monitoring only makes sense for a repo-connected app — it re-scans the code on
+  // new deploys. A URL-only app has nothing to re-pull, so it gets no monitoring.
+  // Also Guard-only. A free user, a URL-only app, or a direct ?tab=monitoring link
+  // that doesn't qualify falls back to Overview.
+  const monitorable = paid && !!app?.githubRepo;
   const tab = ((): 'overview' | 'findings' | 'monitoring' => {
     const t = params.get('tab');
-    return t === 'findings' || t === 'monitoring' ? t : 'overview';
+    if (t === 'monitoring') return monitorable ? 'monitoring' : 'overview';
+    return t === 'findings' ? 'findings' : 'overview';
   })();
   const goTab = (t: string, scanId?: string) =>
     router.replace(`/app?key=${encodeURIComponent(app.key)}&tab=${t}${scanId ? `&scan=${scanId}` : ''}`);
@@ -161,7 +182,7 @@ export default function AppDetailScreen() {
 
       {/* Tabs — everything about this app lives here */}
       <div className="flex items-center gap-6 border-b border-border mb-6">
-        {TABS.map((t) => {
+        {TABS.filter((t) => monitorable || t.id !== 'monitoring').map((t) => {
           const on = tab === t.id;
           const crit = t.id === 'findings' ? (c?.critical ?? 0) : 0;
           return (
@@ -188,14 +209,24 @@ export default function AppDetailScreen() {
           <div className="min-w-0 flex-1">
             <SectionLabel>Latest scan</SectionLabel>
             <div className="text-[15px] text-ink font-semibold mt-[6px]">
-              {latest.status === 'done' ? `${c?.critical ?? 0} critical · ${warnings} warnings · ${c?.passed ?? 0} passed` : latest.status}
+              {latest.status === 'done'
+                ? `${c?.critical ?? 0} critical · ${warnings} warnings · ${c?.passed ?? 0} passed`
+                : latest.status === 'error'
+                  ? scanFailure(latest).title
+                  : isRunning(latest)
+                    ? 'Scanning…'
+                    : 'Queued…'}
             </div>
             <div className="text-[13px] text-muted mt-[2px]">{timeAgo(latest.createdAt)}</div>
             <div className="flex items-center gap-[10px] mt-4">
-              <button onClick={() => goTab('findings', latest.id)} className="vg-press cursor-pointer bg-ink text-white font-medium text-[14px] rounded-[10px] px-[16px] py-[9px]">View findings</button>
+              {latest.status === 'error' ? (
+                <button onClick={() => openResult(latest.id)} className="vg-press cursor-pointer bg-ink text-white font-medium text-[14px] rounded-[10px] px-[16px] py-[9px]">See what happened</button>
+              ) : (
+                <button onClick={() => goTab('findings', latest.id)} className="vg-press cursor-pointer bg-ink text-white font-medium text-[14px] rounded-[10px] px-[16px] py-[9px]">View findings</button>
+              )}
               <button onClick={rescan} style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }} className="vg-press cursor-pointer font-medium text-[14px] rounded-[10px] px-[16px] py-[9px] inline-flex items-center gap-[7px]">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v4h-4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                Rescan
+                {latest.status === 'error' ? 'Try again' : 'Rescan'}
               </button>
             </div>
           </div>
@@ -225,10 +256,10 @@ export default function AppDetailScreen() {
                   className="vg-row cursor-pointer flex items-center gap-3 py-[13px] px-2 -mx-2 rounded-[8px] text-left"
                   style={{ borderTop: i === 0 ? undefined : '1px solid var(--color-hairline)' }}
                 >
-                  <span className="shrink-0 w-[9px] h-[9px] rounded-full" style={{ background: s.grade ? GRADE_TINT[s.grade].fg : '#9B9B96' }} />
+                  <span className="shrink-0 w-[9px] h-[9px] rounded-full" style={{ background: s.status === 'error' ? '#C23B3F' : s.grade ? GRADE_TINT[s.grade].fg : '#9B9B96' }} />
                   <span className="flex-1 min-w-0">
                     <span className="block text-[15px] font-semibold">{lens} scan</span>
-                    <span className="block font-mono text-[12px] text-faint mt-[2px] tnum">{running ? (s.progress?.phase ?? 'scanning…') : s.status} · {timeAgo(s.createdAt)}</span>
+                    <span className="block font-mono text-[12px] text-faint mt-[2px] tnum">{running ? (s.progress?.phase ?? 'scanning…') : s.status === 'error' ? 'Failed' : s.status === 'done' ? 'Complete' : s.status} · {timeAgo(s.createdAt)}</span>
                   </span>
                   {s.grade && <span className="w-[30px] h-[30px] rounded-lg flex items-center justify-center font-semibold text-[15px] tnum" style={{ background: GRADE_TINT[s.grade].bg, color: GRADE_TINT[s.grade].fg }}>{s.grade}</span>}
                   <svg className="text-faint" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>

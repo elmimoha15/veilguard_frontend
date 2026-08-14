@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { checkUrl } from '@/lib/url';
 import { saveOnboarding, subscribeScan, type ScanDoc } from '@/lib/scans';
+import { scanFailure, startFailure } from '@/lib/scanError';
 import { GRADE_COLOR } from '@/lib/adapters';
 import Logo from '@/components/ui/Logo';
 import { BrandLogo, type BrandLogoName } from '@/components/ui/BrandLogo';
@@ -114,7 +115,7 @@ export default function OnboardingWizard() {
       <div className="min-h-screen bg-bg relative">
         <div className="absolute inset-x-0 top-0 z-10"><Header onSkip={skipToDashboard} busy={busy} /></div>
         <div className="min-h-screen flex items-center justify-center px-5 py-20">
-          <OnboardingResult scanId={ob.scanId} onContinue={() => router.replace('/dashboard')} />
+          <OnboardingResult scanId={ob.scanId} onContinue={() => router.replace('/dashboard')} onRetried={(id) => setOb({ scanId: id })} />
         </div>
       </div>
     );
@@ -255,8 +256,10 @@ export default function OnboardingWizard() {
 }
 
 /* ── inline result view ──────────────────────────────────────────────────── */
-function OnboardingResult({ scanId, onContinue }: { scanId: string; onContinue: () => void }) {
+function OnboardingResult({ scanId, onContinue, onRetried }: { scanId: string; onContinue: () => void; onRetried: (id: string) => void }) {
+  const { toast } = useApp();
   const [scan, setScan] = useState<ScanDoc | null>(null);
+  const [retrying, setRetrying] = useState(false);
   useEffect(() => subscribeScan(scanId, setScan), [scanId]);
 
   const status = scan?.status;
@@ -267,6 +270,19 @@ function OnboardingResult({ scanId, onContinue }: { scanId: string; onContinue: 
   const grade = scan?.grade;
   const c = scan?.counts;
   const warnings = c ? c.high + c.medium + c.low : 0;
+  const fail = errored && scan ? scanFailure(scan) : null;
+
+  // The onboarding first scan is always a URL scan — re-run it in place and swap
+  // the tracked scan id so the wizard follows the fresh run.
+  const retry = async () => {
+    if (!scan || retrying) return;
+    setRetrying(true);
+    const res = await api.createScan(scan.sources?.url || scan.target.value);
+    if (res.ok && res.data.scanId) { onRetried(res.data.scanId); return; }
+    if (res.data.error) console.error('[onboarding retry] scan start failed:', res.data.error);
+    toast(startFailure(res.status, res.data).message, '#C23B3F');
+    setRetrying(false);
+  };
 
   return (
     <div className="w-full max-w-[560px] text-center vg-fade">
@@ -275,8 +291,11 @@ function OnboardingResult({ scanId, onContinue }: { scanId: string; onContinue: 
           <div className="mx-auto w-[120px] h-[120px] flex items-center justify-center">
             <GradeLetter letter="!" color="#E0932F" size={64} halftone={false} />
           </div>
-          <h1 className="font-bold text-[24px] tracking-[-0.02em] mt-4">We couldn’t finish that scan</h1>
-          <p className="text-[15px] text-muted mt-2 max-w-[46ch] mx-auto leading-[1.55]">You can retry it any time from your dashboard.</p>
+          <h1 className="font-bold text-[24px] tracking-[-0.02em] mt-4">{fail?.title ?? 'We couldn’t finish that scan'}</h1>
+          <p className="text-[15px] text-muted mt-2 max-w-[46ch] mx-auto leading-[1.55]">{fail?.body ?? 'You can retry it any time from your dashboard.'}</p>
+          <button onClick={retry} disabled={retrying} className="vg-press cursor-pointer mt-6 bg-ink text-white rounded-[10px] px-7 py-[13px] font-medium text-[15px] disabled:opacity-60">
+            {retrying ? 'Starting…' : 'Try again'}
+          </button>
         </>
       ) : done ? (
         <>

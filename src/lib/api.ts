@@ -101,10 +101,25 @@ async function call<T = Record<string, unknown>>(
   try {
     res = await fetch(`${BASE}${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
   } catch {
-    return { ok: false, status: 0, data: { error: 'backend unreachable — is `npm run dev:all` running?' } as T };
+    return { ok: false, status: 0, data: { error: 'Can’t reach Veilguard right now — check your connection and try again.' } as T };
   }
   const data = (await res.json().catch(() => ({}))) as T;
   return { ok: res.ok, status: res.status, data };
+}
+
+/**
+ * Retry only TRANSIENT failures — a network drop (status 0) or an our-side 5xx —
+ * with backoff. Never retries a 4xx (the user's input won't change on retry).
+ * Used to wrap scan-start calls so a blip doesn't surface as a hard error.
+ */
+async function withRetry<T>(fn: () => Promise<ApiResult<T>>, backoff: number[] = [400, 900, 2000]): Promise<ApiResult<T>> {
+  let last = await fn();
+  for (let i = 0; i < backoff.length; i++) {
+    if (last.ok || !(last.status === 0 || last.status >= 500)) return last;
+    await new Promise((r) => setTimeout(r, backoff[i]));
+    last = await fn();
+  }
+  return last;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -115,13 +130,13 @@ export const api = {
   me: () => call('POST', '/me', { auth: 'required' }),
 
   createScan: (url: string) =>
-    call<{ scanId?: string; error?: string; code?: string }>('POST', '/createScan', {
+    withRetry(() => call<{ scanId?: string; error?: string; code?: string }>('POST', '/createScan', {
       body: { target: { type: 'url', value: url } },
       auth: 'optional',
-    }),
+    })),
 
   createDeepScan: (sources: { github?: boolean; githubRepo?: string; supabase?: boolean; url?: string }) =>
-    call<{ scanId?: string; error?: string; code?: string }>('POST', '/createDeepScan', { body: sources, auth: 'required' }),
+    withRetry(() => call<{ scanId?: string; error?: string; code?: string }>('POST', '/createDeepScan', { body: sources, auth: 'required' })),
 
   /**
    * Upload a folder (as a single .zip Blob) for a Pro white-box scan. Bypasses
@@ -131,18 +146,21 @@ export const api = {
   createUploadScan: async (zip: Blob, name: string): Promise<ApiResult<{ scanId?: string; error?: string; code?: string }>> => {
     const token = await getIdToken();
     if (!token) return { ok: false, status: 401, data: { error: 'not signed in' } };
-    let res: Response;
-    try {
-      res = await fetch(`${BASE}/createUploadScan?name=${encodeURIComponent(name)}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/zip', authorization: `Bearer ${token}` },
-        body: zip,
-      });
-    } catch {
-      return { ok: false, status: 0, data: { error: 'backend unreachable — is the backend running?' } };
-    }
-    const data = (await res.json().catch(() => ({}))) as { scanId?: string; error?: string };
-    return { ok: res.ok, status: res.status, data };
+    const attempt = async (): Promise<ApiResult<{ scanId?: string; error?: string; code?: string }>> => {
+      let res: Response;
+      try {
+        res = await fetch(`${BASE}/createUploadScan?name=${encodeURIComponent(name)}`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/zip', authorization: `Bearer ${token}` },
+          body: zip,
+        });
+      } catch {
+        return { ok: false, status: 0, data: { error: 'Can’t reach Veilguard right now — check your connection and try again.' } };
+      }
+      const data = (await res.json().catch(() => ({}))) as { scanId?: string; error?: string; code?: string };
+      return { ok: res.ok, status: res.status, data };
+    };
+    return withRetry(attempt);
   },
 
   /** List the repos the caller's connected GitHub installation can scan (repo picker). */
@@ -210,8 +228,18 @@ export const api = {
   billingReactivate: () =>
     call<{ ok?: boolean; error?: string }>('POST', '/billingReactivate', { auth: 'required' }),
 
-  /** Fetch fix content for a finding. Guard → any; free → the teaser only (else 402).
-   *  `explanation` is present only for Claude-tailored (deep) fixes. */
+  /** Fetch fix content for a finding. Guard → any (Claude-tailored, generated on
+   *  demand); free → the teaser only (else 402). `explanation` is present only for
+   *  Claude-tailored fixes. */
   findingFix: (scanId: string, findingId: string) =>
     call<{ fix?: string; fixPrompt?: string; explanation?: string; error?: string }>('POST', '/findingFix', { body: { scanId, findingId }, auth: 'required' }),
+
+  /** GUARD-only: one organized AI prompt containing every fix for a scan (else 402). */
+  allFixesPrompt: (scanId: string) =>
+    call<{ prompt?: string; count?: number; error?: string }>('POST', '/allFixesPrompt', { body: { scanId }, auth: 'required' }),
+
+  /** Send a feedback / help / bug message. Anonymous allowed (auth optional). The
+   *  backend stores it in Firestore + emails support; context fields are auto-captured. */
+  submitFeedback: (body: { type: string; message: string; email?: string; page?: string; scanId?: string; userAgent?: string }) =>
+    call<{ ok?: boolean; id?: string; error?: string }>('POST', '/feedback', { body, auth: 'optional' }),
 };

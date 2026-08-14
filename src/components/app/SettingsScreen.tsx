@@ -179,15 +179,23 @@ export default function SettingsScreen() {
         {PROVIDERS.map((c) => {
           const meta = conns[c.key];
           const connected = !!meta;
+          // The worker flags a connection stale (`needsReconnect`) when a scan
+          // finds its access has lapsed. Surface that instead of a green tick.
+          const stale = connected && !!meta?.needsReconnect;
           return (
             <div key={c.key} className="flex items-center gap-3 py-3 border-t border-[color:var(--color-hairline)]">
               <span className="w-[38px] h-[38px] rounded-[10px] flex items-center justify-center text-white" style={{ background: c.iconBg }}><BrandLogo name={c.logo} size={20} invert={c.invert} /></span>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[15px]">{c.name}</div>
-                <div className="font-mono text-[12.5px] text-faint truncate">{detailFor(c.key, meta)}</div>
+                <div className="font-mono text-[12.5px] text-faint truncate">{stale ? 'Access lapsed — reconnect to keep scanning' : detailFor(c.key, meta)}</div>
                 <a href={c.helpUrl} target="_blank" rel="noopener noreferrer" className="inline-block text-[12.5px] text-yellow-dark hover:underline mt-[2px]">{c.helpText}</a>
               </div>
-              {connected ? (
+              {stale ? (
+                <>
+                  <span className="inline-flex items-center gap-[6px] text-[14px] font-semibold" style={{ color: '#8a6d00' }}><span className="inline-block w-[6px] h-[6px] rounded-full" style={{ background: '#E0932F' }} />Needs reconnect</span>
+                  <button onClick={() => connect(c.key)} disabled={busy === c.key} className="vg-press cursor-pointer bg-ink text-white rounded-[10px] px-[14px] py-2 text-[14px] font-medium disabled:opacity-60">{busy === c.key ? 'Connecting…' : 'Reconnect'}</button>
+                </>
+              ) : connected ? (
                 <>
                   <span className="inline-flex items-center gap-[6px] text-[14px] font-semibold" style={{ color: '#157A43' }}><span className="inline-block w-[6px] h-[6px] rounded-full" style={{ background: '#1F9D57' }} />Connected</span>
                   <button onClick={() => disconnect(c.key)} disabled={busy === c.key} className="bg-none cursor-pointer text-[#C23B3F] text-[14px] font-semibold disabled:opacity-60">{busy === c.key ? 'Disconnecting…' : 'Disconnect'}</button>

@@ -23,8 +23,9 @@ export function useMyScans(): { scans: ScanDoc[]; loading: boolean } {
 export type GitHubReposState = {
   repos: GitHubRepo[];
   loading: boolean;
-  /** 'not-connected' when GitHub isn't linked; a message string on other failures. */
-  error: 'not-connected' | string | null;
+  /** 'not-connected' = never linked; 'needs-reconnect' = the install went stale
+   *  or access was revoked (GitHub 502); a message string on any other failure. */
+  error: 'not-connected' | 'needs-reconnect' | string | null;
   reload: () => void;
 };
 
@@ -33,7 +34,7 @@ export function useGitHubRepos(enabled = true): GitHubReposState {
   const { user } = useAuth();
   const [repos, setRepos] = useState<GitHubRepo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<'not-connected' | string | null>(null);
+  const [error, setError] = useState<'not-connected' | 'needs-reconnect' | string | null>(null);
   const [nonce, setNonce] = useState(0);
   const reload = useCallback(() => setNonce((n) => n + 1), []);
 
@@ -49,8 +50,13 @@ export function useGitHubRepos(enabled = true): GitHubReposState {
         setError(null);
       } else if (res.status === 409) {
         setError('not-connected');
+      } else if (res.status === 502) {
+        // Install revoked / token stale — recoverable by reconnecting.
+        if (res.data?.error) console.error('[github repos] load failed:', res.data.error);
+        setError('needs-reconnect');
       } else {
-        setError(res.data?.error || 'Could not load your repositories.');
+        if (res.data?.error) console.error('[github repos] load failed:', res.data.error);
+        setError('Couldn’t load your repositories. Please try again.');
       }
       setLoading(false);
     });

@@ -7,6 +7,7 @@ import Logo from '@/components/ui/Logo';
 import { useAuth, isPaid } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { checkUrl, billingHref } from '@/lib/url';
+import { startFailure } from '@/lib/scanError';
 import { SUPPORT_MAILTO, LEGAL } from '@/content/site';
 import { RepoPicker } from './RepoPicker';
 import { UploadPicker } from './UploadPicker';
@@ -77,8 +78,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     const res = await api.createScan(c.url!);
     setStarting(false);
     if (!res.ok || !res.data.scanId) {
-      if (res.data.code === 'E_SCAN_LIMIT') { toast(res.data.error || 'Monthly scan limit reached', '#E0932F'); closeModal(); if (!paid) go(billingHref()); }
-      else toast(res.data.error || 'Could not start scan', '#E5484D');
+      if (res.data.error) console.error('[url scan] start failed:', res.data.error);
+      if (res.data.code === 'E_SCAN_LIMIT') { toast(res.data.error || 'You’ve used all your scans this month.', '#E0932F'); closeModal(); if (!paid) go(billingHref()); }
+      else toast(startFailure(res.status, res.data).message, '#C23B3F');
       return;
     }
     closeModal(); setNewAppUrl('');
@@ -91,8 +93,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const startDeepScan = async (fullName: string): Promise<boolean> => {
     const r = await api.createDeepScan({ githubRepo: fullName });
     if (!r.ok || !r.data.scanId) {
-      if (r.data.code === 'E_SCAN_LIMIT') { toast(r.data.error || 'Monthly scan limit reached', '#E0932F'); setRepoOpen(false); if (!paid) go(billingHref()); }
-      else toast(r.data.error || 'Could not start the scan', '#E5484D');
+      if (r.data.error) console.error('[deep scan] start failed:', r.data.error);
+      if (r.data.code === 'E_SCAN_LIMIT') { toast(r.data.error || 'You’ve used all your scans this month.', '#E0932F'); setRepoOpen(false); if (!paid) go(billingHref()); }
+      else if (r.status === 409) { toast('Your GitHub connection needs refreshing — reconnect it in Settings, then try again.', '#C23B3F'); setRepoOpen(false); go('/settings'); }
+      else if (r.status === 502) { toast('We couldn’t verify that repo with GitHub. Give it a moment and try again.', '#C23B3F'); }
+      else toast(startFailure(r.status, r.data).message, '#C23B3F');
       return false;
     }
     setRepoOpen(false);
@@ -104,9 +109,12 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const startUploadScan = async (zip: Blob, name: string): Promise<boolean> => {
     const r = await api.createUploadScan(zip, name);
     if (!r.ok || !r.data.scanId) {
-      if (r.status === 402) { toast(r.data.error || 'Folder upload is a Pro feature — upgrade to scan uploaded code.', '#E0932F'); setUploadOpen(false); go(billingHref()); }
-      else if (r.data.code === 'E_SCAN_LIMIT') { toast(r.data.error || 'Monthly scan limit reached', '#E0932F'); setUploadOpen(false); }
-      else toast(r.data.error || 'Could not start the scan', '#E5484D');
+      if (r.data.error) console.error('[upload scan] start failed:', r.data.error);
+      if (r.status === 402) { toast(r.data.error || 'Folder upload is a Guard feature — upgrade to scan uploaded code.', '#E0932F'); setUploadOpen(false); go(billingHref()); }
+      else if (r.data.code === 'E_SCAN_LIMIT') { toast(r.data.error || 'You’ve used all your scans this month.', '#E0932F'); setUploadOpen(false); }
+      else if (r.status === 413) { toast('That upload is too large. Skip node_modules and build folders, then try again.', '#C23B3F'); } // keep modal open
+      else if (r.status === 400) { toast('We couldn’t open that zip. Try re-zipping your project folder — or just drop the folder itself — and upload again.', '#C23B3F'); }
+      else toast(startFailure(r.status, r.data).message, '#C23B3F');
       return false;
     }
     setUploadOpen(false);
@@ -172,7 +180,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             {profile?.plan === 'free' || !profile?.plan ? 'Upgrade' : 'Manage billing'}
           </button>
         </div>
-        <UserBlock open={userMenu} setOpen={setUserMenu} email={user?.email ?? ''} onSettings={() => go('/settings')} onLogout={doLogout} />
+        <UserBlock open={userMenu} setOpen={setUserMenu} email={user?.email ?? ''} onSettings={() => go('/settings')} onFeedback={() => go('/feedback')} onLogout={doLogout} />
       </aside>
 
       {/* ===== Main ===== */}
@@ -195,10 +203,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
               Settings
             </button>
-            <a href={SUPPORT_MAILTO} className="vg-nav flex items-center gap-[11px] rounded-[9px] px-[11px] py-[9px] text-left font-medium text-[14.5px] text-[#5b5a56] transition-colors cursor-pointer no-underline">
+            <button onClick={() => go('/feedback')} className="vg-nav flex items-center gap-[11px] rounded-[9px] px-[11px] py-[9px] text-left font-medium text-[14.5px] text-[#5b5a56] transition-colors cursor-pointer">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.6 1.4c0 1.7-2.1 2-2.1 3.1M12 17h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-              Need help?
-            </a>
+              Help &amp; feedback
+            </button>
             <button onClick={doLogout} className="vg-nav flex items-center gap-[11px] rounded-[9px] px-[11px] py-[9px] text-left font-medium text-[14.5px] text-[#C23B3F] transition-colors cursor-pointer">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               Log out
@@ -247,7 +255,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 <span className="font-mono text-tertiary text-[14px]">https://</span>
                 <input value={newAppUrl} onChange={(e) => setNewAppUrl(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && confirmAddApp()} placeholder="your-app.com" aria-label="App URL" style={{ outline: 'none' }} className="flex-1 border-0 outline-none bg-transparent text-[15px] min-w-0" autoFocus />
               </label>
-              <button onClick={confirmAddApp} disabled={starting} className="vg-press shrink-0 bg-ink text-white rounded-[10px] px-5 font-medium text-[14px] disabled:opacity-70 cursor-pointer">{starting ? '…' : 'Scan'}</button>
+              <button onClick={confirmAddApp} disabled={starting} className="vg-press shrink-0 w-[112px] bg-ink text-white rounded-[10px] font-medium text-[14px] disabled:opacity-70 cursor-pointer whitespace-nowrap text-center">{starting ? 'Scanning…' : 'Scan'}</button>
             </div>
           </div>
 
@@ -297,7 +305,7 @@ function IconFolder() {
   return <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" /></svg>;
 }
 
-function UserBlock({ open, setOpen, email, onSettings, onLogout }: { open: boolean; setOpen: (v: boolean) => void; email: string; onSettings: () => void; onLogout: () => void }) {
+function UserBlock({ open, setOpen, email, onSettings, onFeedback, onLogout }: { open: boolean; setOpen: (v: boolean) => void; email: string; onSettings: () => void; onFeedback: () => void; onLogout: () => void }) {
   const initials = (email || '?').slice(0, 2).toUpperCase();
   return (
     <div className="relative mt-[10px]">
@@ -307,10 +315,10 @@ function UserBlock({ open, setOpen, email, onSettings, onLogout }: { open: boole
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.6" /><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
             Settings
           </button>
-          <a href={SUPPORT_MAILTO} className="vg-nav flex items-center gap-[10px] w-full rounded-[9px] px-[11px] py-[10px] text-left text-ink font-medium text-[14px] transition-colors cursor-pointer no-underline">
+          <button onClick={onFeedback} className="vg-nav flex items-center gap-[10px] w-full rounded-[9px] px-[11px] py-[10px] text-left text-ink font-medium text-[14px] transition-colors cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M9.5 9.5a2.5 2.5 0 0 1 4.6 1.4c0 1.7-2.1 2-2.1 3.1M12 17h.01" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-            Need help?
-          </a>
+            Help &amp; feedback
+          </button>
           <button onClick={onLogout} className="vg-nav flex items-center gap-[10px] w-full rounded-[9px] px-[11px] py-[10px] text-left font-medium text-[14px] text-[#C23B3F] transition-colors cursor-pointer">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 8l-4 4 4 4M6 12h10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Log out

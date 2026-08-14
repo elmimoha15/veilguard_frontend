@@ -104,6 +104,7 @@ export interface ScanDoc {
   score?: number;
   counts?: { critical: number; high: number; medium: number; low: number; info: number; passed: number };
   error?: string;
+  errorReason?: 'timeout' | 'unreachable' | 'empty-upload' | 'not-found' | 'needs-reconnect' | 'engine-error';
   stack?: { supabase?: boolean; firebase?: boolean; firebaseRulesInRepo?: boolean };
   createdAt: string;
   finishedAt?: string;

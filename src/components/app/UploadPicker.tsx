@@ -147,13 +147,22 @@ export function UploadPicker({
   async function handlePicked(picked: Picked[]) {
     setError(null);
     if (!picked.length) { setError('Nothing selected.'); return; }
+    // A single loose file that isn't a .zip (e.g. a PDF or one source file dropped
+    // by mistake) — a folder always arrives as many entries with nested paths.
+    if (picked.length === 1 && !/\.zip$/i.test(picked[0]!.file.name) && !picked[0]!.path.includes('/')) {
+      setError('Please upload a .zip of your project folder, or drop the whole folder.');
+      return;
+    }
     setStatus('preparing');
     setSummary(null);
     try {
       const prepped = await prepare(picked);
       if (!prepped) { setStatus('idle'); return; }
       if (prepped.blob.size > MAX_ZIP_BYTES) {
-        setError(`That’s ${humanSize(prepped.blob.size)} zipped — the limit is ${MAX_ZIP_BYTES / 1024 / 1024}MB. Remove large assets and try again.`);
+        // The single biggest cause of a too-big upload is a self-zipped project
+        // that still has node_modules/build output in it (our folder picker skips
+        // those automatically, but a hand-made .zip won't). Lead with that fix.
+        setError(`This upload is ${humanSize(prepped.blob.size)} — over the ${MAX_ZIP_BYTES / 1024 / 1024}MB limit. Try uploading just your source code: skip node_modules and build folders (that’s usually what makes it too big). Dropping the folder instead of a .zip does this for you.`);
         setStatus('idle');
         return;
       }

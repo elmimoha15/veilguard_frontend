@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
 import { toUiFinding, toUiCounts, GRADE_COLOR } from '@/lib/adapters';
 import { scanLabel, repoDisplay } from '@/lib/hooks';
+import { scanFailure, SUPPORT_LINK, type ScanKind } from '@/lib/scanError';
 import { SEV_TINT, SEV_COLOR } from './data';
 
 const HERO: Record<string, { label: string; labelColor: string; headline: string }> = {
@@ -53,6 +54,72 @@ export default function ResultsScreen() {
   const grade = scan?.grade;
   const hero = grade ? HERO[grade] : null;
   const running = !scan || scan.status === 'queued' || scan.status === 'running';
+
+  // A failed scan must never render as an empty success. Show the plain-English
+  // reason + a real next action; keep any partial findings that streamed in.
+  if (scan?.status === 'error') {
+    const f = scanFailure(scan);
+    const kind: ScanKind = scan.type === 'upload' ? 'upload' : scan.type === 'deep' ? 'deep' : 'url';
+    const doRetry = async () => {
+      if (f.action === 'reconnect') { router.push('/settings'); return; }
+      if (kind === 'url') {
+        const res = await api.createScan(scan.sources?.url || scan.target.value);
+        if (res.ok && res.data?.scanId) { router.replace(`/scanning?scanId=${res.data.scanId}`); return; }
+      }
+      router.push(kind === 'url' ? '/' : '/apps');
+    };
+    const primaryLabel = f.action === 'reupload' ? 'Upload again' : f.action === 'reconnect' ? 'Reconnect' : 'Try again';
+    return (
+      <div className="min-h-screen bg-bg vg-fade pb-16">
+        <div className="bg-card border-b border-border px-6 py-4">
+          <div className="max-w-[960px] mx-auto flex items-center gap-[11px]">
+            <Logo size={32} wordmarkClassName="text-[17px]" />
+            <span className="ml-auto font-mono text-[13.5px] text-label">{scan ? repoDisplay(scanLabel(scan)) : '…'}</span>
+          </div>
+        </div>
+        <div className="max-w-[560px] mx-auto px-6 pt-16 text-center">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
+            <path d="M12 3l9 16H3z" strokeLinejoin="round" />
+            <path d="M12 10v4" strokeLinecap="round" />
+            <circle cx="12" cy="16.8" r="0.7" fill={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} stroke="none" />
+          </svg>
+          <h1 className="font-semibold text-[24px] text-ink">{f.title}</h1>
+          <p className="text-[15.5px] text-muted mt-3 leading-[1.5]">{f.body}</p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button onClick={doRetry} className="vg-press cursor-pointer bg-ink text-white font-medium rounded-[10px] px-5 py-3">{primaryLabel}</button>
+          </div>
+          {f.showSupport && (
+            <a href={SUPPORT_LINK} className="block mt-5 text-[13.5px] text-muted hover:text-ink underline">Still stuck? Contact support</a>
+          )}
+        </div>
+        {findings.length > 0 && (
+          <div className="max-w-[960px] mx-auto px-6 mt-12">
+            <p className="text-center text-[14px] text-muted mb-4">
+              We found these before the scan stopped — run again for a complete result.
+            </p>
+            <div className="flex flex-col gap-3 opacity-90">
+              {findings.map((f2) => (
+                <div key={f2.id} className="vg-card block vg-surface p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="shrink-0 mt-[5px] w-[9px] h-[9px] rounded-full" style={{ background: f2.color }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-[9px] flex-wrap">
+                        <span className="font-mono text-[11px] tracking-[0.1em]" style={{ color: f2.color }}>{f2.sev}</span>
+                        <span className="font-mono text-[11px] text-faint">{f2.cat}</span>
+                      </div>
+                      <div className="font-semibold text-[17px] mt-[3px]">{f2.title}</div>
+                      <div className="text-[15px] leading-[1.5] text-muted mt-[3px]">{f2.what}</div>
+                      {f2.where && <div className="font-mono text-[12.5px] text-faint mt-[6px]">{f2.where}</div>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg vg-fade pb-28">

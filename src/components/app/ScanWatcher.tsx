@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
 import { useAuth } from '@/lib/auth';
 import { subscribeScan, type ScanDoc } from '@/lib/scans';
 import { scanLabel, repoDisplay } from '@/lib/hooks';
+import { api } from '@/lib/api';
+import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/scanError';
 
 /**
  * Watches the scan the user most recently started (`pendingScanId`) and shows a
@@ -17,7 +20,7 @@ import { scanLabel, repoDisplay } from '@/lib/hooks';
  */
 export default function ScanWatcher() {
   const router = useRouter();
-  const { pendingScanId, setPendingScanId } = useApp();
+  const { pendingScanId, setPendingScanId, setModal, setNewAppUrl, toast } = useApp();
   const { refreshProfile } = useAuth();
   const [tracked, setTracked] = useState<{ id: string; doc: ScanDoc } | null>(null);
   // Which scan we've already refreshed the profile for, so the usage meter updates
@@ -49,6 +52,18 @@ export default function ScanWatcher() {
 
   const dismiss = () => setPendingScanId(null);
   const view = () => { setPendingScanId(null); router.push(`/scan?scan=${id}`); };
+  // Re-run the failed scan from the chip. Uploads have no file to resend → open
+  // the full "see why" view (which routes to the picker).
+  const retry = async () => {
+    const kind: ScanKind = doc.type === 'upload' ? 'upload' : doc.type === 'deep' ? 'deep' : 'url';
+    if (kind === 'upload') { view(); return; }
+    const res = kind === 'url'
+      ? await api.createScan(doc.sources?.url || doc.target.value)
+      : await api.createDeepScan({ github: !!doc.sources?.githubRepo, githubRepo: doc.sources?.githubRepo, supabase: doc.sources?.supabase, url: doc.sources?.url });
+    if (res.ok && res.data?.scanId) { setPendingScanId(res.data.scanId); return; }
+    if (res.data?.error) console.error('[retry] scan start failed:', res.data.error);
+    toast(startFailure(res.status, res.data || {}).message, '#C23B3F');
+  };
 
   const DismissX = (
     <button onClick={dismiss} aria-label="Dismiss" className="shrink-0 -mr-1 -mt-1 w-6 h-6 rounded-md flex items-center justify-center text-tertiary hover:bg-[#F2F2EF] transition-colors">
@@ -56,21 +71,49 @@ export default function ScanWatcher() {
     </button>
   );
 
-  return (
-    <div className="fixed z-[9997] bottom-4 right-4 w-[320px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-[12px] p-4 shadow-[0_16px_40px_-14px_rgba(0,0,0,.3)] vg-pop">
-      {doc.status === 'error' ? (
-        <>
-          <div className="flex items-start gap-[10px]">
-            <span className="shrink-0 mt-[3px] w-[9px] h-[9px] rounded-full bg-red" />
-            <div className="flex-1 min-w-0">
-              <div className="font-semibold text-[14px]">Scan failed</div>
-              <div className="font-mono text-[11.5px] text-faint truncate mt-[2px]">{label}</div>
-            </div>
-            {DismissX}
+  // A FAILED background scan is important — interrupt the user with a centered,
+  // dimmed alert wherever they are in the app, not a corner chip they might miss.
+  // The calm running/done states stay as the quiet docked chip below.
+  if (doc.status === 'error' && typeof document !== 'undefined') {
+    const f = scanFailure(doc);
+    const kind: ScanKind = doc.type === 'upload' ? 'upload' : doc.type === 'deep' ? 'deep' : 'url';
+    const primaryLabel = kind === 'upload' ? 'Upload again' : f.action === 'reconnect' ? 'Reconnect' : 'Try again';
+    // For a URL scan, re-running the SAME address just fails again — the address
+    // is usually the thing to fix. So "Try again" reopens the New scan modal with
+    // the URL prefilled, ready to correct or paste a new one.
+    const onPrimary = kind === 'url'
+      ? () => { setPendingScanId(null); setNewAppUrl((doc.sources?.url || doc.target.value || '').replace(/^https?:\/\//, '')); setModal('addApp'); }
+      : kind === 'upload'
+        ? () => { setPendingScanId(null); router.push('/apps'); }
+        : f.action === 'reconnect'
+          ? () => { setPendingScanId(null); router.push('/settings'); }
+          : retry;
+    return createPortal(
+      <div className="fixed inset-0 z-[9998] flex items-center justify-center p-6 vg-fade" style={{ background: 'rgba(10,10,10,.45)' }} onClick={dismiss}>
+        <div onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true" className="w-full max-w-[440px] bg-card border border-border rounded-[16px] p-7 text-center vg-pop shadow-[var(--shadow-pop)]">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
+            <path d="M12 3l9 16H3z" strokeLinejoin="round" />
+            <path d="M12 10v4" strokeLinecap="round" />
+            <circle cx="12" cy="16.8" r="0.7" fill={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} stroke="none" />
+          </svg>
+          <h2 className="font-semibold text-[20px] text-ink tracking-[-0.02em]">{f.title}</h2>
+          <div className="font-mono text-[12.5px] text-faint truncate mt-1">{label}</div>
+          <p className="text-[15px] text-muted mt-3 leading-[1.5]">{f.body}</p>
+          <div className="mt-6 flex items-center justify-center gap-3">
+            <button onClick={onPrimary} className="vg-press cursor-pointer bg-ink text-white font-medium rounded-[10px] px-5 py-3">{primaryLabel}</button>
+            <button onClick={view} className="vg-press cursor-pointer text-muted hover:text-ink font-medium rounded-[10px] px-4 py-3 border border-border">See details</button>
           </div>
-          <button onClick={view} className="vg-press mt-3 w-full rounded-[10px] py-[9px] font-semibold text-[13.5px] bg-ink text-white">See why</button>
-        </>
-      ) : doc.status === 'done' ? (
+          <button onClick={dismiss} className="block mx-auto mt-4 text-[13.5px] text-faint hover:text-muted cursor-pointer">Dismiss</button>
+          {f.showSupport && <a href={SUPPORT_LINK} className="block mt-2 text-[13px] text-muted hover:text-ink underline">Still stuck? Contact support</a>}
+        </div>
+      </div>,
+      document.body,
+    );
+  }
+
+  return (
+    <div className="fixed z-[9997] bottom-[80px] right-5 w-[320px] max-w-[calc(100vw-2rem)] bg-card border border-border rounded-[12px] p-4 shadow-[0_16px_40px_-14px_rgba(0,0,0,.3)] vg-pop">
+      {doc.status === 'done' ? (
         <>
           <div className="flex items-start gap-[10px]">
             <span className="shrink-0 mt-[1px] w-[18px] h-[18px] rounded-full flex items-center justify-center" style={{ background: '#EAF6EF' }}>

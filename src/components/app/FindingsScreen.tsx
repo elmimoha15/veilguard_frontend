@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { GRADE_TINT, type App } from '@/lib/hooks';
 import { subscribeFindings, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
 import { toUiFinding, type UiSev, type UiFinding } from '@/lib/adapters';
+import { useAuth, isPaid } from '@/lib/auth';
+import { useApp } from './state';
+import { api } from '@/lib/api';
+import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
 import { SEV_COLOR, SEV_TINT, STATUS_META } from './data';
 
@@ -32,6 +36,10 @@ const keyOf = (f: UiFinding) => `${f.ruleId}@${f.where}`;
  */
 export default function FindingsScreen({ app, initialScanId }: { app: App; initialScanId?: string | null }) {
   const router = useRouter();
+  const { profile } = useAuth();
+  const { toast } = useApp();
+  const paid = isPaid(profile);
+  const [copyBusy, setCopyBusy] = useState(false);
   const site = app;
 
   // Which scan within the app: a picked historical one, else the latest.
@@ -81,14 +89,40 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
   const errored = selected.status === 'error';
   const totalShown = findings.length + fixed.length;
 
+  // Guard-only: gather every fix into one organized AI prompt and copy it.
+  const copyAllFixes = async () => {
+    if (!scanId) return;
+    if (!paid) { toast('Copy-all-fixes is a Guard feature — upgrade to unlock.', '#E0932F'); router.push(billingHref()); return; }
+    setCopyBusy(true);
+    const res = await api.allFixesPrompt(scanId);
+    setCopyBusy(false);
+    if (!res.ok || !res.data.prompt) { toast(res.data.error || 'Could not build the prompt', '#E5484D'); return; }
+    try { await navigator.clipboard.writeText(res.data.prompt); toast('All fixes copied as a prompt', '#0A0A0A'); }
+    catch { toast('Could not copy — try again', '#E5484D'); }
+  };
+
   return (
     <div className="vg-fade">
       {/* Pick which scan to view; the selected scan's grade sits at the right. */}
       <div className="flex items-center gap-[10px] flex-wrap mb-5">
         <ScanPicker scans={site.scans} selectedId={selected.id} onSelect={setViewScanId} />
-        {selected.grade && (
-          <span className="ml-auto w-11 h-11 rounded-xl flex items-center justify-center font-semibold text-[22px] tnum" style={{ background: GRADE_TINT[selected.grade].bg, color: GRADE_TINT[selected.grade].fg }}>{selected.grade}</span>
-        )}
+        <div className="ml-auto flex items-center gap-[10px]">
+          {selected.status === 'done' && findings.length > 0 && (
+            <button
+              onClick={copyAllFixes}
+              disabled={copyBusy}
+              title={paid ? 'Copy every fix as one AI prompt' : 'Guard feature'}
+              style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }}
+              className="vg-press cursor-pointer rounded-[10px] px-[13px] py-[8px] text-[13.5px] font-semibold disabled:opacity-60 inline-flex items-center gap-[7px]"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7" /><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.7" /></svg>
+              {copyBusy ? 'Preparing…' : paid ? 'Copy all fixes as a prompt' : 'Copy all fixes (Guard)'}
+            </button>
+          )}
+          {selected.grade && (
+            <span className="w-11 h-11 rounded-xl flex items-center justify-center font-semibold text-[22px] tnum" style={{ background: GRADE_TINT[selected.grade].bg, color: GRADE_TINT[selected.grade].fg }}>{selected.grade}</span>
+          )}
+        </div>
       </div>
 
       {/* diff summary vs previous scan */}
