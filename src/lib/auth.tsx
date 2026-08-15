@@ -4,12 +4,16 @@ import { createContext, useContext, useEffect, useState, useCallback } from 'rea
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  signInWithCredential,
   getAdditionalUserInfo,
   linkWithPopup,
   linkWithCredential,
   fetchSignInMethodsForEmail,
   GoogleAuthProvider,
   GithubAuthProvider,
+  OAuthCredential,
   signOut,
   type User,
   type UserCredential,
@@ -17,6 +21,95 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { api } from './api';
+
+/** OAuth clients where redirect is safe: NOT localhost/emulator. `signInWithRedirect`
+ *  returns to `authDomain` (veilguard.dev) — great in prod, broken on localhost —
+ *  so we use redirect in prod and keep the popup locally. */
+function isRedirectEnv(): boolean {
+  if (typeof window === 'undefined') return false;
+  const h = window.location.hostname;
+  const local = h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
+  return !local && process.env.NEXT_PUBLIC_USE_EMULATOR !== 'true';
+}
+/** Google Web OAuth client id (public). Present + prod domain → One Tap is on. */
+export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+export function oneTapEnabled(): boolean {
+  return !!GOOGLE_CLIENT_ID && isRedirectEnv();
+}
+
+const WHICH_KEY = 'vg_auth_which';        // provider we redirected with
+const PENDING_LINK_KEY = 'vg_pending_link'; // cross-provider credential to link on return
+const AUTH_ERROR_KEY = 'vg_auth_error';   // redirect-return error message for the login page
+const PENDING_SCAN_KEY = 'vg_pending_scan';
+
+/** Read-and-clear an auth error stashed by the redirect handler (login page shows it). */
+export function consumeAuthError(): string {
+  try {
+    const v = window.sessionStorage.getItem(AUTH_ERROR_KEY);
+    if (v) { window.sessionStorage.removeItem(AUTH_ERROR_KEY); return v; }
+  } catch { /* storage off */ }
+  return '';
+}
+
+/** Max session age from the last real sign-in before we force re-login. Tunable
+ *  security knob — 7 days balances safety with not nagging users to re-log-in. */
+export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** Hard cap on how long an OAuth popup may run before we stop waiting (anti-hang). */
+const POPUP_TIMEOUT_MS = 180_000;
+const SESSION_EXPIRED_KEY = 'vg_session_expired';
+
+/** Mark the session expired (for the login banner) and sign out. Signing out
+ *  drives onAuthStateChanged(null) → AuthGate routes to /login. */
+export async function expireSession(): Promise<void> {
+  try { window.localStorage.setItem(SESSION_EXPIRED_KEY, '1'); } catch { /* storage off */ }
+  try { await signOut(auth()); } catch { /* already gone */ }
+}
+/** Read-and-clear the "session expired" flag (login page shows the message once). */
+export function consumeSessionExpired(): boolean {
+  try {
+    if (window.localStorage.getItem(SESSION_EXPIRED_KEY) === '1') {
+      window.localStorage.removeItem(SESSION_EXPIRED_KEY);
+      return true;
+    }
+  } catch { /* storage off */ }
+  return false;
+}
+function sessionTooOld(u: User): boolean {
+  const t = u.metadata?.lastSignInTime ? Date.parse(u.metadata.lastSignInTime) : NaN;
+  return Number.isFinite(t) && Date.now() - t > SESSION_MAX_AGE_MS;
+}
+
+/** Race a promise against a timeout so a hung/closed OAuth popup can't spin forever. */
+function withPopupTimeout<T>(p: Promise<T>): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<never>((_, reject) => setTimeout(() => {
+      const e = new Error('sign-in timed out') as Error & { code?: string };
+      e.code = 'auth/timeout';
+      reject(e);
+    }, POPUP_TIMEOUT_MS)),
+  ]);
+}
+
+/** Plain-English message for an auth failure; the raw code is logged, never shown. */
+export function authErrorMessage(e: unknown): string {
+  const code = (e as { code?: string })?.code ?? '';
+  switch (code) {
+    case 'auth/popup-closed-by-user':
+    case 'auth/cancelled-popup-request':
+      return 'Sign-in cancelled. Try again.';
+    case 'auth/popup-blocked':
+      return 'Your browser blocked the sign-in popup. Allow popups and try again.';
+    case 'auth/network-request-failed':
+      return 'Can’t sign in — check your internet connection and try again.';
+    case 'auth/use-existing-provider':
+      return e instanceof Error ? e.message : 'Continue with your original provider to sign in.';
+    case 'auth/account-exists-with-different-credential':
+      return 'That email is already registered — continue with your original provider (Google or GitHub).';
+    default:
+      return 'Something went wrong signing in. Please try again.';
+  }
+}
 
 type Which = 'google' | 'github';
 const providerLabel = (w: Which) => (w === 'google' ? 'Google' : 'GitHub');
@@ -37,7 +130,7 @@ const credFromError = (w: Which, err: AuthError) =>
  */
 async function signInWithLinking(which: Which): Promise<UserCredential> {
   try {
-    return await signInWithPopup(auth(), newProvider(which));
+    return await withPopupTimeout(signInWithPopup(auth(), newProvider(which)));
   } catch (e) {
     const err = e as AuthError;
     if (err.code !== 'auth/account-exists-with-different-credential') throw err;
@@ -59,7 +152,7 @@ async function signInWithLinking(which: Which): Promise<UserCredential> {
     existingProvider.setCustomParameters({ login_hint: email });
     let result: UserCredential;
     try {
-      result = await signInWithPopup(auth(), existingProvider);
+      result = await withPopupTimeout(signInWithPopup(auth(), existingProvider));
     } catch {
       // Second popup was blocked/closed — guide instead of dead-ending.
       const guide = new Error(
@@ -71,6 +164,96 @@ async function signInWithLinking(which: Which): Promise<UserCredential> {
     try { await linkWithCredential(result.user, pending); } catch { /* already linked / benign */ }
     return result;
   }
+}
+
+/**
+ * Start a provider sign-in. Production → full-page `signInWithRedirect` (native
+ * feel, no popup blockers); localhost → the popup `signInWithLinking` (redirect
+ * can't return to localhost with a custom authDomain). The redirect return is
+ * processed by `completeRedirect()` on the next load.
+ */
+async function startSignIn(which: Which): Promise<UserCredential | void> {
+  if (isRedirectEnv()) {
+    try { window.sessionStorage.setItem(WHICH_KEY, which); } catch { /* storage off */ }
+    await signInWithRedirect(auth(), newProvider(which)); // navigates away
+    return;
+  }
+  return signInWithLinking(which);
+}
+
+async function claimPendingScan(): Promise<void> {
+  try {
+    const scan = window.localStorage.getItem(PENDING_SCAN_KEY);
+    if (scan) { await api.claimScan(scan).catch(() => {}); window.localStorage.removeItem(PENDING_SCAN_KEY); }
+  } catch { /* storage off */ }
+}
+
+/**
+ * Process a `signInWithRedirect` return, once on load. Handles the happy path,
+ * the same-email cross-provider link (stash the pending credential, re-redirect
+ * to the existing provider, link on the following return — the stash's presence
+ * is the loop guard), and errors (stashed as a plain-English message for the
+ * login page). No-op when there is no pending redirect.
+ */
+export async function completeRedirect(): Promise<void> {
+  let result: UserCredential | null = null;
+  try {
+    result = await getRedirectResult(auth());
+  } catch (e) {
+    const err = e as AuthError;
+    if (err.code === 'auth/account-exists-with-different-credential') {
+      const which = (window.sessionStorage.getItem(WHICH_KEY) as Which | null) ?? null;
+      const email = (err.customData?.email as string | undefined) ?? undefined;
+      const pending = which ? credFromError(which, err) : null;
+      const already = !!safeGet(PENDING_LINK_KEY);
+      if (which && email && pending && !already) {
+        try { window.sessionStorage.setItem(PENDING_LINK_KEY, JSON.stringify(pending.toJSON())); } catch { /* */ }
+        const existing: Which = which === 'google' ? 'github' : 'google';
+        const p = newProvider(existing);
+        p.setCustomParameters({ login_hint: email });
+        try { window.sessionStorage.setItem(WHICH_KEY, existing); } catch { /* */ }
+        await signInWithRedirect(auth(), p); // returns → link applied below
+        return;
+      }
+    }
+    console.error('[auth] redirect result failed:', e);
+    try { window.sessionStorage.setItem(AUTH_ERROR_KEY, authErrorMessage(e)); } catch { /* */ }
+    clearRedirectStash();
+    return;
+  }
+
+  if (!result) return; // no pending redirect
+
+  const pend = readPendingLink();
+  if (pend) {
+    try { await linkWithCredential(result.user, pend); } catch (e) { console.error('[auth] link failed:', e); }
+  }
+  const which = window.sessionStorage.getItem(WHICH_KEY);
+  if (which === 'google' || which === 'github') rememberProvider(which);
+  clearRedirectStash();
+  await claimPendingScan();
+}
+
+function safeGet(k: string): string | null { try { return window.sessionStorage.getItem(k); } catch { return null; } }
+function clearRedirectStash(): void {
+  try { window.sessionStorage.removeItem(PENDING_LINK_KEY); window.sessionStorage.removeItem(WHICH_KEY); } catch { /* */ }
+}
+function readPendingLink(): OAuthCredential | null {
+  const raw = safeGet(PENDING_LINK_KEY);
+  if (!raw) return null;
+  try { return OAuthCredential.fromJSON(JSON.parse(raw)); } catch { return null; }
+}
+
+/**
+ * Google One Tap: exchange the GIS ID token for a Firebase sign-in — the SAME
+ * Firebase user as the normal Google flow (creates or links). Claims a pending
+ * anonymous scan on success.
+ */
+export async function signInWithGoogleIdToken(idToken: string): Promise<UserCredential> {
+  const result = await signInWithCredential(auth(), GoogleAuthProvider.credential(idToken));
+  rememberProvider('google');
+  await claimPendingScan();
+  return result;
 }
 
 export interface Profile {
@@ -124,9 +307,10 @@ interface AuthCtx {
   profile: Profile | null;
   loading: boolean;
   refreshProfile: () => Promise<Profile | null>;
-  /** Sign in with Google/GitHub (popup). Returns the credential for new-user detection. */
-  google: () => Promise<UserCredential>;
-  github: () => Promise<UserCredential>;
+  /** Sign in with Google/GitHub. Prod → redirect (navigates away, resolves void);
+   *  localhost → popup (returns the credential for new-user detection). */
+  google: () => Promise<UserCredential | void>;
+  github: () => Promise<UserCredential | void>;
   /** Link a Google/GitHub sign-in to the current account (account linking). */
   link: (which: 'google' | 'github') => Promise<void>;
   logout: () => Promise<void>;
@@ -146,14 +330,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const refreshProfile = useCallback(async (): Promise<Profile | null> => {
-    const res = await api.me();
+    let res;
+    try {
+      res = await api.me();
+    } catch (e) {
+      // getIdToken() can reject when the token can't refresh (revoked) — that's
+      // an expired session, not a crash.
+      console.error('[auth] /me failed:', e);
+      await expireSession();
+      setProfile(null);
+      return null;
+    }
+    if (res.status === 401) { await expireSession(); setProfile(null); return null; }
     const p = res.ok ? (res.data as unknown as Profile) : null;
     setProfile(p);
     return p;
   }, []);
 
+  // Process a signInWithRedirect return once on load (links, provider memory,
+  // scan claim, or stashes an error for the login page).
+  useEffect(() => { void completeRedirect(); }, []);
+
   useEffect(() => {
     return onAuthStateChanged(auth(), async (u) => {
+      if (u) {
+        // Max-age expiry + token validity. On expiry we sign out, which re-fires
+        // this callback with null (which clears loading + routes to /login).
+        if (sessionTooOld(u)) { await expireSession(); return; }
+        try { await u.getIdToken(); } catch { await expireSession(); return; }
+      }
       setUser(u);
       if (u) await refreshProfile();
       else setProfile(null);
@@ -161,8 +366,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, [refreshProfile]);
 
-  const google = useCallback(() => signInWithLinking('google'), []);
-  const github = useCallback(() => signInWithLinking('github'), []);
+  // A long-open tab must also expire without a reload.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const u = auth().currentUser;
+      if (u && sessionTooOld(u)) void expireSession();
+    }, 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const google = useCallback(() => startSignIn('google'), []);
+  const github = useCallback(() => startSignIn('github'), []);
   const link = useCallback(async (which: 'google' | 'github') => {
     const u = auth().currentUser;
     if (!u) throw new Error('not signed in');

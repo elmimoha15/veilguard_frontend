@@ -87,18 +87,45 @@ export default function SettingsScreen() {
     const err = params.get('error');
     if (!connected && !err) return;
     (async () => {
-      if (connected) { await refreshProfile(); toast(`${connected === 'github' ? 'GitHub' : connected === 'supabase' ? 'Supabase' : connected} connected`, '#1F9D57'); }
-      else toast(`Connection failed (${err}). Please try again.`, '#E5484D');
+      if (connected) {
+        await refreshProfile();
+        toast(`${connected === 'github' ? 'GitHub' : connected === 'supabase' ? 'Supabase' : connected} connected`, '#1F9D57');
+      } else {
+        // Friendly, plain-English copy — the raw code is never shown.
+        if (err) console.error('[connect] callback error:', err);
+        const provider = err?.includes('supabase') ? 'Supabase' : err?.includes('github') ? 'GitHub' : null;
+        const msg = err === 'access_denied'
+          ? 'Connection cancelled. Try again.'
+          : provider ? `Couldn’t connect to ${provider} — please try again.`
+                     : 'Couldn’t complete the connection — please try again.';
+        toast(msg, '#C23B3F');
+      }
       router.replace('/settings');
     })();
   }, [params, refreshProfile, router, toast]);
+
+  // Never leave the Connect button frozen on "Connecting…": returning from the
+  // provider (especially via browser Back / bfcache) fires pageshow → reset; and
+  // a safety timeout un-sticks it if the pre-redirect call ever hangs.
+  useEffect(() => {
+    const reset = () => setBusy(null);
+    window.addEventListener('pageshow', reset);
+    return () => window.removeEventListener('pageshow', reset);
+  }, []);
+  useEffect(() => {
+    if (!busy) return;
+    const t = setTimeout(() => setBusy(null), 90_000);
+    return () => clearTimeout(t);
+  }, [busy]);
 
   const connect = async (p: Provider) => {
     setBusy(p);
     const label = p === 'github' ? 'GitHub' : 'Supabase';
     const res = await api.connectBegin(p);
     if (!res.ok || !res.data.redirectUrl) {
-      toast(res.data?.error || `Could not start ${label} connect`, '#E5484D');
+      if (res.data?.error) console.error('[connect] begin failed:', res.data.error);
+      // 402 (paid gate) etc. carry a specific server message worth showing; else friendly generic.
+      toast(res.status === 402 && res.data?.error ? res.data.error : `Couldn’t start the ${label} connection — please try again.`, '#C23B3F');
       setBusy(null);
       return;
     }
@@ -127,7 +154,7 @@ export default function SettingsScreen() {
 
   const detailFor = (p: Provider, meta?: Record<string, unknown>): string => {
     if (!meta) return PROVIDERS.find((x) => x.key === p)!.hint;
-    if (p === 'github') return `${meta.repo ?? 'connected'}${meta.mock ? ' · mock' : ''}`;
+    if (p === 'github') return `${meta.repo ?? 'connected — push code to GitHub to scan'}${meta.mock ? ' · mock' : ''}`;
     return `${meta.projectRef ? `project ${meta.projectRef}` : 'connected'}${meta.mock ? ' · mock' : ''}`;
   };
 

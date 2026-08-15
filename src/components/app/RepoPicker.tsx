@@ -77,8 +77,21 @@ export function RepoPicker({
                 <div className="text-[14.5px] text-red py-4 text-center">
                   {error} <button onClick={reload} className="text-yellow-dark font-semibold underline ml-1">Retry</button>
                 </div>
+              ) : filtered.length === 0 && repos.length === 0 ? (
+                <div className="py-8 text-center px-4">
+                  <div className="mx-auto mb-3 w-11 h-11 rounded-full bg-bg-soft flex items-center justify-center">
+                    <BrandLogo name="github" size={22} />
+                  </div>
+                  <div className="font-semibold text-[16px] text-ink">No repositories to scan yet</div>
+                  <p className="text-[14.5px] text-muted mt-1.5 leading-[1.55] max-w-[380px] mx-auto">
+                    GitHub is connected, but there’s no code here yet. Push your project to GitHub — once it’s there, it’ll show up in this list and you can scan it.
+                  </p>
+                  <p className="text-[13px] text-faint mt-3">
+                    Already have repos? <button onClick={reload} className="text-yellow-dark font-semibold underline">Refresh</button>, or grant access to more in Settings.
+                  </p>
+                </div>
               ) : filtered.length === 0 ? (
-                <div className="text-[14.5px] text-muted py-6 text-center">{repos.length === 0 ? 'No repositories available. Grant access to more repos in Settings.' : 'No repositories match your search.'}</div>
+                <div className="text-[14.5px] text-muted py-6 text-center">No repositories match your search.</div>
               ) : (
                 <div className="vg-surface overflow-hidden">
                   {filtered.map((r, i) => (

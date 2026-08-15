@@ -11,6 +11,7 @@ import Pricing from '@/components/sections/Pricing';
 import Faq from '@/components/sections/Faq';
 import LearnStrip from '@/components/sections/LearnStrip';
 import FinalCta from '@/components/sections/FinalCta';
+import GoogleOneTap from '@/components/auth/GoogleOneTap';
 import { FAQS } from '@/content/landing';
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
+      <GoogleOneTap />
       <Hero />
       <PlatformStrip />
       <ScanTypes />

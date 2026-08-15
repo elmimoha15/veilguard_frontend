@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
-import { useAuth, isNewUser, rememberProvider, getLastProvider, type LastProvider } from '@/lib/auth';
+import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSessionExpired, consumeAuthError, type LastProvider } from '@/lib/auth';
+import GoogleOneTap from '@/components/auth/GoogleOneTap';
 import { api } from '@/lib/api';
 import { LEGAL } from '@/content/site';
 import Logo from '@/components/ui/Logo';
@@ -21,11 +22,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const { user, profile, google, github, refreshProfile, logout } = useAuth();
   const [busy, setBusy] = useState<'google' | 'github' | null>(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [last, setLast] = useState<LastProvider | null>(null);
   const routed = useRef(false);
 
   // Read the last-used provider after mount (avoids SSR/hydration mismatch).
   useEffect(() => { setLast(getLastProvider()); }, []);
+  // Gentle notice when the user landed here because their session expired, and
+  // surface any error returned from a redirect sign-in (getRedirectResult).
+  useEffect(() => {
+    if (consumeSessionExpired()) setNotice('Your session expired — please sign in again.');
+    const redirErr = consumeAuthError();
+    if (redirErr) setError(redirErr);
+  }, []);
 
   // Route any already-signed-in user away from the auth pages (e.g. they opened
   // /login in a fresh tab while a session exists).
@@ -38,8 +47,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const start = async (which: 'google' | 'github') => {
     setBusy(which);
     setError('');
+    setNotice('');
     try {
       const cred = await (which === 'google' ? google() : github());
+
+      // Redirect flow (prod) navigates away here and resolves void — the return
+      // is handled by completeRedirect(). The rest runs only for the popup path.
+      if (!cred) return; // keep busy through the redirect navigation
 
       // On the LOGIN page, a brand-new social user has no account yet — undo the
       // just-created account and send them to sign up instead of letting them in.
@@ -59,17 +73,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       routed.current = true;
       router.replace(p?.onboarded ? '/dashboard' : '/onboarding');
     } catch (e) {
-      const code = (e as { code?: string })?.code ?? '';
-      if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') { setBusy(null); return; }
-      setError(
-        // The linking flow guides the user to their existing provider with a
-        // specific, friendly message — surface it verbatim.
-        code === 'auth/use-existing-provider'
-          ? (e as Error).message
-          : code === 'auth/account-exists-with-different-credential'
-            ? 'That email is already registered — continue with your original provider (Google or GitHub).'
-            : 'Sign-in failed — please try again.',
-      );
+      // Every non-success path resolves the button + shows a plain-English
+      // message (cancel, popup-blocked, offline, linking guide, or generic).
+      // Raw error codes go to the console only.
+      console.error('[auth] sign-in failed:', e);
+      setError(authErrorMessage(e));
       setBusy(null);
     }
   };
@@ -78,11 +86,18 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <div className="vg-fade">
+      <GoogleOneTap />
       <div className="flex flex-col items-center text-center mb-[30px]">
         <div className="mb-[26px]"><Logo size={30} wordmarkClassName="text-[20px]" /></div>
         <h1 className="font-bold text-[26px] tracking-[-0.02em] m-0">{c.title}</h1>
         <p className="text-[16px] text-muted mt-2">{c.sub}</p>
       </div>
+
+      {notice && (
+        <div className="mb-4 text-[14px] text-center rounded-[10px] px-4 py-3" style={{ background: 'rgba(243,197,0,.14)', color: '#8a6d00' }}>
+          {notice}
+        </div>
+      )}
 
       <div className="flex flex-col gap-[10px]">
         <ProviderButton onClick={() => start('google')} disabled={busy !== null} busy={busy === 'google'} lastUsed={last === 'google'} icon={<GoogleIcon />} label="Continue with Google" />
