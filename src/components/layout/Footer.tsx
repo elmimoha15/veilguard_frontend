@@ -21,7 +21,7 @@ export default function Footer() {
 
   return (
     <footer className="an-x pb-8 pt-4">
-      <div className="an-max bg-[#17171A] text-white px-8 sm:px-12 py-12">
+      <div className="an-max bg-[#17171A] text-white px-8 sm:px-12 py-12 rounded-[24px]">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-[1.4fr_repeat(4,1fr)] lg:gap-0 lg:divide-x lg:divide-white/[0.12]">
           <div className="lg:pr-10">
             <Logo size={30} tone="onDark" />

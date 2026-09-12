@@ -238,7 +238,7 @@ export const PLANS: Plan[] = [
       'Deep Supabase & Firebase audit',
     ],
     cta: 'Start monitoring',
-    ctaHref: '#scan',
+    ctaHref: '/onboarding',
     featured: true,
     badge: 'Most popular',
   },
