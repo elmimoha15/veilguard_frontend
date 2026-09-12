@@ -292,7 +292,7 @@ export default function OnboardingWizard() {
 
           {step === URL_STEP && (
             <>
-              <StepHead q="What’s your app’s live URL?" hint="We’ll scan it the way an attacker would, right after you sign up." />
+              <StepHead q="What’s your app’s live URL?" hint="We’ll scan it the way an attacker would, right after you sign up. Optional, leave it blank to skip." />
               <label className="mx-auto max-w-[460px] flex items-center gap-[10px] bg-white rounded-[12px] px-[16px] min-h-[54px] border border-border focus-within:shadow-[0_0_0_2px_#0A0A0A] transition-shadow">
                 <span className="font-mono text-tertiary text-[15px]">https://</span>
                 <input value={ob.url} onChange={(e) => setOb({ url: e.target.value })} aria-label="App URL" placeholder="your-app.com" style={{ outline: 'none' }} className="flex-1 border-0 outline-none bg-transparent text-[16px] min-w-0" autoFocus />
@@ -362,7 +362,7 @@ export default function OnboardingWizard() {
             ) : <span />}
             {step === SIGNUP
               ? <span />
-              : <PillButton onClick={next} disabled={busy || (step === URL_STEP && !checkUrl(ob.url).ok)}>{nextLabel}</PillButton>}
+              : <PillButton onClick={next} disabled={busy}>{nextLabel}</PillButton>}
           </div>
         </div>
       </div>
