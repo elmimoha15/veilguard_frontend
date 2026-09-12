@@ -39,8 +39,6 @@ export function oneTapEnabled(): boolean {
 const WHICH_KEY = 'vg_auth_which';        // provider we redirected with
 const PENDING_LINK_KEY = 'vg_pending_link'; // cross-provider credential to link on return
 const AUTH_ERROR_KEY = 'vg_auth_error';   // redirect-return error message for the login page
-const LOGIN_INTENT_KEY = 'vg_auth_login_only'; // redirect started from the LOGIN page (refuse new users)
-const NO_ACCOUNT_KEY = 'vg_auth_no_account';   // a new user was refused at login (show Get Started)
 const PENDING_SCAN_KEY = 'vg_pending_scan';
 
 /** True while a `signInWithRedirect` is in progress: `WHICH_KEY` is set right
@@ -58,17 +56,6 @@ export function consumeAuthError(): string {
     if (v) { window.sessionStorage.removeItem(AUTH_ERROR_KEY); return v; }
   } catch { /* storage off */ }
   return '';
-}
-
-/** Read-and-clear the "new user refused at login" flag stashed by the redirect handler. */
-export function consumeNoAccount(): boolean {
-  try {
-    if (window.sessionStorage.getItem(NO_ACCOUNT_KEY) === '1') {
-      window.sessionStorage.removeItem(NO_ACCOUNT_KEY);
-      return true;
-    }
-  } catch { /* storage off */ }
-  return false;
 }
 
 /** Max session age from the last real sign-in before we force re-login. Tunable
@@ -192,15 +179,9 @@ async function signInWithLinking(which: Which): Promise<UserCredential> {
  * can't return to localhost with a custom authDomain). The redirect return is
  * processed by `completeRedirect()` on the next load.
  */
-async function startSignIn(which: Which, opts?: { loginOnly?: boolean }): Promise<UserCredential | void> {
+async function startSignIn(which: Which): Promise<UserCredential | void> {
   if (isRedirectEnv()) {
-    try {
-      window.sessionStorage.setItem(WHICH_KEY, which);
-      // Remember this redirect began on the LOGIN page, so completeRedirect() can
-      // refuse a brand-new user (onboarding signups leave this unset and proceed).
-      if (opts?.loginOnly) window.sessionStorage.setItem(LOGIN_INTENT_KEY, '1');
-      else window.sessionStorage.removeItem(LOGIN_INTENT_KEY);
-    } catch { /* storage off */ }
+    try { window.sessionStorage.setItem(WHICH_KEY, which); } catch { /* storage off */ }
     await signInWithRedirect(auth(), newProvider(which)); // navigates away
     return;
   }
@@ -251,17 +232,6 @@ export async function completeRedirect(): Promise<void> {
   if (!result) return; // no pending redirect
 
   const pend = readPendingLink();
-  // Login page + brand-new user (and not a cross-provider link) → refuse: undo the
-  // just-created account, flag it so the login page shows "Get Started", and stop.
-  if (!pend && safeGet(LOGIN_INTENT_KEY) === '1' && isNewUser(result)) {
-    try { window.sessionStorage.setItem(NO_ACCOUNT_KEY, '1'); } catch { /* */ }
-    try { await result.user.delete(); } catch { await signOut(auth()).catch(() => {}); }
-    clearRedirectStash();
-    try { window.sessionStorage.removeItem(LOGIN_INTENT_KEY); } catch { /* */ }
-    return;
-  }
-  try { window.sessionStorage.removeItem(LOGIN_INTENT_KEY); } catch { /* */ }
-
   if (pend) {
     try { await linkWithCredential(result.user, pend); } catch (e) { console.error('[auth] link failed:', e); }
   }
@@ -359,8 +329,8 @@ interface AuthCtx {
   refreshProfile: () => Promise<Profile | null>;
   /** Sign in with Google/GitHub. Prod → redirect (navigates away, resolves void);
    *  localhost → popup (returns the credential for new-user detection). */
-  google: (opts?: { loginOnly?: boolean }) => Promise<UserCredential | void>;
-  github: (opts?: { loginOnly?: boolean }) => Promise<UserCredential | void>;
+  google: () => Promise<UserCredential | void>;
+  github: () => Promise<UserCredential | void>;
   /** Link a Google/GitHub sign-in to the current account (account linking). */
   link: (which: 'google' | 'github') => Promise<void>;
   logout: () => Promise<void>;
@@ -428,8 +398,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  const google = useCallback((opts?: { loginOnly?: boolean }) => startSignIn('google', opts), []);
-  const github = useCallback((opts?: { loginOnly?: boolean }) => startSignIn('github', opts), []);
+  const google = useCallback(() => startSignIn('google'), []);
+  const github = useCallback(() => startSignIn('github'), []);
   const link = useCallback(async (which: 'google' | 'github') => {
     const u = auth().currentUser;
     if (!u) throw new Error('not signed in');

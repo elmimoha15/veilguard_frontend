@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSessionExpired, consumeAuthError, consumeNoAccount, pendingRedirect, isRedirectEnv, type LastProvider } from '@/lib/auth';
+import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSessionExpired, consumeAuthError, pendingRedirect, isRedirectEnv, type LastProvider } from '@/lib/auth';
 import GoogleOneTap from '@/components/auth/GoogleOneTap';
 import FullScreenLoader from '@/components/auth/FullScreenLoader';
 import { api } from '@/lib/api';
@@ -22,9 +22,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [busy, setBusy] = useState<'google' | 'github' | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  // Set when a brand-new user is refused at login (they have no account); reveals a
-  // "Get Started" button that sends them to onboarding (the only way to sign up).
-  const [noAccount, setNoAccount] = useState(false);
   const [last, setLast] = useState<LastProvider | null>(null);
   // True if we landed here mid `signInWithRedirect` (snapshot at mount), drives
   // the branded loader while the session + profile restore, instead of flashing
@@ -49,16 +46,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     const redirErr = consumeAuthError();
     if (redirErr) setError(redirErr);
   }, []);
-  // Redirect (prod) return: a new user refused at login is flagged by completeRedirect().
-  // Consume it only once redirect processing has settled (avoids the mount-vs-redirect race).
-  useEffect(() => {
-    if (loading) return;
-    if (!consumeNoAccount()) return;
-    // Defer out of the effect body (avoids cascading-render lint) — one-shot: the
-    // flag is already cleared, so this can't loop.
-    queueMicrotask(() => { setNoAccount(true); setError('You don’t have an account yet.'); });
-  }, [loading]);
-
   // Route any already-signed-in user away from the auth pages (e.g. they opened
   // /login in a fresh tab while a session exists).
   useEffect(() => {
@@ -71,23 +58,22 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setBusy(which);
     setError('');
     setNotice('');
-    setNoAccount(false);
     try {
-      const cred = await (which === 'google' ? google({ loginOnly: mode === 'login' }) : github({ loginOnly: mode === 'login' }));
+      const cred = await (which === 'google' ? google() : github());
 
       // Redirect flow (prod) navigates away here and resolves void, the return
       // is handled by completeRedirect(). The rest runs only for the popup path.
       if (!cred) return; // keep busy through the redirect navigation
 
-      // On the LOGIN page, a brand-new social user has no account yet: undo the
-      // just-created account and refuse, then reveal the "Get Started" button so
-      // they sign up through onboarding. Stay on the page (no redirect).
+      // Signup happens through onboarding, so a brand-new user who used the LOGIN
+      // page has no account yet: undo the just-created account and send them to
+      // onboarding to sign up. Doing this BEFORE refreshProfile avoids the
+      // fresh-account /me race that would otherwise sign them straight back out.
       if (mode === 'login' && isNewUser(cred)) {
         try { await cred.user.delete(); } catch { await logout().catch(() => {}); }
-        setNoAccount(true);
-        setError('You don’t have an account yet.');
-        setBusy(null);
-        return;
+        routed.current = true;
+        router.replace('/onboarding');
+        return; // keep busy through the navigation
       }
 
       rememberProvider(which);
@@ -143,19 +129,6 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       </div>
 
       {error && <div className="mt-4 text-[14px] text-red font-semibold text-center">{error}</div>}
-
-      {/* Refused new user: no account exists yet, so route them into onboarding to sign up. */}
-      {noAccount && (
-        <div className="mt-4 rounded-[12px] border border-border bg-bg-soft px-4 py-4 text-center">
-          <p className="text-[14px] text-muted">New to Veilguard? Create your account to get your first scan.</p>
-          <button
-            onClick={() => router.push('/onboarding')}
-            className="vg-press mt-3 w-full rounded-[10px] bg-ink text-white font-semibold text-[15px] py-[12px] cursor-pointer"
-          >
-            Get started
-          </button>
-        </div>
-      )}
 
       <p className="text-[13px] text-faint text-center mt-5 leading-[1.5]">
         We only use Google or GitHub to sign you in, no passwords to remember.
