@@ -70,6 +70,10 @@ export default function OnboardingWizard() {
   // The last "question" step before signup: marketing entrants already gave a URL,
   // so their questions end at HEARD; direct visitors also answer the URL step.
   const qLast = ob.fromMarketing ? HEARD : URL_STEP;
+  // Only route through the scan/result step when there's a URL to scan; a blank
+  // (optional) URL skips straight to the alert-email step — no scanning screen.
+  const willScan = checkUrl(ob.url).ok;
+  const postSignupStep = () => (willScan ? RESULT : EMAIL);
   // True while we're saving + navigating out (to dashboard / checkout). We render a
   // neutral loader instead of the wizard so step 1 never flashes during the redirect.
   const [finishing, setFinishing] = useState(false);
@@ -99,7 +103,7 @@ export default function OnboardingWizard() {
   // Prefill the alert email from the account once signed in.
   useEffect(() => { if (user?.email && !ob.email) setOb({ email: user.email }); }, [user, ob.email, setOb]);
   // If we reach the signup step but the user is already signed in, skip it.
-  useEffect(() => { if (step === SIGNUP && user) setOb({ step: RESULT }); }, [step, user, setOb]);
+  useEffect(() => { if (step === SIGNUP && user) setOb({ step: willScan ? RESULT : EMAIL }); }, [step, user, willScan, setOb]);
   // Post-signup: kick off the scan on the account when we land on the result step.
   // Runs for both popup and redirect sign-in (redirect resumes straight into RESULT).
   // A ref guards single-fire (never gates on `busy`, whose changes would otherwise
@@ -140,10 +144,10 @@ export default function OnboardingWizard() {
   });
 
   const afterReveal = () => setOb({ step: EMAIL });
-  const afterSignup = () => setOb({ step: RESULT });
+  const afterSignup = () => setOb({ step: postSignupStep() });
   // Redirect sign-in navigates away, persist the post-signup step synchronously first
   // so the return resumes straight into the result step (where the scan kicks off).
-  const persistPostSignup = () => { try { window.sessionStorage.setItem(OB_KEY, JSON.stringify({ ...ob, step: RESULT })); } catch { /* storage off */ } };
+  const persistPostSignup = () => { try { window.sessionStorage.setItem(OB_KEY, JSON.stringify({ ...ob, step: postSignupStep() })); } catch { /* storage off */ } };
 
   const finishTo = async (path: string) => {
     setFinishVariant('loading');
@@ -181,7 +185,7 @@ export default function OnboardingWizard() {
   const onSkip = () => { if (user) void finishTo('/dashboard'); else setOb({ step: SIGNUP }); };
 
   const next = () => {
-    if (step === qLast) return void setOb({ step: user ? RESULT : SIGNUP });
+    if (step === qLast) return void setOb({ step: user ? postSignupStep() : SIGNUP });
     if (step === RESULT) return void setOb({ step: EMAIL });
     if (step === PLAN) return void finishOnboarding();
     setOb({ step: step + 1 }); // HEARD → URL, URL → SIGNUP, EMAIL → PLAN, plain steps
