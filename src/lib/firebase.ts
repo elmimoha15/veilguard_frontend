@@ -4,6 +4,8 @@ import {
   getFirestore,
   initializeFirestore,
   connectFirestoreEmulator,
+  persistentLocalCache,
+  persistentMultipleTabManager,
   type Firestore,
 } from 'firebase/firestore';
 
@@ -62,6 +64,10 @@ export function db(): Firestore {
     _db = initializeFirestore(app(), {
       experimentalForceLongPolling: true,
       ignoreUndefinedProperties: true,
+      // Persistent IndexedDB cache so a reload / new tab serves data INSTANTLY from
+      // disk (then syncs in the background) instead of a cold network fetch every
+      // time. multipleTabManager keeps several open tabs in sync (no lock conflict).
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
     });
   } catch {
     _db = getFirestore(app());

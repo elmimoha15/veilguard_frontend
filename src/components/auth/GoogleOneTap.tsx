@@ -7,7 +7,7 @@ import { auth } from '@/lib/firebase';
 import { GOOGLE_CLIENT_ID, oneTapEnabled, signInWithGoogleIdToken } from '@/lib/auth';
 
 /**
- * Google One Tap — the Canva-style "Continue as [name]" auto-prompt. Self-
+ * Google One Tap, the Canva-style "Continue as [name]" auto-prompt. Self-
  * contained (uses Firebase directly, so it works on the marketing landing which
  * has no AuthProvider). Renders nothing; it just shows the native GIS prompt.
  *
@@ -60,7 +60,7 @@ export default function GoogleOneTap() {
     if (started.current || !oneTapEnabled() || recentlyDismissed()) return;
     started.current = true;
 
-    // Only prompt signed-out visitors — wait for the first restored auth state.
+    // Only prompt signed-out visitors, wait for the first restored auth state.
     const unsub = onAuthStateChanged(auth(), async (u) => {
       unsub();
       if (u) return; // already signed in → never nag
@@ -79,7 +79,7 @@ export default function GoogleOneTap() {
               await signInWithGoogleIdToken(resp.credential);
               router.push('/dashboard'); // AuthGate sends brand-new users to /onboarding
             } catch (e) {
-              // e.g. this email is a GitHub account — quietly fall back to the buttons.
+              // e.g. this email is a GitHub account, quietly fall back to the buttons.
               console.error('[onetap] sign-in failed:', e);
             }
           },

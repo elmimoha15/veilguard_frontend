@@ -3,20 +3,21 @@
 import { useApp } from './state';
 
 /* -------------------------------------------------------------------------- */
-/* Toast stack — top-right, auto-dismissing (managed by AppStateProvider).     */
+/* Toast stack, bottom-center black pill, auto-dismissing (AppStateProvider).  */
 /* -------------------------------------------------------------------------- */
 export function ToastStack() {
   const { toasts } = useApp();
   return (
-    <div className="fixed z-[9998] top-[18px] right-[18px] flex flex-col gap-[10px] pointer-events-none">
+    <div className="fixed z-[9998] bottom-[24px] left-1/2 -translate-x-1/2 flex flex-col items-center gap-[10px] pointer-events-none">
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="flex items-center gap-[10px] bg-ink text-white px-4 py-3 rounded-xl min-w-[220px] shadow-[0_14px_34px_-14px_rgba(0,0,0,.55)]"
-          style={{ animation: 'vgToast .3s ease both' }}
+          role="status"
+          className="flex items-center gap-[9px] bg-ink text-white px-[18px] py-[11px] rounded-full text-[13px] font-medium"
+          style={{ boxShadow: 'var(--shadow-toast, 0 16px 40px -14px rgba(0,0,0,.5))', animation: 'vgFade .3s ease both' }}
         >
-          <span className="w-[9px] h-[9px] rounded-full" style={{ background: t.color }} />
-          <span className="text-[14.5px] font-medium">{t.msg}</span>
+          <span className="w-[8px] h-[8px] rounded-full" style={{ background: t.color }} />
+          <span>{t.msg}</span>
         </div>
       ))}
     </div>
@@ -24,11 +25,11 @@ export function ToastStack() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Confetti burst — fires while `celebrate` is true.                           */
+/* Confetti burst, fires while `celebrate` is true.                           */
 /* -------------------------------------------------------------------------- */
-const CONFETTI_COLORS = ['#F3C500', '#1F9D57', '#E0932F', '#E5484D'];
+const CONFETTI_COLORS = ['#FFE24D', '#16A34A', '#D97706', '#DC2626'];
 
-// Positions are derived from the piece index with a deterministic hash — NOT
+// Positions are derived from the piece index with a deterministic hash, NOT
 // Math.random(), which evaluates independently on the server and the client and
 // would yield different values, tripping a hydration mismatch if this ever
 // rendered during SSR. A fixed spread keeps the burst identical everywhere.
@@ -65,13 +66,13 @@ export function ConfettiOverlay() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Grade ring — a circular progress dial. `pct` drives the stroke offset.      */
+/* Grade ring, a circular progress dial. `pct` drives the stroke offset.      */
 /* -------------------------------------------------------------------------- */
 export function GradeRing({
   size = 120,
   pct,
   color,
-  track = '#EDEDEA',
+  track = '#F2F2F2',
   strokeWidth = 9,
   animate = false,
   children,
@@ -137,7 +138,7 @@ export function GradeLetter({
         ...(halftone
           ? {
               // Longhand (NOT the `background` shorthand) so background-clip:text
-              // from .grade-halftone isn't reset to border-box — otherwise the
+              // from .grade-halftone isn't reset to border-box, otherwise the
               // halftone fills the whole box and the transparent glyph vanishes.
               backgroundImage: 'radial-gradient(circle at center, rgba(0,0,0,.22) 1.5px, transparent 2.1px)',
               backgroundSize: '11px 11px',
@@ -167,7 +168,7 @@ export function Toggle({ on, onClick, label }: { on: boolean; onClick: () => voi
       aria-label={label}
       onClick={onClick}
       className="relative w-[42px] h-6 rounded-full border-0 transition-colors"
-      style={{ background: on ? '#1F9D57' : '#E2E2DF' }}
+      style={{ background: on ? '#0A0A0A' : '#E5E5E5' }}
     >
       <span
         className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-[left] shadow-[0_1px_2px_rgba(0,0,0,.2)]"

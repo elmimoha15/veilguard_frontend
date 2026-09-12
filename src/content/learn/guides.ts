@@ -58,7 +58,7 @@ export const GUIDES: Article[] = [
       {
         h2: 'Database access is where most of the damage happens',
         body:
-          'If you only fix one thing, fix this one. In a Supabase app, your database is reachable over the internet with the public "anon" key that ships in your frontend, that is by design, and it is safe only when Row Level Security (RLS) is turned on and every table has a policy. With RLS off (or a policy of "using (true)"), the anon key can read and write every row in the table. Firebase has the same shape: open rules ("allow read, write: if true") mean anyone can read your whole database.\n\nThe reason this bites AI-built apps specifically is that the fastest way to make a feature "work" during building is to loosen the rules, and AI tools, or the founder following their suggestion, often do exactly that and never tighten them back up. The app keeps working, so nothing signals that the front door is open.',
+          'If you only fix one thing, fix this one. In a Supabase app, your database is reachable over the internet with the public "anon" key that ships in your frontend, that is by design, and it is safe only when Row Level Security (RLS) is turned on and every table has a policy. With RLS off (or a policy of "using (true)"), the anon key can read and write every row in the table. Firebase has the same shape: open rules ("allow read, write: if true") mean anyone can read your whole database. This is not hypothetical: [CVE-2025-48757](https://nvd.nist.gov/vuln/detail/CVE-2025-48757) found 170+ live apps exposed by exactly this misconfiguration.\n\nThe reason this bites AI-built apps specifically is that the fastest way to make a feature "work" during building is to loosen the rules, and AI tools, or the founder following their suggestion, often do exactly that and never tighten them back up. The app keeps working, so nothing signals that the front door is open.',
         note:
           'If you take payments or store any personal data, treat an RLS/rules failure as an emergency, not a to-do, this is the item most likely to expose customer records.',
       },
@@ -105,6 +105,12 @@ export const GUIDES: Article[] = [
       { label: 'Security checks before launching your SaaS', href: '/guides/security-checks-before-launching-your-saas' },
       { label: 'How do I know if my Supabase database is exposed?', href: '/security/how-do-i-know-if-my-supabase-database-is-exposed' },
     ],
+    sources: [
+      { label: 'CVE-2025-48757: open Supabase RLS exposed 170+ live apps (NIST NVD)', href: 'https://nvd.nist.gov/vuln/detail/CVE-2025-48757' },
+      { label: 'GitGuardian: The State of Secrets Sprawl 2026 (28.6M secrets on public GitHub in 2025)', href: 'https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/' },
+      { label: 'Stripe: verify webhook event signatures before trusting them (official docs)', href: 'https://docs.stripe.com/webhooks' },
+      { label: 'OWASP: SQL Injection', href: 'https://owasp.org/www-community/attacks/SQL_Injection' },
+    ],
     hasPlaceholders: false,
   },
 
@@ -134,12 +140,12 @@ export const GUIDES: Article[] = [
       {
         h2: 'Why AI-built apps share the same seven weaknesses',
         body:
-          'AI coding tools optimise for a working demo. When you ask Lovable, Bolt, Cursor, Replit or v0 to "add a database" or "let users upload files," the fastest path to something that runs is the permissive default, open access, keys wherever they are convenient, checks in the browser where they are easy to write. The result works on the first try, which removes the usual signal that something is wrong.\n\nThese are not exotic vulnerabilities. They are the same seven mistakes over and over, because they all come from the same root cause: convenience defaults that were never tightened. Learn to recognise them and you can audit almost any AI-built app.',
+          'AI coding tools optimise for a working demo. When you ask Lovable, Bolt, Cursor, Replit or v0 to "add a database" or "let users upload files," the fastest path to something that runs is the permissive default, open access, keys wherever they are convenient, checks in the browser where they are easy to write. The result works on the first try, which removes the usual signal that something is wrong.\n\nThese are not exotic vulnerabilities. They are the same seven mistakes over and over, because they all come from the same root cause: convenience defaults that were never tightened. Independent research backs this up: the [Veracode 2025 study](https://www.veracode.com/blog/genai-code-security-report/) found AI writes insecure code about 45% of the time, and a [Stanford study](https://arxiv.org/abs/2211.03622) found developers using AI assistants shipped more security bugs while feeling more confident. Learn to recognise these seven and you can audit almost any AI-built app.',
       },
       {
         h2: '1. Public database rows',
         body:
-          'What it is: your database tables are readable (and sometimes writable) by anyone with the public key, because Row Level Security is off in Supabase or your Firebase rules are open.\n\nWhy AI tools cause it: to make a feature work quickly, the tool creates a table and skips the row-level policies, or explicitly disables RLS "to fix" a query that was returning nothing. The app then works perfectly, for you and for a stranger reading the same data.\n\nThe cost: every customer record, emails, orders, messages, whatever the table holds, can be downloaded by anyone who opens the network tab and reuses the public key. This is the single most common way AI-built apps leak data. [SOURCE NEEDED]\n\nThe fix: turn on RLS for every table and add a policy tying each row to its owner ("auth.uid() = user_id"); lock Firebase rules to authenticated owners. See our dedicated RLS guide for good-vs-bad policy examples.',
+          'What it is: your database tables are readable (and sometimes writable) by anyone with the public key, because Row Level Security is off in Supabase or your Firebase rules are open.\n\nWhy AI tools cause it: to make a feature work quickly, the tool creates a table and skips the row-level policies, or explicitly disables RLS "to fix" a query that was returning nothing. The app then works perfectly, for you and for a stranger reading the same data.\n\nThe cost: every customer record, emails, orders, messages, whatever the table holds, can be downloaded by anyone who opens the network tab and reuses the public key. This is the single most common way AI-built apps leak data: [CVE-2025-48757](https://nvd.nist.gov/vuln/detail/CVE-2025-48757) catalogued 170+ live apps exposed exactly this way, and the [Moltbook breach](https://www.wiz.io/blog/exposed-moltbook-database-reveals-millions-of-api-keys) leaked 1.5M tokens and 35,000 emails through the same open-database mistake.\n\nThe fix: turn on RLS for every table and add a policy tying each row to its owner ("auth.uid() = user_id"); lock Firebase rules to authenticated owners. See our dedicated RLS guide for good-vs-bad policy examples.',
       },
       {
         h2: '2. Secret keys in the browser bundle',
@@ -154,7 +160,7 @@ export const GUIDES: Article[] = [
       {
         h2: '4. Unsigned payment webhooks',
         body:
-          'What it is: your payment webhook (the URL Stripe or Polar calls when a payment succeeds) accepts any incoming request and acts on it without verifying it really came from the payment provider.\n\nWhy AI tools cause it: the tool wires up a route that reads the event and grants access, but skips the signature-verification step because the happy path works without it.\n\nThe cost: anyone who discovers the webhook URL can send a fake "payment succeeded" event and unlock paid access, credits, or entitlements without paying. [SOURCE NEEDED]\n\nThe fix: verify the provider signature on every event using your webhook signing secret before you trust it, and confirm the amount and currency match what you expected.',
+          'What it is: your payment webhook (the URL Stripe or Polar calls when a payment succeeds) accepts any incoming request and acts on it without verifying it really came from the payment provider.\n\nWhy AI tools cause it: the tool wires up a route that reads the event and grants access, but skips the signature-verification step because the happy path works without it.\n\nThe cost: anyone who discovers the webhook URL can send a fake "payment succeeded" event and unlock paid access, credits, or entitlements without paying. [Stripe documentation](https://docs.stripe.com/webhooks) is explicit that you must verify the event signature before you act on it.\n\nThe fix: verify the provider signature on every event using your webhook signing secret before you trust it, and confirm the amount and currency match what you expected.',
       },
       {
         h2: '5. Public storage buckets',
@@ -169,7 +175,7 @@ export const GUIDES: Article[] = [
       {
         h2: '7. Unsanitized input and injection',
         body:
-          'What it is: user-supplied input flows into a database query, a shell command, or the page without being safely handled, the classic setup for SQL injection or cross-site scripting.\n\nWhy AI tools cause it: when generated code builds a query by gluing strings together with user input, or renders user input as raw HTML, it works in the demo and hides the injection risk.\n\nThe cost: an attacker can craft input that reads or destroys data, or runs script in other users\' browsers. [SOURCE NEEDED]\n\nThe fix: use parameterised queries or the database client\'s query builder (never string-concatenated SQL), and escape or sanitise any user input before rendering it. Supabase\'s client and most ORMs do this for you when used as intended.',
+          'What it is: user-supplied input flows into a database query, a shell command, or the page without being safely handled, the classic setup for SQL injection or cross-site scripting.\n\nWhy AI tools cause it: when generated code builds a query by gluing strings together with user input, or renders user input as raw HTML, it works in the demo and hides the injection risk.\n\nThe cost: an attacker can craft input that reads or destroys data, or runs script in other users\' browsers. These are the classic [SQL injection](https://owasp.org/www-community/attacks/SQL_Injection) and [cross-site scripting](https://owasp.org/www-community/attacks/xss/) attacks OWASP has tracked for years.\n\nThe fix: use parameterised queries or the database client\'s query builder (never string-concatenated SQL), and escape or sanitise any user input before rendering it. Supabase\'s client and most ORMs do this for you when used as intended.',
       },
     ],
     keyTakeaways: [
@@ -204,7 +210,16 @@ export const GUIDES: Article[] = [
       { label: 'Can someone hack an app built with AI?', href: '/security/can-someone-hack-an-app-built-with-ai' },
       { label: 'Are AI-generated apps safe to launch?', href: '/guides/are-ai-generated-apps-safe-to-launch' },
     ],
-    hasPlaceholders: true,
+    sources: [
+      { label: 'CVE-2025-48757: open Supabase RLS exposed 170+ live apps (NIST NVD)', href: 'https://nvd.nist.gov/vuln/detail/CVE-2025-48757' },
+      { label: 'Wiz Research: Moltbook exposed database (1.5M API keys, 35k emails)', href: 'https://www.wiz.io/blog/exposed-moltbook-database-reveals-millions-of-api-keys' },
+      { label: 'Veracode 2025 GenAI Code Security Report (45% of AI code fails security tests)', href: 'https://www.veracode.com/blog/genai-code-security-report/' },
+      { label: 'Stanford: developers with AI assistants wrote less secure code, more confidently', href: 'https://arxiv.org/abs/2211.03622' },
+      { label: 'Stripe: verify webhook event signatures before trusting them (official docs)', href: 'https://docs.stripe.com/webhooks' },
+      { label: 'OWASP: SQL Injection', href: 'https://owasp.org/www-community/attacks/SQL_Injection' },
+      { label: 'OWASP: Cross-Site Scripting (XSS)', href: 'https://owasp.org/www-community/attacks/xss/' },
+    ],
+    hasPlaceholders: false,
   },
 
   // 3 ────────────────────────────────────────────────────────────────────────
@@ -245,7 +260,7 @@ export const GUIDES: Article[] = [
       {
         h2: 'The two traps: "using (true)" and "I turned RLS off to make it work"',
         body:
-          'There are two ways AI-built Supabase apps end up wide open, and they are worth naming because they feel like solutions at the time.\n\nThe first is turning RLS off. A query returns nothing, the app is broken, and the fastest way to "fix" it is to disable Row Level Security on the table. The app instantly works, because now there is no bouncer at all. The fix was actually the disease.\n\nThe second is a policy of "using (true)". This looks like a real security policy, so it feels safe, but "true" means "this check passes for everyone, always." It is a bouncer who waves through every single person. It is functionally the same as having no policy, every row is readable by anyone with the anon key.\n\nBoth happen because they make the app work, and a working app gives you no warning that the door is open.',
+          'There are two ways AI-built Supabase apps end up wide open, and they are worth naming because they feel like solutions at the time.\n\nThe first is turning RLS off. A query returns nothing, the app is broken, and the fastest way to "fix" it is to disable Row Level Security on the table. The app instantly works, because now there is no bouncer at all. The fix was actually the disease.\n\nThe second is a policy of "using (true)". This looks like a real security policy, so it feels safe, but "true" means "this check passes for everyone, always." It is a bouncer who waves through every single person. It is functionally the same as having no policy, every row is readable by anyone with the anon key.\n\nBoth happen because they make the app work, and a working app gives you no warning that the door is open. This is exactly the pattern behind [CVE-2025-48757](https://nvd.nist.gov/vuln/detail/CVE-2025-48757), where 170+ live Supabase-backed apps were found readable by anyone holding the public key.',
       },
       {
         h2: 'A dangerous policy next to a good one',
@@ -307,6 +322,11 @@ export const GUIDES: Article[] = [
       { label: 'Is my Lovable app secure?', href: '/scanners/lovable' },
     ],
     builder: { label: 'Check your Supabase security free', href: '/scanners/supabase' },
+    sources: [
+      { label: 'Supabase: Row Level Security (official docs)', href: 'https://supabase.com/docs/guides/database/postgres/row-level-security' },
+      { label: 'CVE-2025-48757: open Supabase RLS exposed 170+ live apps (NIST NVD)', href: 'https://nvd.nist.gov/vuln/detail/CVE-2025-48757' },
+      { label: 'Wiz Research: Moltbook exposed database (1.5M API keys, 35k emails)', href: 'https://www.wiz.io/blog/exposed-moltbook-database-reveals-millions-of-api-keys' },
+    ],
     hasPlaceholders: false,
   },
 
@@ -341,7 +361,7 @@ export const GUIDES: Article[] = [
       {
         h2: 'Step 1, Lock down the database',
         body:
-          'Start here because an open database is the fastest way to leak everything. In Supabase, turn on Row Level Security for every table that holds user or business data and add a policy scoping each row to its owner ("auth.uid() = user_id"); make sure no policy is "using (true)". In Firebase, replace any "allow read, write: if true" with rules that require "request.auth != null" and check ownership.\n\nThen prove it: log out or use a second account and confirm you cannot read data that is not yours. Do not move on until this passes, everything else matters less than this.',
+          'Start here because an open database is the fastest way to leak everything. In Supabase, turn on Row Level Security for every table that holds user or business data and add a policy scoping each row to its owner ("auth.uid() = user_id"); make sure no policy is "using (true)". In Firebase, replace any "allow read, write: if true" with rules that require "request.auth != null" and check ownership.\n\nThen prove it: log out or use a second account and confirm you cannot read data that is not yours. Do not move on until this passes, everything else matters less than this. An open database is the [CVE-2025-48757](https://nvd.nist.gov/vuln/detail/CVE-2025-48757) failure mode: 170+ live apps were found leaking data through exactly this gap.',
       },
       {
         h2: 'Step 2, Get secrets off the client and rotate what leaked',
@@ -356,7 +376,7 @@ export const GUIDES: Article[] = [
       {
         h2: 'Step 4, Secure payments and storage',
         body:
-          'Payments: confirm your webhook verifies the provider signature before granting anything. If your Stripe or Polar webhook accepts events without checking the signing secret, anyone who finds the URL can fake a successful payment. Add signature verification and confirm the amount and currency match what you expected.\n\nStorage: check every Supabase/Firebase bucket. Anything private (IDs, invoices, user uploads) must be in a private bucket with owner-scoped rules, served via short-lived signed URLs, not public links. Test by opening a stored file URL in an incognito window with no login.',
+          'Payments: confirm your webhook verifies the provider signature before granting anything. If your Stripe or Polar webhook accepts events without checking the signing secret, anyone who finds the URL can fake a successful payment. Add [signature verification](https://docs.stripe.com/webhooks) and confirm the amount and currency match what you expected.\n\nStorage: check every Supabase/Firebase bucket. Anything private (IDs, invoices, user uploads) must be in a private bucket with owner-scoped rules, served via short-lived signed URLs, not public links. Test by opening a stored file URL in an incognito window with no login.',
       },
       {
         h2: 'Step 5, Tighten CORS, headers, dependencies, and git',
@@ -408,6 +428,11 @@ export const GUIDES: Article[] = [
       { label: 'Is it safe to take payments on a vibe-coded app?', href: '/guides/is-it-safe-to-take-payments-on-a-vibe-coded-app' },
       { label: 'Exposed API keys: what they are, how to find and fix them', href: '/security/exposed-api-keys-what-they-are-how-to-find-and-fix' },
     ],
+    sources: [
+      { label: 'CVE-2025-48757: open Supabase RLS exposed 170+ live apps (NIST NVD)', href: 'https://nvd.nist.gov/vuln/detail/CVE-2025-48757' },
+      { label: 'Stripe: verify webhook event signatures before trusting them (official docs)', href: 'https://docs.stripe.com/webhooks' },
+      { label: 'GitGuardian: The State of Secrets Sprawl 2026 (28.6M secrets on public GitHub in 2025)', href: 'https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/' },
+    ],
     hasPlaceholders: false,
   },
 
@@ -437,7 +462,7 @@ export const GUIDES: Article[] = [
       {
         h2: 'Public keys vs secret keys, the distinction that matters',
         body:
-          'Not every key in your browser is a problem. API keys come in two families, and confusing them causes both false panic and real breaches.\n\nPublishable (public) keys are designed to be seen by anyone. Stripe\'s "pk_" key and Supabase\'s "anon" key are examples, they identify your project but do not, on their own, grant access to anything sensitive (in Supabase\'s case, your Row Level Security policies are what actually protect the data). Finding these in your frontend is expected.\n\nSecret keys are the opposite. Stripe\'s "sk_" key, Supabase\'s "service_role" key, your OpenAI key, and SMTP or database passwords all grant real, often unrestricted power, charging cards, bypassing database rules, spending money, sending mail as you. These must never reach the browser. The whole job of this guide is telling the two apart and getting the secret ones back behind your server.',
+          'Not every key in your browser is a problem. API keys come in two families, and confusing them causes both false panic and real breaches.\n\nPublishable (public) keys are designed to be seen by anyone. Stripe\'s "pk_" key and Supabase\'s "anon" key are examples, they identify your project but do not, on their own, grant access to anything sensitive (in Supabase\'s case, your Row Level Security policies are what actually protect the data). Finding these in your frontend is expected.\n\nSecret keys are the opposite. Stripe\'s "sk_" key, Supabase\'s "service_role" key, your OpenAI key, and SMTP or database passwords all grant real, often unrestricted power, charging cards, bypassing database rules, spending money, sending mail as you. These must never reach the browser. Leaked secrets are rampant, [GitGuardian](https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/) found 28.6M new secrets pushed to public GitHub in 2025 alone. The whole job of this guide is telling the two apart and getting the secret ones back behind your server.',
         note:
           'Quick rule: "pk_" and "anon" are meant to be public. "sk_", "service_role", and anything called "secret", "private", or "password" are not, if one is in your browser, treat it as compromised.',
       },
@@ -461,7 +486,7 @@ export const GUIDES: Article[] = [
           'Open the "Network" tab, use your app normally, and inspect outgoing requests, a secret sent from the browser to a third-party API is exposed.',
           'In your codebase, search for "NEXT_PUBLIC_" and confirm every one of them is genuinely safe to be public; a secret behind that prefix is exposed.',
           'Check whether a real ".env" file is tracked by git (it should be listed in ".gitignore" and not appear in the repo).',
-          'Search your git history for secrets, for example "git log -p -S sk_", a key that was committed and later deleted is still there. GitHub also sends secret-scanning alerts if it detects known key formats. [SOURCE NEEDED]',
+          'Search your git history for secrets, for example "git log -p -S sk_", a key that was committed and later deleted is still there. GitHub also sends [secret-scanning alerts](https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning) if it detects known key formats.',
         ],
       },
       {
@@ -512,6 +537,10 @@ export const GUIDES: Article[] = [
       { label: '7 security holes AI coding tools leave behind', href: '/guides/7-security-holes-ai-coding-tools-leave-behind' },
       { label: 'How to secure your app before launch', href: '/guides/how-to-secure-your-app-before-launch' },
     ],
-    hasPlaceholders: true,
+    sources: [
+      { label: 'GitGuardian: The State of Secrets Sprawl 2026 (28.6M secrets on public GitHub in 2025)', href: 'https://blog.gitguardian.com/the-state-of-secrets-sprawl-2026/' },
+      { label: 'GitHub: about secret scanning (official docs)', href: 'https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning' },
+    ],
+    hasPlaceholders: false,
   },
 ];

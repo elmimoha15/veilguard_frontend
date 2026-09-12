@@ -7,7 +7,7 @@ import { BRAND_ICON, type BrandKey } from './BrandIcons';
  * behind it. The provided SVGs are monochrome black, so pass `invert` when the
  * logo sits on a dark tile (renders it white).
  */
-export type BrandLogoName = BrandKey | 'stripe';
+export type BrandLogoName = BrandKey | 'stripe' | 'claude' | 'windsurf' | 'copilot' | 'neon' | 'mongodb';
 
 /** Brands with a real asset in public/svgs (rest fall back to BrandIcons). */
 const ASSET: Partial<Record<BrandLogoName, string>> = {
@@ -16,7 +16,30 @@ const ASSET: Partial<Record<BrandLogoName, string>> = {
   replit: '/svgs/replit.svg',
   v0: '/svgs/v0.svg',
   stripe: '/svgs/stripe.svg',
-  bolt: '/svgs/bolt.png',
+  bolt: '/svgs/bolt.svg',
+  claude: '/svgs/claude.svg',
+  windsurf: '/svgs/windsurf.svg',
+  copilot: '/svgs/copilot.svg',
+  lovable: '/svgs/lovable.svg',
+  supabase: '/svgs/supabase.svg',
+  firebase: '/svgs/firebase.svg',
+  neon: '/svgs/neon.png',
+  mongodb: '/svgs/mongodb.svg',
+};
+
+/** Square icon marks (no wordmark) — for onboarding + all marketing (only the
+ *  under-hero logo wall uses the full wordmark logos). */
+const ICON_ASSET: Partial<Record<BrandLogoName, string>> = {
+  cursor: '/svgs/cursor-icon.svg',
+  bolt: '/svgs/bolt-icon.svg',
+  supabase: '/svgs/supabase-icon.svg',
+  replit: '/svgs/replit-icon.svg',
+  lovable: '/svgs/lovable-icon.svg',
+  mongodb: '/svgs/mongodb-icon.svg',
+  claude: '/svgs/claude-icon.svg',
+  windsurf: '/svgs/windsurf-icon.svg',
+  copilot: '/svgs/copilot-icon.svg',
+  v0: '/svgs/v0.svg', // already a square mark
 };
 
 export function BrandLogo({
@@ -25,14 +48,24 @@ export function BrandLogo({
   className,
   title,
   invert,
+  icon,
 }: {
   name: BrandLogoName;
   size?: number;
   className?: string;
   title?: string;
   invert?: boolean;
+  /** Prefer the square icon mark (no wordmark) when one exists. */
+  icon?: boolean;
 }) {
-  const asset = ASSET[name];
+  const iconSvg = icon ? ICON_ASSET[name] : undefined;
+  const HandMark = BRAND_ICON[name as BrandKey];
+  // When a square icon is requested but there's no dedicated icon SVG, prefer the
+  // hand-drawn square mark (e.g. firebase) over squishing the wide wordmark asset.
+  if (icon && !iconSvg && HandMark) {
+    return <HandMark size={size} className={className} title={title} />;
+  }
+  const asset = iconSvg || ASSET[name];
   if (asset) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
@@ -47,7 +80,5 @@ export function BrandLogo({
       />
     );
   }
-  // No real asset yet (lovable / supabase / firebase) → existing colored mark.
-  const Icon = BRAND_ICON[name as BrandKey];
-  return Icon ? <Icon size={size} className={className} title={title} /> : null;
+  return HandMark ? <HandMark size={size} className={className} title={title} /> : null;
 }

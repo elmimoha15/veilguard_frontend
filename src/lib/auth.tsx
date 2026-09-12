@@ -23,9 +23,8 @@ import { auth } from './firebase';
 import { api } from './api';
 
 /** OAuth clients where redirect is safe: NOT localhost/emulator. `signInWithRedirect`
- *  returns to `authDomain` (veilguard.dev) — great in prod, broken on localhost —
- *  so we use redirect in prod and keep the popup locally. */
-function isRedirectEnv(): boolean {
+ *  returns to `authDomain` (veilguard.dev), great in prod, broken on localhost,  *  so we use redirect in prod and keep the popup locally. */
+export function isRedirectEnv(): boolean {
   if (typeof window === 'undefined') return false;
   const h = window.location.hostname;
   const local = h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
@@ -40,7 +39,17 @@ export function oneTapEnabled(): boolean {
 const WHICH_KEY = 'vg_auth_which';        // provider we redirected with
 const PENDING_LINK_KEY = 'vg_pending_link'; // cross-provider credential to link on return
 const AUTH_ERROR_KEY = 'vg_auth_error';   // redirect-return error message for the login page
+const LOGIN_INTENT_KEY = 'vg_auth_login_only'; // redirect started from the LOGIN page (refuse new users)
+const NO_ACCOUNT_KEY = 'vg_auth_no_account';   // a new user was refused at login (show Get Started)
 const PENDING_SCAN_KEY = 'vg_pending_scan';
+
+/** True while a `signInWithRedirect` is in progress: `WHICH_KEY` is set right
+ *  before we redirect and cleared at the end of `completeRedirect()` (and stays
+ *  set through the cross-provider link re-redirect). The auth pages use this to
+ *  show the branded loader on redirect return instead of flashing the form. */
+export function pendingRedirect(): boolean {
+  try { return !!window.sessionStorage.getItem(WHICH_KEY); } catch { return false; }
+}
 
 /** Read-and-clear an auth error stashed by the redirect handler (login page shows it). */
 export function consumeAuthError(): string {
@@ -51,8 +60,19 @@ export function consumeAuthError(): string {
   return '';
 }
 
+/** Read-and-clear the "new user refused at login" flag stashed by the redirect handler. */
+export function consumeNoAccount(): boolean {
+  try {
+    if (window.sessionStorage.getItem(NO_ACCOUNT_KEY) === '1') {
+      window.sessionStorage.removeItem(NO_ACCOUNT_KEY);
+      return true;
+    }
+  } catch { /* storage off */ }
+  return false;
+}
+
 /** Max session age from the last real sign-in before we force re-login. Tunable
- *  security knob — 7 days balances safety with not nagging users to re-log-in. */
+ *  security knob, 7 days balances safety with not nagging users to re-log-in. */
 export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 /** Hard cap on how long an OAuth popup may run before we stop waiting (anti-hang). */
 const POPUP_TIMEOUT_MS = 180_000;
@@ -101,11 +121,11 @@ export function authErrorMessage(e: unknown): string {
     case 'auth/popup-blocked':
       return 'Your browser blocked the sign-in popup. Allow popups and try again.';
     case 'auth/network-request-failed':
-      return 'Can’t sign in — check your internet connection and try again.';
+      return 'Can’t sign in, check your internet connection and try again.';
     case 'auth/use-existing-provider':
       return e instanceof Error ? e.message : 'Continue with your original provider to sign in.';
     case 'auth/account-exists-with-different-credential':
-      return 'That email is already registered — continue with your original provider (Google or GitHub).';
+      return 'That email is already registered, continue with your original provider (Google or GitHub).';
     default:
       return 'Something went wrong signing in. Please try again.';
   }
@@ -121,12 +141,12 @@ const credFromError = (w: Which, err: AuthError) =>
  * Sign in with a provider, and gracefully resolve the classic
  * `auth/account-exists-with-different-credential` case (same email already
  * registered with the OTHER provider). We re-authenticate with the existing
- * provider, then LINK the just-attempted credential — so afterwards the user can
+ * provider, then LINK the just-attempted credential, so afterwards the user can
  * sign in with EITHER Google or GitHub interchangeably, never a dead end.
  *
  * We only offer two OAuth providers, so the "existing" one is simply the other
- * (and `fetchSignInMethodsForEmail` — which returns [] under email-enumeration
- * protection — is used only as a confirming hint, never a hard dependency).
+ * (and `fetchSignInMethodsForEmail`, which returns [] under email-enumeration
+ * protection, is used only as a confirming hint, never a hard dependency).
  */
 async function signInWithLinking(which: Which): Promise<UserCredential> {
   try {
@@ -154,7 +174,7 @@ async function signInWithLinking(which: Which): Promise<UserCredential> {
     try {
       result = await withPopupTimeout(signInWithPopup(auth(), existingProvider));
     } catch {
-      // Second popup was blocked/closed — guide instead of dead-ending.
+      // Second popup was blocked/closed, guide instead of dead-ending.
       const guide = new Error(
         `This email is already registered with ${providerLabel(existing)}. Continue with ${providerLabel(existing)} to sign in.`,
       ) as Error & { code?: string };
@@ -172,9 +192,15 @@ async function signInWithLinking(which: Which): Promise<UserCredential> {
  * can't return to localhost with a custom authDomain). The redirect return is
  * processed by `completeRedirect()` on the next load.
  */
-async function startSignIn(which: Which): Promise<UserCredential | void> {
+async function startSignIn(which: Which, opts?: { loginOnly?: boolean }): Promise<UserCredential | void> {
   if (isRedirectEnv()) {
-    try { window.sessionStorage.setItem(WHICH_KEY, which); } catch { /* storage off */ }
+    try {
+      window.sessionStorage.setItem(WHICH_KEY, which);
+      // Remember this redirect began on the LOGIN page, so completeRedirect() can
+      // refuse a brand-new user (onboarding signups leave this unset and proceed).
+      if (opts?.loginOnly) window.sessionStorage.setItem(LOGIN_INTENT_KEY, '1');
+      else window.sessionStorage.removeItem(LOGIN_INTENT_KEY);
+    } catch { /* storage off */ }
     await signInWithRedirect(auth(), newProvider(which)); // navigates away
     return;
   }
@@ -191,7 +217,7 @@ async function claimPendingScan(): Promise<void> {
 /**
  * Process a `signInWithRedirect` return, once on load. Handles the happy path,
  * the same-email cross-provider link (stash the pending credential, re-redirect
- * to the existing provider, link on the following return — the stash's presence
+ * to the existing provider, link on the following return, the stash's presence
  * is the loop guard), and errors (stashed as a plain-English message for the
  * login page). No-op when there is no pending redirect.
  */
@@ -225,6 +251,17 @@ export async function completeRedirect(): Promise<void> {
   if (!result) return; // no pending redirect
 
   const pend = readPendingLink();
+  // Login page + brand-new user (and not a cross-provider link) → refuse: undo the
+  // just-created account, flag it so the login page shows "Get Started", and stop.
+  if (!pend && safeGet(LOGIN_INTENT_KEY) === '1' && isNewUser(result)) {
+    try { window.sessionStorage.setItem(NO_ACCOUNT_KEY, '1'); } catch { /* */ }
+    try { await result.user.delete(); } catch { await signOut(auth()).catch(() => {}); }
+    clearRedirectStash();
+    try { window.sessionStorage.removeItem(LOGIN_INTENT_KEY); } catch { /* */ }
+    return;
+  }
+  try { window.sessionStorage.removeItem(LOGIN_INTENT_KEY); } catch { /* */ }
+
   if (pend) {
     try { await linkWithCredential(result.user, pend); } catch (e) { console.error('[auth] link failed:', e); }
   }
@@ -245,7 +282,7 @@ function readPendingLink(): OAuthCredential | null {
 }
 
 /**
- * Google One Tap: exchange the GIS ID token for a Firebase sign-in — the SAME
+ * Google One Tap: exchange the GIS ID token for a Firebase sign-in, the SAME
  * Firebase user as the normal Google flow (creates or links). Claims a pending
  * anonymous scan on success.
  */
@@ -269,19 +306,32 @@ export interface Profile {
   // Usage computed server-side from the user's scans (accurate + persistent).
   usage?: { scansThisMonth: number };
   caps?: { maxScansPerMonth: number };
-  // Onboarding answers (client-written to the user's own doc) — for segmentation.
-  onboarding?: { builtWith?: string; backend?: string; handles?: string[]; codeComfort?: string; scanTarget?: string; shipFrequency?: string };
+  // Onboarding answers (client-written to the user's own doc), for segmentation.
+  onboarding?: { builtWith?: string[]; backend?: string; handles?: string[]; codeComfort?: string; scanTarget?: string; shipFrequency?: string };
   alertEmail?: string;
   onboardedAt?: string;
   // Account-wide notification defaults (client-written to the user's own doc).
   notifications?: { email: boolean; critical: boolean; deploy: boolean; summary: boolean };
 }
 
+// Cache the profile so a reload/new tab has it INSTANTLY (correct plan/gates with no
+// flash) while /me refreshes in the background.
+const PROFILE_CACHE_KEY = 'vg_profile';
+function readProfileCache(): Profile | null {
+  try { const raw = window.sessionStorage.getItem(PROFILE_CACHE_KEY); return raw ? (JSON.parse(raw) as Profile) : null; } catch { return null; }
+}
+function writeProfileCache(p: Profile | null): void {
+  try {
+    if (p) window.sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(p));
+    else window.sessionStorage.removeItem(PROFILE_CACHE_KEY);
+  } catch { /* storage off */ }
+}
+
 /**
  * THE single client-side paid check: the Guard plan unlocks every paid feature
  * (connections, deep scan, folder upload, monitoring, all fixes). The webhook
  * keeps `plan==='guard'` through grace + a scheduled cancel and drops it to
- * 'free' only when access truly ends. This only drives the UI — the backend
+ * 'free' only when access truly ends. This only drives the UI, the backend
  * independently enforces every gate.
  */
 export function isPaid(profile: Profile | null | undefined): boolean {
@@ -309,8 +359,8 @@ interface AuthCtx {
   refreshProfile: () => Promise<Profile | null>;
   /** Sign in with Google/GitHub. Prod → redirect (navigates away, resolves void);
    *  localhost → popup (returns the credential for new-user detection). */
-  google: () => Promise<UserCredential | void>;
-  github: () => Promise<UserCredential | void>;
+  google: (opts?: { loginOnly?: boolean }) => Promise<UserCredential | void>;
+  github: (opts?: { loginOnly?: boolean }) => Promise<UserCredential | void>;
   /** Link a Google/GitHub sign-in to the current account (account linking). */
   link: (which: 'google' | 'github') => Promise<void>;
   logout: () => Promise<void>;
@@ -326,7 +376,7 @@ export function useAuth(): AuthCtx {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(() => readProfileCache());
   const [loading, setLoading] = useState(true);
 
   const refreshProfile = useCallback(async (): Promise<Profile | null> => {
@@ -334,16 +384,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       res = await api.me();
     } catch (e) {
-      // getIdToken() can reject when the token can't refresh (revoked) — that's
+      // getIdToken() can reject when the token can't refresh (revoked), that's
       // an expired session, not a crash.
       console.error('[auth] /me failed:', e);
       await expireSession();
-      setProfile(null);
+      setProfile(null); writeProfileCache(null);
       return null;
     }
-    if (res.status === 401) { await expireSession(); setProfile(null); return null; }
+    if (res.status === 401) { await expireSession(); setProfile(null); writeProfileCache(null); return null; }
     const p = res.ok ? (res.data as unknown as Profile) : null;
     setProfile(p);
+    writeProfileCache(p);
     return p;
   }, []);
 
@@ -359,10 +410,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (sessionTooOld(u)) { await expireSession(); return; }
         try { await u.getIdToken(); } catch { await expireSession(); return; }
       }
+      // Unblock the app as soon as the session is known (fast, from IndexedDB),       // do NOT wait for the /me network call. The profile refreshes in the
+      // background; the UI uses the cached profile meanwhile (no full-screen wait).
       setUser(u);
-      if (u) await refreshProfile();
-      else setProfile(null);
       setLoading(false);
+      if (u) void refreshProfile();
+      else { setProfile(null); writeProfileCache(null); }
     });
   }, [refreshProfile]);
 
@@ -375,8 +428,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(id);
   }, []);
 
-  const google = useCallback(() => startSignIn('google'), []);
-  const github = useCallback(() => startSignIn('github'), []);
+  const google = useCallback((opts?: { loginOnly?: boolean }) => startSignIn('google', opts), []);
+  const github = useCallback((opts?: { loginOnly?: boolean }) => startSignIn('github', opts), []);
   const link = useCallback(async (which: 'google' | 'github') => {
     const u = auth().currentUser;
     if (!u) throw new Error('not signed in');

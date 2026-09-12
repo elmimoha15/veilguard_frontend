@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Hanken_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
+import { Hanken_Grotesk, Inter, JetBrains_Mono, Caveat } from 'next/font/google';
 import './globals.css';
 import Providers from '@/components/Providers';
 
@@ -24,6 +24,14 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   weight: ['400', '500', '700'],
   variable: '--font-jetbrains-mono',
+  display: 'swap',
+});
+
+// Handwritten accent, only for the landing's "No signup required" note.
+const caveat = Caveat({
+  subsets: ['latin'],
+  weight: ['500'],
+  variable: '--font-caveat',
   display: 'swap',
 });
 
@@ -74,7 +82,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${hanken.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${hanken.variable} ${jetbrainsMono.variable} ${caveat.variable}`} suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className="antialiased font-sans bg-bg text-ink relative overflow-x-hidden min-h-screen flex flex-col"

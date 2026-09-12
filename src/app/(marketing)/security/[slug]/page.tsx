@@ -15,11 +15,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const a = getArticle(slug);
   if (!a || articleHub(slug) !== 'security') return {};
   const url = `https://veilguard.dev/security/${a.slug}`;
+  // This legacy article duplicates /security/exposed-api-keys — point its canonical
+  // at the real one so any inbound links consolidate there (it's noindex too).
+  const canonical =
+    slug === 'exposed-api-keys-what-they-are-how-to-find-and-fix'
+      ? '/security/exposed-api-keys'
+      : `/security/${a.slug}`;
   return {
     title: { absolute: a.metaTitle },
     description: a.metaDescription,
     keywords: a.keywords,
-    alternates: { canonical: `/security/${a.slug}` },
+    alternates: { canonical },
     // Drafts stay routable (inbound links resolve) but out of the index.
     ...(DRAFT_SLUGS.has(slug) ? { robots: { index: false, follow: true } } : {}),
     openGraph: {

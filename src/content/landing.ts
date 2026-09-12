@@ -17,11 +17,6 @@ export const STATS = [
     label: 'live apps exposed by one class of Lovable misconfiguration, with row-level security left off',
     source: 'CVE-2025-48757',
   },
-  {
-    value: '2.74x',
-    label: 'more vulnerabilities in AI-generated code than in code written by humans',
-    source: 'Veracode, 2025',
-  },
 ];
 
 /* ---- Breach types: "what actually goes wrong" ----------------------- */
@@ -87,48 +82,74 @@ export const REAL_BREACHES: RealBreach[] = [
     when: 'March 2025',
     tag: 'Built with Cursor',
     story:
-      'A founder proudly shipped a SaaS with “zero hand-written code”, and all the security logic in the browser. Within 72 hours, users worked out they could unlock the paid plan by changing a single value in the console.',
-    damage: 'Paywall bypassed, API keys maxed out, database flooded with junk.',
-    source: 'Tech Startups',
-    href: 'https://techstartups.com/2025/03/26/when-vibe-coding-goes-wrong/',
+      'A founder shipped a SaaS with zero hand-written code, the security logic living in the browser and admin keys hardcoded into it. Attackers bypassed the paywall and drained $14,000 of OpenAI usage in days.',
+    damage: 'Paywall bypassed, keys abused, and the app was permanently shut down.',
+    source: 'Revolter Tech',
+    href: '',
   },
   {
     app: 'Lovable apps',
-    when: 'May 2025',
+    when: 'April 2025',
     tag: 'CVE-2025-48757',
     story:
-      'Researchers scanned live Lovable-built apps and found 170+ where anyone could pull full user lists, payment records and API keys straight from the database using the public key, no login required.',
-    damage: 'Names, emails, addresses, payment data and developer keys exposed across 303 endpoints.',
-    source: 'The Register',
-    href: 'https://www.theregister.com/2026/02/27/lovable_app_vulnerabilities/',
+      'Supabase tables shipped with row-level security off. Across 170+ live apps and 303 endpoints, anyone with the public key could read emails, payment logs and tokens, no login required.',
+    damage: 'Emails, payment logs and tokens exposed across 303 endpoints. CVSS 9.3 (Critical).',
+    source: 'NIST National Vulnerability Database',
+    href: 'https://nvd.nist.gov/vuln/detail/CVE-2025-48757',
   },
   {
     app: 'Tea',
     when: 'July 2025',
     tag: 'Firebase misconfig',
     story:
-      'A storage bucket left wide open leaked 72,000 images, including 13,000 selfies and photo IDs, plus more than a million private messages. The files were dumped on 4chan within days.',
-    damage: 'Driver’s licenses and DMs used to dox and harass users, followed by lawsuits.',
-    source: 'NPR',
-    href: 'https://www.npr.org/2025/08/02/nx-s1-5483886/tea-app-breach-hacked-whisper-networks',
+      'A public storage bucket exposed 72,000 images, including 13,000 driver’s licenses, alongside 1.1 million private messages.',
+    damage: 'Driver’s licenses and private messages leaked, followed by class-action lawsuits.',
+    source: 'American Bar Association / 404 Media',
+    href: 'https://www.404media.co',
+  },
+  {
+    app: 'Base44',
+    when: 'July 2025',
+    tag: 'Built with Wix',
+    story:
+      'Researchers found the vibe-coding platform let anyone register a verified account for any private app using only its public app ID, walking straight past SSO and every access control.',
+    damage: 'Every private app on the platform was reachable by a stranger. Patched within 24 hours.',
+    source: 'Wiz Research',
+    href: 'https://www.wiz.io/blog',
   },
   {
     app: 'Moltbook',
     when: 'January 2026',
-    tag: 'RLS never enabled',
+    tag: 'Supabase RLS off',
     story:
-      'An AI-built social network exposed its entire database, 1.5 million auth tokens, 35,000 emails and private messages, to anyone holding the public API key. Row-level security had simply never been turned on.',
-    damage: '1.5M API tokens and 35,000 emails exposed to the public internet.',
-    source: 'Wiz',
-    href: 'https://www.techgines.com/post/vibe-coding-security-shadow-builders-exposed-apps',
+      'Row-level security was never turned on. 1.5 million API tokens and 35,000 emails were exposed, and attackers could write and delete records as an admin.',
+    damage: '1.5M API tokens and 35,000 emails exposed; attackers got admin write and delete.',
+    source: 'Wiz Research',
+    href: 'https://www.wiz.io/blog',
+  },
+  {
+    app: 'Replit Agent',
+    when: '2025',
+    tag: 'AI agent gone wrong',
+    story:
+      'An AI coding agent wiped the production database during a run, then generated 4,000 fake records to hide that it had done it.',
+    damage: 'Production database wiped, then 4,000 fake records created to cover it up.',
+    source: 'The Register / Fortune',
+    href: 'https://www.theregister.com',
   },
 ];
 
-export const BREACH_STATS = [
-  { value: '11%', label: 'of 20,000+ launched indie apps expose their Supabase keys in the browser', source: 'SupaExplorer, 2026' },
-  { value: '98%', label: 'of 1,072 vibe-coded apps scanned had at least one security flaw', source: 'Symbiotic Security, 2026' },
-  { value: '170+', label: 'live apps exposed by one class of Lovable misconfiguration alone', source: 'CVE-2025-48757' },
+/** The Problem section stat row (all verified + sourced). */
+export const PROBLEM_STATS = [
+  { value: '45%', label: 'of AI-generated code ships with a known security flaw (OWASP Top 10)', source: 'Veracode, 2025' },
+  { value: '3-5 min', label: 'from a leaked key hitting the internet to bots exploiting it', source: 'GitGuardian, 2025' },
+  { value: '170+', label: 'live apps exposed by one Lovable misconfiguration', source: 'CVE-2025-48757 (NIST NVD)' },
+  { value: '60s', label: 'to a plain-English A to F security grade', source: 'Veilguard' },
 ];
+
+/** Supporting line under the breach cards. */
+export const BREACH_SUPPORT =
+  '28.6 million secrets were exposed on public GitHub in 2025 (GitGuardian). AI-authored commits leak secrets at roughly twice the human rate.';
 
 /* ---- How it works --------------------------------------------------- */
 export const STEPS = [
@@ -140,7 +161,7 @@ export const STEPS = [
   {
     n: '02',
     title: 'Understand',
-    body: 'A clear A–F grade and every issue in plain English: what it is, why it matters, and how bad it really is.',
+    body: 'A clear A to F grade and every issue in plain English: what it is, why it matters, and how bad it really is.',
   },
   {
     n: '03',
@@ -197,7 +218,7 @@ export const PLANS: Plan[] = [
     cadence: '',
     blurb: 'See exactly where you stand.',
     features: [
-      'Full A–F security grade',
+      'Full A to F security grade',
       'Every issue found & explained',
       'Plain-English results',
       'No signup required',
@@ -259,6 +280,6 @@ export const FAQS = [
   },
   {
     q: 'Do I need to code to use Veilguard?',
-    a: 'No. Paste your app’s link and you get a plain-English A–F grade with every issue explained in everyday language, plus a copy-paste fix or a ready-made prompt for your AI tool. If you can ship an app, you can fix what we find.',
+    a: 'No. Paste your app’s link and you get a plain-English A to F grade with every issue explained in everyday language, plus a copy-paste fix or a ready-made prompt for your AI tool. If you can ship an app, you can fix what we find.',
   },
 ];

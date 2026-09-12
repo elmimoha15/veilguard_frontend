@@ -1,91 +1,46 @@
 import Link from 'next/link';
-import Eyebrow from '@/components/ui/Eyebrow';
-import FadeIn from '@/components/ui/FadeIn';
+import { ActionInner } from '@/components/ui/ActionButton';
+import { CenterHead, PillLabel } from '@/components/sections/annot/kit';
 import { PLANS } from '@/content/landing';
 import { cn } from '@/lib/utils';
 
 export default function Pricing() {
   return (
-    <section id="pricing" className="bg-card scroll-mt-20">
-      <div className="mx-auto max-w-[1160px] px-6 py-[clamp(60px,8vw,96px)]">
-        <FadeIn className="max-w-[720px]">
-          <Eyebrow className="text-yellow-dark">{'// PRICING'}</Eyebrow>
-          <h2 className="mt-4">Scan free. Pay only to fix.</h2>
-          <p className="mt-4 text-[17px] leading-[1.55] text-muted">
-            The grade and every issue are free, forever. You only pay when you want the fixes or
-            someone watching your back as you ship.
-          </p>
-        </FadeIn>
+    <section id="pricing" className="an-x an-sec">
+      <div className="an-max">
+        <CenterHead
+          eyebrow="Pricing"
+          title="Simple pricing."
+          sub="Scan and grade free, forever. Pay only when you want the fixes or someone watching your back as you ship."
+        />
+        <div className="mt-14 grid sm:grid-cols-2 max-w-[820px] mx-auto items-stretch divide-y sm:divide-y-0 sm:divide-x divide-[#E8E7E3]">
+          {PLANS.map((p, i) => (
+            <div key={p.name} className={cn('flex flex-col py-8 sm:py-2', i === 0 ? 'sm:pr-10' : 'sm:pl-10')}>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-[20px] font-semibold text-ink">{p.name}</h3>
+                {p.badge && <PillLabel>{p.badge}</PillLabel>}
+              </div>
+              <div className="mt-3 flex items-end gap-1">
+                <span className="text-[40px] font-semibold tracking-[-0.02em] leading-none text-ink">{p.price}</span>
+                {p.cadence && <span className="mb-1.5 text-[14px] text-muted">{p.cadence}</span>}
+              </div>
+              <p className="mt-2 text-[14px] text-muted">{p.blurb}</p>
 
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 max-w-[820px] mx-auto items-stretch">
-          {PLANS.map((p, i) => {
-            const featured = p.featured;
-            return (
-              <FadeIn key={p.name} delay={i * 0.08} className="h-full">
-                <div
-                  className={cn(
-                    'relative h-full flex flex-col rounded-[20px] p-8 border',
-                    featured
-                      ? 'bg-ink text-white border-2 border-yellow'
-                      : 'bg-card text-ink border-border-2',
-                  )}
-                >
-                  {p.badge && (
-                    <span className="absolute -top-3 left-8 inline-flex items-center rounded-full bg-yellow text-ink font-mono font-bold text-[10px] tracking-[0.12em] uppercase px-3 py-1">
-                      {p.badge}
-                    </span>
-                  )}
-                  <h3 className={cn('text-[20px] font-bold', featured ? 'text-white' : 'text-ink')}>
-                    {p.name}
-                  </h3>
-                  <div className="mt-3 flex items-end gap-1.5">
-                    <span className="text-[52px] font-extrabold leading-none tracking-[-0.02em]">
-                      {p.price}
-                    </span>
-                    {p.cadence && (
-                      <span className={cn('mb-1.5 text-[15px]', featured ? 'text-white/60' : 'text-muted')}>
-                        {p.cadence}
-                      </span>
-                    )}
-                  </div>
-                  <p className={cn('mt-2 text-[14px]', featured ? 'text-white/60' : 'text-muted')}>
-                    {p.blurb}
-                  </p>
+              <div className="mt-6 text-[13px] font-semibold text-ink">What&apos;s included</div>
+              <ul className="mt-3 space-y-3 flex-1">
+                {p.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-[14px] text-ink">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="mt-[2px] shrink-0"><path d="M5 12.5l4 4 10-10" stroke="#1F9D57" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    <span>{f}</span>
+                  </li>
+                ))}
+              </ul>
 
-                  <div className={cn('my-6 h-px', featured ? 'bg-white/10' : 'bg-border')} />
-
-                  <ul className="space-y-3 flex-1">
-                    {p.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-[14.5px]">
-                        <svg
-                          aria-hidden
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          className="mt-[2px] shrink-0"
-                        >
-                          <circle cx="12" cy="12" r="10" fill={featured ? 'rgba(31,157,87,0.22)' : '#EAF6EF'} />
-                          <path d="M8 12.5l2.5 2.5 5.5-5.5" stroke="#1F9D57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <span className={featured ? 'text-white/85' : 'text-ink'}>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <Link
-                    href={p.ctaHref}
-                    className={cn(
-                      'mt-8 inline-flex items-center justify-center h-12 rounded-xl font-semibold text-[15px] transition-transform duration-150 hover:scale-[1.02] active:scale-[0.99]',
-                      featured ? 'bg-yellow text-ink font-bold' : 'bg-ink text-white',
-                    )}
-                  >
-                    {p.cta}
-                  </Link>
-                </div>
-              </FadeIn>
-            );
-          })}
+              <Link href={p.ctaHref} className={cn('mt-8 vg-abtn w-full h-12 text-[15px]', p.featured ? 'vg-abtn--primary' : 'vg-abtn--outline')}>
+                <ActionInner>{p.cta}</ActionInner>
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
     </section>

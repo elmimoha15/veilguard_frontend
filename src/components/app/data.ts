@@ -1,35 +1,70 @@
 /**
  * Presentational lookups shared by the product-app screens. The app is fully
  * wired to the real backend (scans/findings come from Firestore via
- * `@/lib/hooks` + `@/lib/scans`); this file only holds severity display metadata
- * and the small enums the UI filters on — no mock scan/app data.
+ * `@/lib/hooks` + `@/lib/scans`); this file only holds the display palette and
+ * the small enums the UI filters on, no mock scan/app data.
+ *
+ * Single source of truth for grade/severity color (handoff palette): red =
+ * critical, amber = warning, green = pass/fixed. `adapters.ts` and `hooks.ts`
+ * mirror these values.
  */
 
 export type Sev = 'CRITICAL' | 'WARNING' | 'PASSED';
+
+/** Map a raw backend severity string ('critical'|'high'|'medium'|'low'|'info')
+ *  to the UI Sev enum, for MonitorEvent refs that carry the raw lowercase value. */
+export function sevFromRaw(raw: string): Sev {
+  const s = (raw || '').toLowerCase();
+  if (s === 'critical') return 'CRITICAL';
+  if (s === 'info' || s === 'passed') return 'PASSED';
+  return 'WARNING'; // high / medium / low
+}
 export type Status = 'open' | 'fixed' | 'ignored' | 'passed';
+export type Grade = 'A' | 'B' | 'C' | 'D' | 'F';
 
 export const SEV_COLOR: Record<Sev, string> = {
-  CRITICAL: '#E5484D',
-  WARNING: '#E0932F',
-  PASSED: '#1F9D57',
+  CRITICAL: '#DC2626',
+  WARNING: '#D97706',
+  PASSED: '#16A34A',
 };
 
-/* Tint / text pairs for severity — used by finding banners & pills. */
+/* Tint / text pairs for severity chips & banners (handoff). */
 export const SEV_TINT: Record<Sev, { bg: string; fg: string }> = {
-  CRITICAL: { bg: '#FBEAEA', fg: '#C23B3F' },
-  WARNING: { bg: '#FBF1E1', fg: '#9A6412' },
-  PASSED: { bg: '#EAF6EF', fg: '#157A43' },
+  CRITICAL: { bg: '#FEF2F2', fg: '#DC2626' },
+  WARNING: { bg: '#FFFBEB', fg: '#B45309' },
+  PASSED: { bg: '#F0FDF4', fg: '#15803D' },
 };
 
 export const SEV_META: Record<Sev, { sevPlain: string; sevHint: string }> = {
-  CRITICAL: { sevPlain: 'Serious problem — fix this first', sevHint: 'Someone could actually get to your customers’ data right now.' },
+  CRITICAL: { sevPlain: 'Serious problem, fix this first', sevHint: 'Someone could actually get to your customers’ data right now.' },
   WARNING: { sevPlain: 'Worth fixing soon', sevHint: 'Not an emergency, but it makes you an easier target.' },
-  PASSED: { sevPlain: 'You’re good here', sevHint: 'This check passed — nothing to do.' },
+  PASSED: { sevPlain: 'You’re good here', sevHint: 'This check passed, nothing to do.' },
 };
 
 export const STATUS_META: Record<Status, { label: string; bg: string; fg: string }> = {
-  open: { label: 'Open', bg: '#FBEAEA', fg: '#C23B3F' },
-  fixed: { label: 'Fixed', bg: '#EAF6EF', fg: '#157A43' },
-  ignored: { label: 'Ignored', bg: '#F2F2EF', fg: '#9B9B96' },
-  passed: { label: 'Passed', bg: '#EAF6EF', fg: '#157A43' },
+  open: { label: 'Open', bg: '#FEF2F2', fg: '#DC2626' },
+  fixed: { label: 'Fixed', bg: '#F0FDF4', fg: '#15803D' },
+  ignored: { label: 'Ignored', bg: '#F5F5F5', fg: '#A3A3A3' },
+  passed: { label: 'Passed', bg: '#F0FDF4', fg: '#15803D' },
 };
+
+/* Grade → chip tint (A/B green, C amber, D/F red). */
+export const GRADE_TINT: Record<Grade, { bg: string; fg: string }> = {
+  A: { bg: '#F0FDF4', fg: '#15803D' },
+  B: { bg: '#F0FDF4', fg: '#15803D' },
+  C: { bg: '#FFFBEB', fg: '#B45309' },
+  D: { bg: '#FEF2F2', fg: '#DC2626' },
+  F: { bg: '#FEF2F2', fg: '#DC2626' },
+};
+
+/* Grade → solid signal color (rings, big letters). */
+export const GRADE_COLOR: Record<Grade, string> = {
+  A: '#16A34A',
+  B: '#16A34A',
+  C: '#D97706',
+  D: '#DC2626',
+  F: '#DC2626',
+};
+
+/* 5-step green ramp for the scan-activity heatmap (index 0 = no scans). */
+export const HEAT_RAMP = ['#F2F2F2', '#D7EFDF', '#93D6B0', '#3EAE71', '#15803D'] as const;

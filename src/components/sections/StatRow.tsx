@@ -14,7 +14,7 @@ export default function StatRow() {
     <section className="bg-bg">
       <div className="mx-auto max-w-[1160px] px-6 py-[clamp(56px,8vw,96px)]">
         <FadeIn className="max-w-[720px]">
-          <Eyebrow className="text-yellow-dark">{'// THE NUMBERS'}</Eyebrow>
+          <Eyebrow className="text-yellow-dark">{'THE NUMBERS'}</Eyebrow>
           <h2 className="el-h mt-4 text-[clamp(24px,3vw,36px)]">
             AI ships fast.
             <span className="block text-tertiary">And it ships exposed, at scale.</span>

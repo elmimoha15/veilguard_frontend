@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp } from './state';
-import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSessionExpired, consumeAuthError, type LastProvider } from '@/lib/auth';
+import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSessionExpired, consumeAuthError, consumeNoAccount, pendingRedirect, isRedirectEnv, type LastProvider } from '@/lib/auth';
 import GoogleOneTap from '@/components/auth/GoogleOneTap';
+import FullScreenLoader from '@/components/auth/FullScreenLoader';
 import { api } from '@/lib/api';
 import { LEGAL } from '@/content/site';
 import Logo from '@/components/ui/Logo';
@@ -18,23 +18,46 @@ const COPY: Record<Mode, { title: string; sub: string; switch: string; to: Mode 
 
 export default function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
-  const { toast } = useApp();
-  const { user, profile, google, github, refreshProfile, logout } = useAuth();
+  const { user, profile, loading, google, github, refreshProfile, logout } = useAuth();
   const [busy, setBusy] = useState<'google' | 'github' | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  // Set when a brand-new user is refused at login (they have no account); reveals a
+  // "Get Started" button that sends them to onboarding (the only way to sign up).
+  const [noAccount, setNoAccount] = useState(false);
   const [last, setLast] = useState<LastProvider | null>(null);
+  // True if we landed here mid `signInWithRedirect` (snapshot at mount), drives
+  // the branded loader while the session + profile restore, instead of flashing
+  // the form. Cleared implicitly: on success `user` takes over; on error the
+  // redirect handler flips `loading` false with no user, so the form returns.
+  const [redirecting] = useState(() => pendingRedirect());
   const routed = useRef(false);
 
   // Read the last-used provider after mount (avoids SSR/hydration mismatch).
   useEffect(() => { setLast(getLastProvider()); }, []);
+  // Clear a stale "Connecting…" if the user hits Back from the OAuth provider and
+  // the page is restored from bfcache (mirrors the connect-flow reset in Settings).
+  useEffect(() => {
+    const reset = () => setBusy(null);
+    window.addEventListener('pageshow', reset);
+    return () => window.removeEventListener('pageshow', reset);
+  }, []);
   // Gentle notice when the user landed here because their session expired, and
   // surface any error returned from a redirect sign-in (getRedirectResult).
   useEffect(() => {
-    if (consumeSessionExpired()) setNotice('Your session expired — please sign in again.');
+    if (consumeSessionExpired()) setNotice('Your session expired, please sign in again.');
     const redirErr = consumeAuthError();
     if (redirErr) setError(redirErr);
   }, []);
+  // Redirect (prod) return: a new user refused at login is flagged by completeRedirect().
+  // Consume it only once redirect processing has settled (avoids the mount-vs-redirect race).
+  useEffect(() => {
+    if (loading) return;
+    if (!consumeNoAccount()) return;
+    // Defer out of the effect body (avoids cascading-render lint) — one-shot: the
+    // flag is already cleared, so this can't loop.
+    queueMicrotask(() => { setNoAccount(true); setError('You don’t have an account yet.'); });
+  }, [loading]);
 
   // Route any already-signed-in user away from the auth pages (e.g. they opened
   // /login in a fresh tab while a session exists).
@@ -48,20 +71,23 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     setBusy(which);
     setError('');
     setNotice('');
+    setNoAccount(false);
     try {
-      const cred = await (which === 'google' ? google() : github());
+      const cred = await (which === 'google' ? google({ loginOnly: mode === 'login' }) : github({ loginOnly: mode === 'login' }));
 
-      // Redirect flow (prod) navigates away here and resolves void — the return
+      // Redirect flow (prod) navigates away here and resolves void, the return
       // is handled by completeRedirect(). The rest runs only for the popup path.
       if (!cred) return; // keep busy through the redirect navigation
 
-      // On the LOGIN page, a brand-new social user has no account yet — undo the
-      // just-created account and send them to sign up instead of letting them in.
+      // On the LOGIN page, a brand-new social user has no account yet: undo the
+      // just-created account and refuse, then reveal the "Get Started" button so
+      // they sign up through onboarding. Stay on the page (no redirect).
       if (mode === 'login' && isNewUser(cred)) {
         try { await cred.user.delete(); } catch { await logout().catch(() => {}); }
-        toast('You don’t have an account yet — sign up to continue', '#E0932F');
-        router.replace('/signup');
-        return; // keep busy through the navigation
+        setNoAccount(true);
+        setError('You don’t have an account yet.');
+        setBusy(null);
+        return;
       }
 
       rememberProvider(which);
@@ -84,17 +110,29 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
   const c = COPY[mode];
 
+  // Cover the post-sign-in window with the branded loader so the auth page never
+  // flashes as "broken" before the dashboard appears. Crucially it must appear
+  // AFTER the provider hop, not before: in redirect mode (prod) clicking a button
+  // navigates to Google/GitHub, so we DON'T show the loader on the pre-redirect
+  // `busy`, only on the return (`redirecting && loading`) and once a user
+  // resolves. In popup mode (localhost) there's no navigation, so `busy` is the
+  // right trigger.
+  const signingIn = !!user || (redirecting && loading) || (busy !== null && !isRedirectEnv());
+  if (signingIn) {
+    return <FullScreenLoader variant={mode === 'signup' ? 'creating' : 'welcome'} />;
+  }
+
   return (
     <div className="vg-fade">
       <GoogleOneTap />
       <div className="flex flex-col items-center text-center mb-[30px]">
-        <div className="mb-[26px]"><Logo size={30} wordmarkClassName="text-[20px]" /></div>
+        <div className="mb-[26px]"><Logo size={28} /></div>
         <h1 className="font-bold text-[26px] tracking-[-0.02em] m-0">{c.title}</h1>
         <p className="text-[16px] text-muted mt-2">{c.sub}</p>
       </div>
 
       {notice && (
-        <div className="mb-4 text-[14px] text-center rounded-[10px] px-4 py-3" style={{ background: 'rgba(243,197,0,.14)', color: '#8a6d00' }}>
+        <div className="mb-4 text-[14px] text-center rounded-[10px] px-4 py-3" style={{ background: '#EDEDEA', color: '#5b5a56' }}>
           {notice}
         </div>
       )}
@@ -106,13 +144,29 @@ export default function AuthForm({ mode }: { mode: Mode }) {
 
       {error && <div className="mt-4 text-[14px] text-red font-semibold text-center">{error}</div>}
 
+      {/* Refused new user: no account exists yet, so route them into onboarding to sign up. */}
+      {noAccount && (
+        <div className="mt-4 rounded-[12px] border border-border bg-bg-soft px-4 py-4 text-center">
+          <p className="text-[14px] text-muted">New to Veilguard? Create your account to get your first scan.</p>
+          <button
+            onClick={() => router.push('/onboarding')}
+            className="vg-press mt-3 w-full rounded-[10px] bg-ink text-white font-semibold text-[15px] py-[12px] cursor-pointer"
+          >
+            Get started
+          </button>
+        </div>
+      )}
+
       <p className="text-[13px] text-faint text-center mt-5 leading-[1.5]">
-        We only use Google or GitHub to sign you in — no passwords to remember.
+        We only use Google or GitHub to sign you in, no passwords to remember.
       </p>
 
-      <div className="text-center mt-[22px] text-[14.5px]">
-        <button onClick={() => router.push(`/${c.to}`)} className="bg-none text-ink font-bold cursor-pointer">{c.switch}</button>
-      </div>
+      {/* Signup happens through onboarding, so the login page shows no "Sign up" link. */}
+      {mode === 'signup' && (
+        <div className="text-center mt-[22px] text-[14.5px]">
+          <button onClick={() => router.push(`/${c.to}`)} className="bg-none text-ink font-bold cursor-pointer">{c.switch}</button>
+        </div>
+      )}
 
       <p className="text-[12px] text-faint text-center mt-4 leading-[1.5]">
         By continuing you agree to our{' '}
@@ -135,7 +189,7 @@ function ProviderButton({
       {icon}
       {busy ? 'Signing in…' : label}
       {lastUsed && !busy && (
-        <span className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[11px] font-semibold rounded-full px-[8px] py-[2px]" style={{ background: 'rgba(243,197,0,.18)', color: '#8a6d00' }}>
+        <span className="absolute right-[12px] top-1/2 -translate-y-1/2 text-[11px] font-semibold rounded-full px-[8px] py-[2px]" style={{ background: '#EDEDEA', color: '#5b5a56' }}>
           Last used
         </span>
       )}

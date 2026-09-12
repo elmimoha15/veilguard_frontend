@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth';
 import { api } from '@/lib/api';
 import type { ScanDoc } from '@/lib/scans';
 import { BrandLogo } from '@/components/ui/BrandLogo';
+import ActionButton from '@/components/ui/ActionButton';
 
 /**
  * Stack-aware nudges for a deep (repo) scan:
@@ -41,31 +42,31 @@ export default function DeepScanHints({ scan }: { scan: ScanDoc | null }) {
   if (!showConnect && !showRescan && !showFirebase) return null;
 
   return (
-    <div className="flex flex-col gap-3 mt-5">
+    <div className="flex flex-col divide-y divide-border border-y border-border mt-5">
       {showConnect && (
-        <div className="vg-card rounded-[14px] p-4 flex items-start gap-3 bg-card border border-border">
-          <span className="shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center bg-ink"><BrandLogo name="supabase" size={18} /></span>
+        <div className="py-4 flex items-start gap-3">
+          <BrandLogo name="supabase" size={20} icon className="shrink-0 mt-[2px]" />
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-[15.5px]">This repo uses Supabase — scan your database too</div>
+            <div className="font-bold text-[15.5px]">This repo uses Supabase, scan your database too</div>
             <div className="text-[14px] text-muted mt-[2px]">Your Row-Level Security rules live on Supabase’s servers, not in the code. Connect Supabase (read-only) to catch the “anyone can read everyone’s data” bugs the code scan can’t see.</div>
           </div>
-          <button onClick={() => router.push('/settings')} className="vg-press shrink-0 bg-ink text-white rounded-[9px] px-[14px] py-2 text-[14px] font-bold">Connect Supabase</button>
+          <ActionButton onClick={() => router.push('/settings')} className="shrink-0">Connect Supabase</ActionButton>
         </div>
       )}
 
       {showRescan && (
-        <div className="vg-card rounded-[14px] p-4 flex items-start gap-3 bg-card border border-border">
-          <span className="shrink-0 w-9 h-9 rounded-[10px] flex items-center justify-center bg-ink"><BrandLogo name="supabase" size={18} /></span>
+        <div className="py-4 flex items-start gap-3">
+          <BrandLogo name="supabase" size={20} icon className="shrink-0 mt-[2px]" />
           <div className="flex-1 min-w-0">
-            <div className="font-bold text-[15.5px]">Supabase is connected — include your database</div>
+            <div className="font-bold text-[15.5px]">Supabase is connected, include your database</div>
             <div className="text-[14px] text-muted mt-[2px]">Re-run this scan to also read your Supabase schema + RLS policies for one combined grade.</div>
           </div>
-          <button onClick={rescanWithDb} disabled={busy} className="vg-press shrink-0 bg-ink text-white rounded-[9px] px-[14px] py-2 text-[14px] font-bold disabled:opacity-60">{busy ? 'Starting…' : 'Re-scan with database'}</button>
+          <ActionButton onClick={rescanWithDb} disabled={busy} className="shrink-0">{busy ? 'Starting…' : 'Re-scan with database'}</ActionButton>
         </div>
       )}
 
       {showFirebase && (
-        <div className="rounded-[14px] p-4 flex items-start gap-3 bg-card border border-border">
+        <div className="py-4 flex items-start gap-3">
           <span className="shrink-0 mt-[1px] text-muted">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
               <circle cx="12" cy="12" r="9" />
@@ -74,7 +75,7 @@ export default function DeepScanHints({ scan }: { scan: ScanDoc | null }) {
             </svg>
           </span>
           <div className="flex-1 min-w-0 text-[14px] text-muted">
-            <span className="font-bold text-ink">This app uses Firebase, but no security-rules file is committed.</span> Your <code className="font-mono">firestore.rules</code>/<code className="font-mono">storage.rules</code> may live only in the Firebase console — we can only check rules that are in the repo.
+            <span className="font-bold text-ink">This app uses Firebase, but no security-rules file is committed.</span> Your <code className="font-mono">firestore.rules</code>/<code className="font-mono">storage.rules</code> may live only in the Firebase console, we can only check rules that are in the repo.
           </div>
         </div>
       )}

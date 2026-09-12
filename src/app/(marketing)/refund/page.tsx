@@ -59,7 +59,7 @@ export default function RefundPage() {
         <section>
           <h2 className="text-lg! font-bold text-ink mb-3">How to request a refund</h2>
           <p>
-            Email <a href="mailto:support@veilguard.dev" className="text-yellow-dark hover:text-ink underline underline-offset-2">support@veilguard.dev</a> with
+            Email <a href="mailto:info@veilguard.dev" className="text-yellow-dark hover:text-ink underline underline-offset-2">info@veilguard.dev</a> with
             the email you used at checkout. We aim to respond within 2 business days. If you&apos;re considering
             a chargeback, please reach out to us first — we&apos;ll almost always sort it out faster directly.
           </p>

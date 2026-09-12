@@ -3,6 +3,8 @@ import { AppStateProvider } from '@/components/app/state';
 import { ConfettiOverlay, ToastStack } from '@/components/app/ui';
 import ScanWatcher from '@/components/app/ScanWatcher';
 import FeedbackWidget from '@/components/app/FeedbackWidget';
+import OfflineBanner from '@/components/app/OfflineBanner';
+import ErrorBoundary from '@/components/app/ErrorBoundary';
 import { AuthProvider } from '@/lib/auth';
 
 // De-index the entire signed-in app group in one place (safety net so no app
@@ -23,9 +25,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* `app-theme` scopes the lighter ElevenLabs-style palette + Hanken font
             to the whole signed-in tree; marketing keeps the :root tokens. */}
         <div className="app-theme min-h-screen bg-bg text-ink">
+          <OfflineBanner />
           {children}
-          <ScanWatcher />
-          <FeedbackWidget />
+          {/* Ambient widgets are wrapped so a crash in one can never take down the
+              page underneath it (they render null on error). */}
+          <ErrorBoundary label="ScanWatcher" silent><ScanWatcher /></ErrorBoundary>
+          <ErrorBoundary label="FeedbackWidget" silent><FeedbackWidget /></ErrorBoundary>
           <ToastStack />
           <ConfettiOverlay />
         </div>

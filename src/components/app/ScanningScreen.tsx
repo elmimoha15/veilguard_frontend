@@ -12,7 +12,7 @@ import { useOnline } from '@/lib/net';
 import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/scanError';
 
 // Black-box (URL) vs white-box (deep/repo) phase labels. The deep flow clones
-// the repo first, so its first step is honest about that — the user always sees
+// the repo first, so its first step is honest about that, the user always sees
 // something in progress, never a silent freeze.
 const URL_PHASES = [
   'Checking HTTPS & headers',
@@ -102,7 +102,7 @@ export default function ScanningScreen() {
 
   // Real progress from the worker. A deep scan clones the repo first (several
   // seconds) before it emits ANY progress. During that window we hold the number
-  // modestly (soft cap ~14%) so it reads "just started — fetching" rather than
+  // modestly (soft cap ~14%) so it reads "just started, fetching" rather than
   // faking near-completion; once real progress arrives it jumps forward (never
   // backwards) toward 96%, then snaps to 100 on done. Phase lighting is driven by
   // REAL progress (below), so the steps stay honest.
@@ -132,7 +132,7 @@ export default function ScanningScreen() {
   // Stuck-running watchdog. A scan that never resolves would spin the ring
   // forever. If it's still queued/running past a generous budget (URL ~2.5 min,
   // code ~16 min), we stop trusting the spinner and resolve the UI to a
-  // "taking longer than expected" state with a real Try again — a scan is never
+  // "taking longer than expected" state with a real Try again, a scan is never
   // left silently stuck. New progress from the worker resets the clock.
   const inFlight = scan?.status === 'queued' || scan?.status === 'running';
   const progressDone = scan?.progress?.done ?? -1;
@@ -154,7 +154,7 @@ export default function ScanningScreen() {
   // is the live one; after that, light steps by real progress in 20% bands.
   const cloning = realPct === 0 && !finished;
 
-  // One calm, specific failure card — reused by the error state and the
+  // One calm, specific failure card, reused by the error state and the
   // stuck-running watchdog. Never shows a raw error string; always offers a
   // working next action and (when useful) a support escape.
   const failView = (o: {
@@ -165,10 +165,10 @@ export default function ScanningScreen() {
   }) => (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-6 text-center vg-fade">
       <div className="relative max-w-[460px]">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={o.tone === 'ours' ? '#8a6d00' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={o.tone === 'ours' ? '#5b5a56' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
           <path d="M12 3l9 16H3z" strokeLinejoin="round" />
           <path d="M12 10v4" strokeLinecap="round" />
-          <circle cx="12" cy="16.8" r="0.7" fill={o.tone === 'ours' ? '#8a6d00' : '#C23B3F'} stroke="none" />
+          <circle cx="12" cy="16.8" r="0.7" fill={o.tone === 'ours' ? '#5b5a56' : '#C23B3F'} stroke="none" />
         </svg>
         <h1 className="font-semibold text-[24px] text-ink">{o.title}</h1>
         <p className="text-[15.5px] text-muted mt-3 leading-[1.5]">{o.body}</p>
@@ -220,14 +220,14 @@ export default function ScanningScreen() {
     });
   }
 
-  // Watchdog tripped while still queued/running — resolve the spinner to a real
+  // Watchdog tripped while still queued/running, resolve the spinner to a real
   // choice instead of leaving it stuck. The scan is still alive server-side.
   if (stalled && inFlight) {
     return failView({
       title: 'This is taking longer than expected',
       body: isDeep
-        ? 'Large repos and uploads can run past our usual time. Try again, or leave it — it keeps scanning in the background and the result will be under My Apps.'
-        : 'Your site is taking a while to respond. Try again, or leave it running — we’ll keep going in the background.',
+        ? 'Large repos and uploads can run past our usual time. Try again, or leave it, it keeps scanning in the background and the result will be under My Apps.'
+        : 'Your site is taking a while to respond. Try again, or leave it running, we’ll keep going in the background.',
       tone: 'ours',
       primaryLabel: 'Try again',
       onPrimary: retry,
@@ -252,14 +252,14 @@ export default function ScanningScreen() {
   return (
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-6 vg-fade">
       {/* Offline banner. The scan keeps running server-side and the Firestore
-          listener auto-reconnects — so we reassure rather than alarm, and it
+          listener auto-reconnects, so we reassure rather than alarm, and it
           clears itself the moment the connection is back. */}
       {!online && (
-        <div className="fixed top-0 left-0 right-0 z-20 bg-yellow-dark/95 text-white text-[13.5px] font-medium text-center py-2 px-4">
-          You’re offline — the scan keeps running and we’ll pick back up the moment you’re reconnected.
+        <div className="fixed top-0 left-0 right-0 z-20 bg-ink/95 text-white text-[13.5px] font-medium text-center py-2 px-4">
+          You’re offline, the scan keeps running and we’ll pick back up the moment you’re reconnected.
         </div>
       )}
-      {/* Let the user leave — the scan keeps running server-side; they can reopen
+      {/* Let the user leave, the scan keeps running server-side; they can reopen
           it from the My Apps list and resume at the live progress. */}
       <button
         onClick={() => router.push(isDeep ? '/apps' : '/dashboard')}
@@ -268,9 +268,9 @@ export default function ScanningScreen() {
         Run in background
       </button>
       <div className="relative flex flex-col items-center">
-        <GradeRing size={200} pct={pct} color="#F3C500" strokeWidth={8} animate>
+        <GradeRing size={200} pct={pct} color="#0A0A0A" strokeWidth={8} animate>
           <span className="font-semibold text-[46px] text-ink leading-none">{pct}</span>
-          <span className="font-mono text-[12px] text-yellow-dark tracking-[0.1em]">SCANNING</span>
+          <span className="text-[12px] text-faint font-semibold tracking-[0.05em]">SCANNING</span>
         </GradeRing>
         {/* Repo/target name + phase list share ONE fixed-width column so the name
             is centered directly over the steps. */}
@@ -292,7 +292,7 @@ export default function ScanningScreen() {
                         style={{
                           width: l.state === 'active' ? 8 : 6,
                           height: l.state === 'active' ? 8 : 6,
-                          background: l.state === 'active' ? '#F3C500' : '#D8D8D4',
+                          background: l.state === 'active' ? '#0A0A0A' : '#D8D8D4',
                         }}
                       />
                     )}
@@ -304,7 +304,7 @@ export default function ScanningScreen() {
           </div>
           {isDeep && (
             <div className="text-center text-faint text-[13px] mt-6 leading-[1.5]">
-              Large repos can take a few minutes.<br />You can leave — it keeps scanning in the background.
+              Large repos can take a few minutes.<br />You can leave, it keeps scanning in the background.
             </div>
           )}
         </div>

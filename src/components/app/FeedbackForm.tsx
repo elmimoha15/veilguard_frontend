@@ -6,12 +6,12 @@ import { api } from '@/lib/api';
 import { SUPPORT_EMAIL } from '@/content/site';
 
 /**
- * The one feedback/help form — shared by the full /feedback page and the docked
+ * The one feedback/help form, shared by the full /feedback page and the docked
  * widget so copy, validation, and submit behaviour never drift. Matches the app's
- * form styling (bg-bg-soft fields, yellow focus ring, ink primary button).
+ * form styling (bg-bg-soft fields, ink focus ring, ink primary button).
  *
- * Context (page / scanId / userAgent) is captured silently at submit time — the
- * user never fills it — because "this is confusing" is far more actionable paired
+ * Context (page / scanId / userAgent) is captured silently at submit time, the
+ * user never fills it, because "this is confusing" is far more actionable paired
  * with where they were and what plan they're on.
  */
 
@@ -75,7 +75,7 @@ export default function FeedbackForm({
         <span className="inline-flex w-11 h-11 rounded-full items-center justify-center mb-3" style={{ background: '#EAF6EF' }}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4 4 10-10" stroke="#1F9D57" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </span>
-        <div className="font-semibold text-[17px] text-ink">Thanks — we’ve got it.</div>
+        <div className="font-semibold text-[17px] text-ink">Thanks, we’ve got it.</div>
         <p className="text-[14.5px] text-muted mt-1 leading-[1.5]">We read every message and we’ll get back to you{email ? ` at ${email}` : ''}.</p>
         <button onClick={() => setStatus('idle')} className="vg-press cursor-pointer mt-5 text-[14px] font-semibold text-muted hover:text-ink underline">Send another</button>
       </div>
@@ -121,7 +121,7 @@ export default function FeedbackForm({
           onChange={(e) => { setMessage(e.target.value); if (showError) setStatus('idle'); }}
           rows={compact ? 4 : 6}
           placeholder={type === 'bug' ? 'What happened, and what did you expect?' : type === 'help' ? 'What are you stuck on?' : 'Tell us what’s on your mind…'}
-          className="w-full bg-bg-soft border rounded-[10px] px-[13px] py-[11px] text-[15px] text-ink resize-y outline-none transition-shadow focus:shadow-[0_0_0_2px_#F3C500]"
+          className="w-full bg-bg-soft border rounded-[10px] px-[13px] py-[11px] text-[15px] text-ink resize-y outline-none transition-shadow focus:shadow-[0_0_0_2px_#0A0A0A]"
           style={{ borderColor: missingMessage ? '#C23B3F' : 'var(--color-border)' }}
         />
         {missingMessage && <div className="text-[13px] text-red mt-1">Please add a message.</div>}
@@ -136,16 +136,16 @@ export default function FeedbackForm({
           value={email}
           onChange={(e) => { setEmail(e.target.value); if (showError) setStatus('idle'); }}
           placeholder="you@example.com"
-          className="w-full bg-bg-soft border rounded-[10px] px-[13px] py-[11px] text-[15px] text-ink outline-none transition-shadow focus:shadow-[0_0_0_2px_#F3C500]"
+          className="w-full bg-bg-soft border rounded-[10px] px-[13px] py-[11px] text-[15px] text-ink outline-none transition-shadow focus:shadow-[0_0_0_2px_#0A0A0A]"
           style={{ borderColor: missingEmail ? '#C23B3F' : 'var(--color-border)' }}
         />
         {missingEmail
           ? <div className="text-[13px] text-red mt-1">Please add your email so we can reply.</div>
-          : <div className="text-[12.5px] text-faint mt-1">{user ? 'We’ll reply here — edit if you’d like a reply elsewhere.' : 'So we can get back to you.'}</div>}
+          : <div className="text-[12.5px] text-faint mt-1">{user ? 'We’ll reply here, edit if you’d like a reply elsewhere.' : 'So we can get back to you.'}</div>}
       </div>
 
       {showError && !missingMessage && !missingEmail && (
-        <div className="text-[13.5px] text-red">Couldn’t send that just now. Please try again — or email <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>.</div>
+        <div className="text-[13.5px] text-red">Couldn’t send that just now. Please try again, or email <a href={`mailto:${SUPPORT_EMAIL}`} className="underline">{SUPPORT_EMAIL}</a>.</div>
       )}
 
       <button

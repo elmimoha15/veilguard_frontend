@@ -56,8 +56,8 @@ export default function HeroDemoWindow() {
 
   return (
     <div id="how" className="relative scroll-mt-24">
-      <div className="overflow-hidden rounded-[16px] border border-[#EDECE8] shadow-[0_40px_90px_-45px_rgba(0,0,0,0.35)]">
-        <div className="relative" style={{ aspectRatio: `${DEMO_W} / ${DEMO_H}`, background: '#F4F4F3' }}>
+      <div className="overflow-hidden rounded-[16px] border border-[#E6E5E1] shadow-[0_20px_50px_-30px_rgba(0,0,0,0.22)]">
+        <div className="relative" style={{ aspectRatio: `${DEMO_W} / ${DEMO_H}`, background: '#FFFFFF' }}>
           {Player && (
             <Player
               ref={ref}

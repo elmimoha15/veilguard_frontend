@@ -35,6 +35,26 @@ export function checkUrl(input: string): UrlCheck {
 }
 
 /**
+ * Best-effort client-side liveness probe, so a well-formed but dead URL (e.g. a
+ * domain that doesn't resolve) is refused at the input instead of after signup.
+ * A `no-cors` request can't read the response, but it still rejects with a network
+ * error when the host can't be reached. Returns `false` ONLY on a definitive fast
+ * failure; a timeout / abort returns `true` so a real-but-slow site is never
+ * wrongly blocked. The real, authoritative reachability check is the scan itself.
+ */
+export async function probeReachable(url: string, timeoutMs = 6000): Promise<boolean> {
+  if (typeof window === 'undefined' || typeof fetch === 'undefined') return true;
+  try {
+    await fetch(url, { mode: 'no-cors', redirect: 'follow', signal: AbortSignal.timeout(timeoutMs) });
+    return true; // host responded (opaque response) → treat as live
+  } catch (e) {
+    // Timeout / abort is ambiguous (could be a slow real site) → don't block.
+    if (e instanceof DOMException && (e.name === 'TimeoutError' || e.name === 'AbortError')) return true;
+    return false; // network error (DNS/connection) → not reachable
+  }
+}
+
+/**
  * Bare, normalized hostname of a URL-ish string (lowercased, `www.` stripped).
  * Used to match a URL scan's target to an app so re-scans and links roll up
  * under one project regardless of trailing slashes / scheme / www.

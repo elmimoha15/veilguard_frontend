@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp } from './state';
 import { GradeRing, GradeLetter } from './ui';
+import { PillButton } from './primitives';
 
 export default function EmptyScreen() {
   const router = useRouter();
@@ -18,14 +19,14 @@ export default function EmptyScreen() {
           <GradeLetter letter="A" color="#1F9D57" size={76} halftone={false} className="vg-pop" />
         </GradeRing>
       </div>
-      <h1 className="font-semibold text-[24px] tracking-[-0.02em] mt-[22px] mb-[6px]">You’re in the clear</h1>
+      <h1 className="font-semibold text-[28px] tracking-[-0.025em] mt-[24px] mb-[7px]">You’re in the clear</h1>
       <p className="text-[15px] text-muted max-w-[46ch] mx-auto leading-[1.55]">
-        Every issue is fixed and nothing new has surfaced. We’ll keep watching on every deploy — you’ll
+        Every issue is fixed and nothing new has surfaced. We’ll keep watching on every deploy, you’ll
         hear from us only if something changes.
       </p>
-      <button onClick={() => router.push('/apps')} className="vg-press cursor-pointer mt-6 bg-ink text-white rounded-[10px] px-6 py-[12px] font-medium text-[15px]">
-        Review fixed findings
-      </button>
+      <div className="mt-6">
+        <PillButton onClick={() => router.push('/apps')}>Review fixed findings</PillButton>
+      </div>
     </div>
   );
 }

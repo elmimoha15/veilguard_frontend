@@ -3,7 +3,7 @@ import type { BackendFinding, ScanDoc } from './scans';
 /**
  * Map the backend's data shapes onto the shapes the (already-built) design
  * components expect. The design uses three severity buckets (CRITICAL / WARNING
- * / PASSED); the engine uses five — we bucket high/medium/low into WARNING.
+ * / PASSED); the engine uses five, we bucket high/medium/low into WARNING.
  */
 export type UiSev = 'CRITICAL' | 'WARNING' | 'PASSED';
 
@@ -23,9 +23,9 @@ export interface UiFinding {
 }
 
 export const SEV_COLOR: Record<UiSev, string> = {
-  CRITICAL: '#E5484D',
-  WARNING: '#E0932F',
-  PASSED: '#1F9D57',
+  CRITICAL: '#DC2626',
+  WARNING: '#D97706',
+  PASSED: '#16A34A',
 };
 
 function toUiSev(sev: BackendFinding['severity']): UiSev {
@@ -95,9 +95,9 @@ export function toUiCounts(scan: ScanDoc | null, findings: UiFinding[]): UiCount
 }
 
 export const GRADE_COLOR: Record<string, string> = {
-  A: '#1F9D57',
-  B: '#1F9D57',
-  C: '#E0932F',
-  D: '#E5484D',
-  F: '#E5484D',
+  A: '#16A34A',
+  B: '#16A34A',
+  C: '#D97706',
+  D: '#DC2626',
+  F: '#DC2626',
 };

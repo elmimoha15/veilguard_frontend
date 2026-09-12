@@ -1,26 +1,33 @@
-import { BRANDS } from '@/components/ui/BrandIcons';
-import { BrandLogo } from '@/components/ui/BrandLogo';
+import { BrandLogo, type BrandLogoName } from '@/components/ui/BrandLogo';
 
+const LOGOS: { name: string; logo: BrandLogoName }[] = [
+  { name: 'Lovable', logo: 'lovable' },
+  { name: 'Supabase', logo: 'supabase' },
+  { name: 'Cursor', logo: 'cursor' },
+  { name: 'Bolt', logo: 'bolt' },
+  { name: 'Replit', logo: 'replit' },
+  { name: 'v0', logo: 'v0' },
+  { name: 'Firebase', logo: 'firebase' },
+  { name: 'Stripe', logo: 'stripe' },
+];
+
+/** Logo loop: a slow, edge-faded marquee of the tools customers build with. */
 export default function PlatformStrip() {
+  const row = [...LOGOS, ...LOGOS]; // doubled so the -50% loop is seamless
   return (
-    <section className="px-6 py-[clamp(32px,5vw,56px)]">
-      <div className="mx-auto max-w-[1160px] text-center">
-        <p className="text-[13px] text-tertiary">Built for the tools you ship with</p>
-        <ul className="mt-7 flex flex-wrap items-center justify-center gap-x-9 gap-y-5">
-          {BRANDS.map(({ key, name }) => (
-            <li
-              key={key}
-              className="group flex items-center gap-2.5"
-            >
-              <span>
-                <BrandLogo name={key} size={24} />
-              </span>
-              <span className="text-[16px] font-semibold tracking-[-0.01em] text-ink">
-                {name}
-              </span>
-            </li>
+    <section className="el-divide pt-[34px] pb-[40px]">
+      <div className="el-x pb-[22px]">
+        <span className="text-[14.5px]" style={{ color: '#8C8C84' }}>Built by founders shipping on the tools you already use</span>
+      </div>
+      <div className="vg-loop" aria-label="Tools our customers build with">
+        <div className="vg-loop__track">
+          {row.map((b, i) => (
+            <span key={i} className="flex items-center gap-[10px] px-[44px] shrink-0 opacity-70">
+              <BrandLogo name={b.logo} size={24} icon />
+              <span className="text-[16px] font-semibold tracking-[-0.01em] text-ink">{b.name}</span>
+            </span>
           ))}
-        </ul>
+        </div>
       </div>
     </section>
   );

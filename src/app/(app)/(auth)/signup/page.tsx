@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
-import AuthForm from '@/components/app/AuthForm';
+import RedirectTo from '@/components/app/RedirectTo';
 
-export const metadata: Metadata = { title: 'Sign up', robots: { index: false } };
+// There is no dedicated signup page anymore, signup happens inside onboarding.
+// Anyone landing on /signup (old links, bookmarks) is sent to /onboarding.
+export const metadata: Metadata = { title: 'Get set up', robots: { index: false } };
 
 export default function SignupPage() {
-  return <AuthForm mode="signup" />;
+  return <RedirectTo to="/onboarding" />;
 }

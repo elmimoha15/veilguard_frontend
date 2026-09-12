@@ -1,10 +1,14 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { zip } from 'fflate';
 import ignore from 'ignore';
+import ActionButton from '@/components/ui/ActionButton';
+
+const FolderGlyph = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>;
+const ScanGlyph = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M4 12a8 8 0 1 1 8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M12 12l5-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><circle cx="12" cy="12" r="1.9" fill="currentColor" /></svg>;
 
 /**
  * Folder / .zip upload chooser for a Pro white-box scan. Supports a folder picker,
@@ -13,15 +17,17 @@ import ignore from 'ignore';
  * browser. `onScan(zip, name)` returns false to keep the modal open on failure.
  */
 
-// Dirs the scanner never reads — filtered client-side so uploads stay small.
+// Dirs the scanner never reads, filtered client-side so uploads stay small.
 const IGNORE = new Set([
   '.git', 'node_modules', '.next', 'dist', 'build', 'coverage', 'out',
   'venv', '.venv', '__pycache__', 'vendor', '.tox', '.mypy_cache', '.pytest_cache', '.gradle',
-  // Test/fixture artifacts — not deployed, so scanning them is false-positive noise.
+  // Test/fixture artifacts, not deployed, so scanning them is false-positive noise.
   'test-fixtures', 'fixtures', '__tests__', '__mocks__', '.storybook', 'cypress', 'e2e',
 ]);
 const MAX_FILE_BYTES = 2_000_000; // engine skips bigger files anyway
-const MAX_ZIP_BYTES = 40 * 1024 * 1024; // must match backend config.uploadMaxBytes
+// No hard cap, uploads stream browser→cloud so any size is accepted. Above this
+// we just warn the user the scan may take a while.
+const WARN_ZIP_BYTES = 75 * 1024 * 1024;
 
 interface Picked { path: string; file: File }
 
@@ -47,7 +53,7 @@ function walkEntry(entry: FileSystemEntry, prefix: string, out: Picked[]): Promi
         reader.readEntries(async (batch) => {
           if (!batch.length) return resolve();
           await Promise.all(batch.map((b) => walkEntry(b, dir, out)));
-          readBatch(); // readEntries returns in chunks — keep going until empty
+          readBatch(); // readEntries returns in chunks, keep going until empty
         }, () => resolve());
       };
       readBatch();
@@ -73,7 +79,7 @@ function topLevelName(picked: Picked[]): string {
 
 /**
  * Build a matcher from the folder's root-most `.gitignore` so we upload exactly
- * what git would keep — a picked folder has no git context, so this is what keeps
+ * what git would keep, a picked folder has no git context, so this is what keeps
  * gitignored secrets/.env/local dirs OUT of the upload (never leave the browser).
  */
 async function buildGitignore(picked: Picked[]): Promise<{ dir: string; ig: ReturnType<typeof ignore> } | null> {
@@ -94,17 +100,18 @@ export function UploadPicker({
   onScan,
 }: {
   onClose: () => void;
-  onScan: (zip: Blob, name: string) => Promise<boolean>;
+  onScan: (zip: Blob, name: string, onProgress?: (frac: number) => void) => Promise<boolean>;
 }) {
   const router = useRouter();
   const folderRef = useRef<HTMLInputElement>(null);
-  const zipRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [status, setStatus] = useState<'idle' | 'preparing' | 'ready' | 'starting'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [warn, setWarn] = useState<string | null>(null);
+  const [progress, setProgress] = useState(0); // upload progress 0→1 while 'starting'
   const [summary, setSummary] = useState<{ name: string; count: number; bytes: number; gitignore: boolean } | null>(null);
   // The zipped upload is held here after a successful drop/pick so the user can
-  // review it and press Scan — we no longer auto-start the scan on drop.
+  // review it and press Scan, we no longer auto-start the scan on drop.
   const [prepared, setPrepared] = useState<{ blob: Blob; name: string } | null>(null);
 
   // 'ready' still lets the user interact (press Scan / re-choose / cancel).
@@ -120,7 +127,7 @@ export function UploadPicker({
       const f = picked[0]!.file;
       return { blob: f, name: f.name.replace(/\.zip$/i, '') || 'upload', count: 1, bytes: f.size, gitignore: false };
     }
-    // Skip exactly what the repo's .gitignore would — secrets/.env/local dirs
+    // Skip exactly what the repo's .gitignore would, secrets/.env/local dirs
     // never leave the browser, so the scan matches what you'd actually deploy.
     const gi = await buildGitignore(picked);
     const gitignored = (path: string): boolean => {
@@ -136,7 +143,7 @@ export function UploadPicker({
     let bytes = 0;
     for (const p of kept) {
       const buf = new Uint8Array(await p.file.arrayBuffer());
-      // Strip a common single top-level dir? No — the engine scans nested trees fine.
+      // Strip a common single top-level dir? No, the engine scans nested trees fine.
       files[p.path] = buf;
       bytes += buf.length;
     }
@@ -146,9 +153,10 @@ export function UploadPicker({
 
   async function handlePicked(picked: Picked[]) {
     setError(null);
+    setWarn(null);
     if (!picked.length) { setError('Nothing selected.'); return; }
     // A single loose file that isn't a .zip (e.g. a PDF or one source file dropped
-    // by mistake) — a folder always arrives as many entries with nested paths.
+    // by mistake), a folder always arrives as many entries with nested paths.
     if (picked.length === 1 && !/\.zip$/i.test(picked[0]!.file.name) && !picked[0]!.path.includes('/')) {
       setError('Please upload a .zip of your project folder, or drop the whole folder.');
       return;
@@ -158,55 +166,83 @@ export function UploadPicker({
     try {
       const prepped = await prepare(picked);
       if (!prepped) { setStatus('idle'); return; }
-      if (prepped.blob.size > MAX_ZIP_BYTES) {
-        // The single biggest cause of a too-big upload is a self-zipped project
-        // that still has node_modules/build output in it (our folder picker skips
-        // those automatically, but a hand-made .zip won't). Lead with that fix.
-        setError(`This upload is ${humanSize(prepped.blob.size)} — over the ${MAX_ZIP_BYTES / 1024 / 1024}MB limit. Try uploading just your source code: skip node_modules and build folders (that’s usually what makes it too big). Dropping the folder instead of a .zip does this for you.`);
-        setStatus('idle');
-        return;
+      // No size limit, big uploads are fine, they just take longer. Warn (don't
+      // block) so the user knows a large folder will be slower to scan.
+      if (prepped.blob.size > WARN_ZIP_BYTES) {
+        setWarn(`That’s a big upload (${humanSize(prepped.blob.size)}), it’ll upload and scan fine, it just may take a few minutes.`);
       }
-      // Two-step: hold the zip and show an "upload ready" summary — the user must
+      // Two-step: hold the zip and show an "upload ready" summary, the user must
       // press Scan to actually start (no surprise auto-scan on drop).
       setSummary({ name: prepped.name, count: prepped.count, bytes: prepped.bytes, gitignore: prepped.gitignore });
       setPrepared({ blob: prepped.blob, name: prepped.name });
       setStatus('ready');
     } catch {
-      setError('Could not read that folder — try again, or upload a .zip instead.');
+      setError('Could not read that folder, try again, or upload a .zip instead.');
       setStatus('idle');
     }
   }
 
   const runScan = async () => {
     if (!prepared) return;
+    setProgress(0);
     setStatus('starting');
-    const ok = await onScan(prepared.blob, prepared.name);
+    const ok = await onScan(prepared.blob, prepared.name, (frac) => setProgress(frac));
     if (!ok) setStatus('ready'); // stay open on failure so the user can retry
   };
 
-  const onDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    if (busy) return;
-    await handlePicked(await fromDataTransfer(e.dataTransfer));
-  };
+  /** Choose a folder via the standard webkitdirectory input, no File System
+   *  Access API, so no "allow this site to view and copy files" permission grant. */
+  const chooseFolder = () => { if (!busy) folderRef.current?.click(); };
+
+  // Let the user drop a folder ANYWHERE on the screen (not just the dashed box).
+  // preventDefault on dragover is required or the browser just opens the file.
+  useEffect(() => {
+    const over = (e: DragEvent) => {
+      if (!e.dataTransfer || !Array.from(e.dataTransfer.types).includes('Files')) return;
+      e.preventDefault();
+      if (!busy) setDragging(true);
+    };
+    const leave = (e: DragEvent) => { if (e.relatedTarget === null) setDragging(false); };
+    const drop = async (e: DragEvent) => {
+      if (!e.dataTransfer) return;
+      e.preventDefault();
+      setDragging(false);
+      if (busy) return;
+      await handlePicked(await fromDataTransfer(e.dataTransfer));
+    };
+    window.addEventListener('dragover', over);
+    window.addEventListener('dragleave', leave);
+    window.addEventListener('drop', drop);
+    return () => {
+      window.removeEventListener('dragover', over);
+      window.removeEventListener('dragleave', leave);
+      window.removeEventListener('drop', drop);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busy]);
 
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div onClick={busy ? undefined : onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: 'rgba(10,10,10,.28)' }}>
+    <>
+      {/* Full-screen drop target, a folder can be dropped ANYWHERE on the page. */}
+      {dragging && (
+        <div className="fixed inset-0 z-[320] flex items-center justify-center pointer-events-none" style={{ background: 'rgba(10,10,10,.06)' }}>
+          <div className="rounded-[18px] border-2 border-dashed px-9 py-7 text-center vg-pop" style={{ borderColor: '#0A0A0A', background: 'var(--color-bg-soft)' }}>
+            <div className="font-semibold text-[19px]">Drop your folder to scan it</div>
+            <div className="text-[14px] text-muted mt-1">Release anywhere on the screen</div>
+          </div>
+        </div>
+      )}
+      <div onClick={busy ? undefined : onClose} className="fixed inset-0 z-[300] flex items-center justify-center p-6" style={{ background: 'rgba(10,10,10,.28)' }}>
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[520px] bg-card border border-border rounded-[16px] p-7 vg-pop shadow-[var(--shadow-pop)]">
         <h2 className="font-semibold text-[20px] tracking-[-0.02em] mb-[6px]">Upload a folder</h2>
-        <p className="text-[15px] text-muted mb-[12px]">Scan code straight from your computer — no GitHub needed. We zip it in your browser (respecting your <code className="font-mono">.gitignore</code> and skipping <code className="font-mono">node_modules</code>, tests, and build output), scan it, and delete it. Your code is never stored.</p>
-        <p className="text-[13.5px] text-muted mb-[18px]" style={{ opacity: 0.85 }}>Tip: for an exact scan of what’s actually live, <button onClick={() => router.push('/settings')} className="text-yellow-dark font-semibold underline">connect GitHub</button> — it scans exactly what you’ve pushed.</p>
+        <p className="text-[15px] text-muted mb-[18px]">Zipped in your browser, scanned, then deleted, never stored. Or <button onClick={() => router.push('/settings')} className="text-ink font-semibold underline">connect GitHub</button> to scan what’s live.</p>
 
         {/* Drop zone */}
         <div
-          onDragOver={(e) => { e.preventDefault(); if (!busy) setDragging(true); }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-          onClick={() => !busy && folderRef.current?.click()}
+          onClick={() => { if (!busy) void chooseFolder(); }}
           className="cursor-pointer rounded-[16px] border-2 border-dashed p-8 text-center transition-colors"
-          style={{ borderColor: dragging ? '#F3C500' : '#DCDCD8', background: dragging ? '#FFFBEB' : '#FBFBFA' }}
+          style={{ borderColor: dragging ? '#0A0A0A' : '#DCDCD8', background: dragging ? 'var(--color-bg-soft)' : '#FBFBFA' }}
         >
           <div className="flex justify-center mb-2 text-tertiary">
             {status === 'preparing' ? (
@@ -220,7 +256,12 @@ export function UploadPicker({
           {status === 'preparing' ? (
             <div className="font-semibold text-[16px]">Packaging your folder…</div>
           ) : status === 'starting' ? (
-            <div className="font-semibold text-[16px]">Uploading &amp; starting scan…</div>
+            <>
+              <div className="font-semibold text-[16px]">{progress < 1 ? `Uploading… ${Math.round(progress * 100)}%` : 'Starting your scan…'}</div>
+              <div className="mt-3 h-[6px] rounded-full bg-bg-soft overflow-hidden">
+                <div className="h-full rounded-full transition-[width] duration-200" style={{ width: `${Math.max(4, Math.round(progress * 100))}%`, background: '#0A0A0A' }} />
+              </div>
+            </>
           ) : status === 'ready' ? (
             <>
               <div className="font-semibold text-[16px]">Upload ready</div>
@@ -229,7 +270,7 @@ export function UploadPicker({
           ) : (
             <>
               <div className="font-semibold text-[16px]">Drag a folder here, or click to choose</div>
-              <div className="text-[14px] text-muted mt-1">Whole project folder, or a <code className="font-mono">.zip</code> — up to {MAX_ZIP_BYTES / 1024 / 1024}MB</div>
+              <div className="text-[14px] text-muted mt-1">Whole project folder, or a <code className="font-mono">.zip</code>, any size</div>
             </>
           )}
         </div>
@@ -240,6 +281,7 @@ export function UploadPicker({
             <span><span className="font-semibold text-ink">{summary.name}</span> · {summary.count} files · {humanSize(summary.bytes)}{summary.gitignore ? ' · respected .gitignore' : ''}</span>
           </div>
         )}
+        {warn && !error && <div className="mt-3 text-[13.5px]" style={{ color: '#9A6412' }}>{warn}</div>}
         {error && <div className="mt-3 text-[14px] text-red">{error}</div>}
 
         {/* Hidden inputs: folder picker (webkitdirectory) + .zip picker. */}
@@ -251,30 +293,21 @@ export function UploadPicker({
           {...({ webkitdirectory: '', directory: '' } as Record<string, string>)}
           onChange={(e) => { if (e.target.files) void handlePicked(fromFileList(e.target.files)); }}
         />
-        <input
-          ref={zipRef}
-          type="file"
-          accept=".zip,application/zip"
-          className="hidden"
-          onChange={(e) => { if (e.target.files) void handlePicked(fromFileList(e.target.files)); }}
-        />
 
         <div className="flex gap-[10px] mt-5">
-          <button onClick={onClose} disabled={busy} className="vg-press flex-1 bg-card border border-border rounded-[10px] py-[13px] font-semibold text-[15.5px] text-muted disabled:opacity-60">Cancel</button>
-          {status === 'ready' ? (
+          <ActionButton variant="cancel" onClick={onClose} disabled={busy} className="flex-1 h-[46px]">Cancel</ActionButton>
+          {status === 'ready' || status === 'starting' ? (
             <>
-              <button onClick={() => !busy && folderRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-bg-soft border border-border rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-60">Choose different</button>
-              <button onClick={runScan} disabled={busy} className="vg-press flex-1 bg-ink text-white rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-70">Scan</button>
+              <ActionButton variant="outline" onClick={chooseFolder} disabled={busy} icon={<FolderGlyph />} className="flex-1 h-[46px]">Choose different</ActionButton>
+              <ActionButton onClick={runScan} disabled={busy} icon={<ScanGlyph />} tooltip="Scan your code" className="flex-1 h-[46px]">{status === 'starting' ? 'Scanning…' : 'Scan'}</ActionButton>
             </>
           ) : (
-            <>
-              <button onClick={() => !busy && zipRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-bg-soft border border-border rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-60">Choose a .zip</button>
-              <button onClick={() => !busy && folderRef.current?.click()} disabled={busy} className="vg-press flex-1 bg-ink text-white rounded-[10px] py-[13px] font-semibold text-[15.5px] disabled:opacity-70">{status === 'preparing' ? 'Working…' : 'Choose folder'}</button>
-            </>
+            <ActionButton onClick={chooseFolder} disabled={busy} icon={<FolderGlyph />} tooltip="Whole project folder" className="flex-1 h-[46px]">{status === 'preparing' ? 'Working…' : 'Choose folder'}</ActionButton>
           )}
         </div>
       </div>
-    </div>,
+      </div>
+    </>,
     document.body,
   );
 }

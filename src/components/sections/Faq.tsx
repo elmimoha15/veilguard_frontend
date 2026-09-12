@@ -1,32 +1,21 @@
-import Eyebrow from '@/components/ui/Eyebrow';
-import FadeIn from '@/components/ui/FadeIn';
+import { CenterHead } from '@/components/sections/annot/kit';
 import { FAQS } from '@/content/landing';
 
 export default function Faq() {
   return (
-    <section id="faq" className="bg-bg-soft scroll-mt-20">
-      <div className="mx-auto max-w-[820px] px-6 py-[clamp(60px,8vw,96px)]">
-        <FadeIn className="text-center">
-          <Eyebrow className="text-yellow-dark">{'// FAQ'}</Eyebrow>
-          <h2 className="mt-4">The nervous-founder questions.</h2>
-        </FadeIn>
-
-        <div className="mt-10 space-y-3">
+    <section id="faq" className="an-x an-sec">
+      <div className="an-max">
+        <CenterHead eyebrow="FAQ" title="What founders ask." />
+        <div className="mt-12 mx-auto max-w-[760px] border-t border-b border-[#E8E7E3] divide-y divide-[#E8E7E3]">
           {FAQS.map((f) => (
-            <details
-              key={f.q}
-              className="group rounded-[14px] border border-border bg-card px-6 [&_summary]:list-none [&_summary::-webkit-details-marker]:hidden"
-            >
-              <summary className="flex cursor-pointer items-center justify-between gap-4 py-5 text-[16px] font-semibold text-ink">
-                {f.q}
-                <span
-                  aria-hidden
-                  className="flex-shrink-0 text-[22px] leading-none text-yellow-dark transition-transform duration-200 group-open:rotate-45"
-                >
-                  +
+            <details key={f.q} className="group [&_summary]:list-none [&_summary::-webkit-details-marker]:hidden">
+              <summary className="flex items-start justify-between gap-4 py-[22px] cursor-pointer">
+                <span className="text-[16px] font-semibold text-ink">{f.q}</span>
+                <span className="shrink-0 mt-[3px] text-faint transition-transform duration-200 group-open:rotate-180" aria-hidden>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>
                 </span>
               </summary>
-              <p className="pb-5 -mt-1 text-[15px] leading-[1.6] text-muted">{f.a}</p>
+              <p className="pb-[22px] -mt-1 text-[14.5px] leading-[1.6] text-muted max-w-[64ch]">{f.a}</p>
             </details>
           ))}
         </div>

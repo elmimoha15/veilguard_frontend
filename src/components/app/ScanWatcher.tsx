@@ -12,8 +12,7 @@ import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/sc
 
 /**
  * Watches the scan the user most recently started (`pendingScanId`) and shows a
- * small docked progress chip (bottom-right) instead of taking over the screen —
- * so the user keeps browsing while the scan runs. On completion the chip becomes
+ * small docked progress chip (bottom-right) instead of taking over the screen,  * so the user keeps browsing while the scan runs. On completion the chip becomes
  * "View results" (it never auto-navigates). Mounted app-wide at the (app) layout
  * so it survives navigation. The onboarding + anonymous first-run flows don't set
  * `pendingScanId` and keep their full-screen /scanning reveal.
@@ -26,20 +25,46 @@ export default function ScanWatcher() {
   // Which scan we've already refreshed the profile for, so the usage meter updates
   // exactly once per scan (the moment it lands) without a manual page reload.
   const refreshedFor = useRef<string | null>(null);
+  // Smart dismissal: a stall watchdog (no snapshot for a long while → the scan is
+  // stuck, so clear the chip) and a short auto-hide after a scan completes, so the
+  // docked chip never lingers or hangs forever.
+  const stallTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const doneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!pendingScanId) return;
     const id = pendingScanId;
-    return subscribeScan(id, (doc) => {
+    const clearStall = () => { if (stallTimer.current) { clearTimeout(stallTimer.current); stallTimer.current = null; } };
+    const armStall = () => {
+      clearStall();
+      // A live scan keeps emitting progress snapshots, which re-arm this. Only a
+      // genuinely stuck scan (no update for this long) trips it.
+      stallTimer.current = setTimeout(() => {
+        setPendingScanId(null);
+        toast('Scan is taking longer than expected, check back shortly.', '#9A6412');
+      }, 150_000);
+    };
+    armStall();
+    const unsub = subscribeScan(id, (doc) => {
       if (!doc) return;
       setTracked({ id, doc });
-      // On terminal (done/error) → pull fresh usage so the meter reflects it live.
-      if ((doc.status === 'done' || doc.status === 'error') && refreshedFor.current !== id) {
-        refreshedFor.current = id;
-        void refreshProfile();
+      if (doc.status === 'done' || doc.status === 'error') {
+        clearStall();
+        // Auto-hide the completed chip shortly after it lands ("View results" stays
+        // clickable in the meantime). Errors keep their alert until acted on.
+        if (doc.status === 'done' && !doneTimer.current) doneTimer.current = setTimeout(() => setPendingScanId(null), 10_000);
+        // On terminal → pull fresh usage so the meter reflects it live.
+        if (refreshedFor.current !== id) { refreshedFor.current = id; void refreshProfile(); }
+      } else {
+        armStall(); // fresh progress → reset the stall watchdog
       }
     });
-  }, [pendingScanId, refreshProfile]);
+    return () => {
+      clearStall();
+      if (doneTimer.current) { clearTimeout(doneTimer.current); doneTimer.current = null; }
+      unsub?.();
+    };
+  }, [pendingScanId, refreshProfile, setPendingScanId, toast]);
 
   // Only render for the current pending scan (guards the brief window after a new
   // scan starts but before its first snapshot arrives).
@@ -71,14 +96,14 @@ export default function ScanWatcher() {
     </button>
   );
 
-  // A FAILED background scan is important — interrupt the user with a centered,
+  // A FAILED background scan is important, interrupt the user with a centered,
   // dimmed alert wherever they are in the app, not a corner chip they might miss.
   // The calm running/done states stay as the quiet docked chip below.
   if (doc.status === 'error' && typeof document !== 'undefined') {
     const f = scanFailure(doc);
     const kind: ScanKind = doc.type === 'upload' ? 'upload' : doc.type === 'deep' ? 'deep' : 'url';
     const primaryLabel = kind === 'upload' ? 'Upload again' : f.action === 'reconnect' ? 'Reconnect' : 'Try again';
-    // For a URL scan, re-running the SAME address just fails again — the address
+    // For a URL scan, re-running the SAME address just fails again, the address
     // is usually the thing to fix. So "Try again" reopens the New scan modal with
     // the URL prefilled, ready to correct or paste a new one.
     const onPrimary = kind === 'url'
@@ -91,10 +116,10 @@ export default function ScanWatcher() {
     return createPortal(
       <div className="fixed inset-0 z-[9998] flex items-center justify-center p-6 vg-fade" style={{ background: 'rgba(10,10,10,.45)' }} onClick={dismiss}>
         <div onClick={(e) => e.stopPropagation()} role="alertdialog" aria-modal="true" className="w-full max-w-[440px] bg-card border border-border rounded-[16px] p-7 text-center vg-pop shadow-[var(--shadow-pop)]">
-          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke={f.tone === 'ours' ? '#9A6412' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
             <path d="M12 3l9 16H3z" strokeLinejoin="round" />
             <path d="M12 10v4" strokeLinecap="round" />
-            <circle cx="12" cy="16.8" r="0.7" fill={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} stroke="none" />
+            <circle cx="12" cy="16.8" r="0.7" fill={f.tone === 'ours' ? '#9A6412' : '#C23B3F'} stroke="none" />
           </svg>
           <h2 className="font-semibold text-[20px] text-ink tracking-[-0.02em]">{f.title}</h2>
           <div className="font-mono text-[12.5px] text-faint truncate mt-1">{label}</div>
@@ -130,11 +155,11 @@ export default function ScanWatcher() {
       ) : (
         <>
           <div className="flex items-start gap-[10px]">
-            <span className="shrink-0 mt-[4px] w-[9px] h-[9px] rounded-full" style={{ background: '#F3C500', animation: 'vgPulse 1.4s ease-in-out infinite' }} />
+            <span className="shrink-0 mt-[4px] w-[9px] h-[9px] rounded-full" style={{ background: '#0A0A0A', animation: 'vgPulse 1.4s ease-in-out infinite' }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="font-semibold text-[14px] truncate">Scanning {label}</div>
-                <span className="shrink-0 font-semibold text-[13px] text-yellow-dark">{pct > 0 ? `${pct}%` : ''}</span>
+                <span className="shrink-0 font-semibold text-[13px] text-ink">{pct > 0 ? `${pct}%` : ''}</span>
               </div>
               <div className="font-mono text-[11.5px] text-faint truncate mt-[2px]">{p?.phase ?? 'starting…'}</div>
             </div>
@@ -143,7 +168,7 @@ export default function ScanWatcher() {
           <div className="mt-3">
             {pct > 0 ? (
               <div className="h-[6px] bg-border-2 rounded-full overflow-hidden">
-                <div className="h-full bg-yellow rounded-full transition-[width] duration-300" style={{ width: `${pct}%` }} />
+                <div className="h-full bg-ink rounded-full transition-[width] duration-300" style={{ width: `${pct}%` }} />
               </div>
             ) : (
               <div className="vg-skel h-[6px] rounded-full" />

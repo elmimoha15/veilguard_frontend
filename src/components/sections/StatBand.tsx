@@ -16,7 +16,7 @@ export default function StatBand() {
         <div aria-hidden className="pointer-events-none absolute inset-0 glow-amber" />
         <div className="relative">
           <FadeIn className="max-w-[720px]">
-            <Eyebrow className="text-yellow">{'// THE NUMBERS'}</Eyebrow>
+            <Eyebrow className="text-yellow">{'THE NUMBERS'}</Eyebrow>
             <h2 className="el-h mt-4 text-white text-[clamp(28px,3.4vw,44px)]">
               You ship faster than you can check.
               <span className="block text-white/45">And the gaps stay invisible until someone finds them.</span>

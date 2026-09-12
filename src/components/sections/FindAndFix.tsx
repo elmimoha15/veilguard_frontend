@@ -1,93 +1,39 @@
-import Eyebrow from '@/components/ui/Eyebrow';
-import FadeIn from '@/components/ui/FadeIn';
-import CopyFixButton from '@/components/ui/CopyFixButton';
-import { FIX_CLIPBOARD } from '@/content/landing';
+import SectionHead from '@/components/sections/SectionHead';
+import FixShot from '@/components/sections/shots/FixShot';
 
-// Generic cryptic scanner output — what "everyone else" dumps on you.
-const NOISE = [
-  'CWE-284 · Improper Access Control',
-  'CVE-2025-48757 · CVSS 9.1',
-  'Missing RLS policy · public.orders',
-  'CORS · Access-Control-Allow-Origin: *',
-  'Secret key in client bundle',
-  'IDOR · GET /api/orders/:id',
-  'No rate limit · POST /auth/login',
-  'Verbose stack trace exposed',
+const FEATURES: { title: string; desc: string; icon: React.ReactNode }[] = [
+  { title: 'Plain-English explanations', desc: 'What the issue is and why it matters, with no jargon.', icon: <path d="M4 5h16M4 12h16M4 19h9" /> },
+  { title: 'The exact fix', desc: 'Copy-paste code or a ready-made prompt for your AI tool.', icon: <path d="M9 7H5v12h14v-4M14 4h6v6M20 4l-9 9" /> },
+  { title: 'Prioritized for you', desc: 'We tell you which issue actually gets you hacked first.', icon: <path d="M12 3l2.4 5.4L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.6-.6L12 3z" /> },
 ];
 
 /**
- * THE DIFFERENCE — visualises the promise: other scanners hand you a scary,
- * cryptic list; we translate the one that matters into a plain-English fix.
+ * The difference: other scanners hand you a scary list; we hand you the exact fix.
+ * The panel is a real finding-detail product shot (grade pills + the actual code fix).
  */
 export default function FindAndFix() {
   return (
-    <section id="fix" className="bg-bg scroll-mt-20">
-      <div className="mx-auto max-w-[1160px] px-6 py-[clamp(56px,8vw,96px)]">
-        <FadeIn className="max-w-[780px]">
-          <Eyebrow className="text-yellow-dark">{'// THE DIFFERENCE'}</Eyebrow>
-          <h2 className="el-h mt-4 text-[clamp(26px,3.4vw,42px)]">
-            Other scanners hand you a scary list. We hand you the{' '}
-            <span style={{ color: '#157A43' }}>fix.</span>
-          </h2>
-          <p className="mt-4 text-[16px] text-muted max-w-[680px]">
-            Every issue comes with a plain-English explanation and the exact repair, so you know which one
-            actually matters and exactly what to do about it.
-          </p>
-        </FadeIn>
+    <section id="fix" className="el-x el-sec el-divide scroll-mt-20">
+      <SectionHead
+        eyebrow="The difference"
+        title={<>Other scanners hand you a scary list. We hand you the <span style={{ color: '#157A43' }}>fix.</span></>}
+        description="Every issue comes with a plain-English explanation and the exact repair, so you know which one actually matters and exactly what to do about it."
+      />
 
-        <FadeIn delay={0.08} className="mt-10 grid gap-5 items-stretch lg:grid-cols-[1fr_auto_1fr]">
-          {/* LEFT — the scary, cryptic list */}
-          <div className="relative el-card p-6 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-muted">Typical scanner output</span>
-              <span className="font-mono text-[12px] font-semibold" style={{ color: '#E5484D' }}>17 issues</span>
-            </div>
-            <ul className="mt-4 space-y-[11px]">
-              {NOISE.map((n) => (
-                <li key={n} className="flex items-center gap-2.5 font-mono text-[12.5px] text-muted">
-                  <span className="shrink-0 w-1.5 h-1.5 rounded-full" style={{ background: '#E5484D' }} />
-                  <span className="truncate">{n}</span>
-                </li>
-              ))}
-            </ul>
-            {/* fade implies the list just keeps going */}
-            <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card to-transparent" />
-            <p className="relative mt-4 text-[13px] text-faint">…and no idea which one actually gets you hacked.</p>
-          </div>
+      <div className="mt-10 el-panel p-3 sm:p-5 max-w-[760px]">
+        <FixShot />
+      </div>
 
-          {/* connector */}
-          <div className="flex lg:flex-col items-center justify-center gap-2 py-1 text-yellow-dark">
-            <span className="font-mono text-[10.5px] tracking-[0.08em] uppercase">translated to</span>
-            <svg className="rotate-90 lg:rotate-0" width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-
-          {/* RIGHT — the one fix that matters */}
-          <div className="relative el-card p-6 flex flex-col" style={{ boxShadow: '0 0 0 1.5px var(--color-yellow), var(--shadow-card, 0 1px 2px rgba(0,0,0,0.04))' }}>
-            <span className="inline-flex items-center gap-[7px] text-[13px] font-semibold text-ink">
-              <span className="w-2 h-2 rounded-full bg-yellow" /> Veilguard
+      <div className="mt-[clamp(32px,4vw,56px)] grid gap-x-10 gap-y-8 sm:grid-cols-3">
+        {FEATURES.map((f) => (
+          <div key={f.title} className="border-t border-hairline pt-5">
+            <span className="text-ink" aria-hidden>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{f.icon}</svg>
             </span>
-            <h3 className="mt-3 font-semibold text-[19px] leading-[1.2] tracking-[-0.01em] text-ink">
-              Your orders table is readable by any logged-in user.
-            </h3>
-            <p className="mt-2 text-[14.5px] leading-[1.55] text-muted">
-              In plain English: anyone signed in can read every customer&apos;s orders, names and emails. One
-              change closes it.
-            </p>
-            <div className="mt-4 rounded-xl border border-border bg-bg-soft p-4">
-              <span className="inline-flex items-center gap-[6px] text-[11.5px] font-semibold tracking-[0.05em] uppercase text-yellow-dark">
-                Do this
-              </span>
-              <p className="mt-2 text-[14px] leading-[1.5] text-ink">
-                Add a Supabase row-level security policy so each user can only read their own rows.
-              </p>
-              <div className="mt-3">
-                <CopyFixButton text={FIX_CLIPBOARD} label="Copy the fix" />
-              </div>
-            </div>
+            <div className="mt-3 font-semibold text-[15px] text-ink">{f.title}</div>
+            <p className="mt-1.5 text-[13.5px] leading-[1.5] text-muted">{f.desc}</p>
           </div>
-        </FadeIn>
+        ))}
       </div>
     </section>
   );

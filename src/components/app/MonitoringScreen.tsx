@@ -6,14 +6,15 @@ import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
 import { billingHref } from '@/lib/url';
 import { useMonitorEvents, GRADE_TINT, scanLabel, repoDisplay, type App } from '@/lib/hooks';
-import { setAppMonitoring, type Cadence, type AppMonitoring, type ScanDoc, type AppRecord } from '@/lib/scans';
+import { setAppMonitoring, openFindingKeysByApp, type Cadence, type AppMonitoring, type ScanDoc, type AppRecord } from '@/lib/scans';
 import { api } from '@/lib/api';
 import { startFailure } from '@/lib/scanError';
 import { Toggle } from './ui';
-import { Card, SectionLabel } from './primitives';
+import { Card, SectionLabel, SeverityChip } from './primitives';
+import { sevFromRaw } from './data';
 import { RepoPicker } from './RepoPicker';
 
-/** Coarse relative time from an ISO timestamp — no external date lib. */
+/** Coarse relative time from an ISO timestamp, no external date lib. */
 function ago(iso?: string): string {
   if (!iso) return '';
   const then = new Date(iso).getTime();
@@ -29,7 +30,7 @@ function ago(iso?: string): string {
 }
 
 /**
- * Monitoring config for ONE app — rendered as a tab inside the app hub. The app
+ * Monitoring config for ONE app, rendered as a tab inside the app hub. The app
  * (and the registry records needed to persist) are passed in; no app-switcher.
  */
 export default function MonitoringScreen({ app, records }: { app: App; records: AppRecord[] }) {
@@ -49,7 +50,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
   const hasConfig = !!active.monitoring;
   const hasRepo = !!active.githubRepo;
   const startConfigure = () => {
-    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
+    if (!paid) { toast('Monitoring is a Pro feature, upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
     setConfiguring(true);
   };
 
@@ -58,7 +59,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
     const r = await api.createDeepScan({ githubRepo: fullName });
     if (!r.ok || !r.data.scanId) {
       if (r.data.error) console.error('[monitoring] deep scan start failed:', r.data.error);
-      if (r.status === 409) { toast('Your GitHub connection needs refreshing — reconnect it in Settings, then try again.', '#C23B3F'); setRepoOpen(false); router.push('/settings'); }
+      if (r.status === 409) { toast('Your GitHub connection needs refreshing, reconnect it in Settings, then try again.', '#C23B3F'); setRepoOpen(false); router.push('/settings'); }
       else if (r.status === 502) { toast('We couldn’t verify that repo with GitHub. Give it a moment and try again.', '#C23B3F'); }
       else toast(startFailure(r.status, r.data).message, '#C23B3F');
       return false;
@@ -69,7 +70,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
     return true;
   };
   const openRepoPicker = () => {
-    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
+    if (!paid) { toast('Monitoring is a Pro feature, upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
     setRepoOpen(true);
   };
 
@@ -83,7 +84,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
       await setAppMonitoring(user.uid, records, { url: active.url, githubRepo: active.githubRepo, name: active.name }, { ...mon, ...patch });
       return true;
     } catch (e) {
-      toast(e instanceof Error ? e.message : 'Could not save — try again', '#E5484D');
+      toast(e instanceof Error ? e.message : 'Could not save, try again', '#E5484D');
       return false;
     } finally {
       setBusy(false);
@@ -91,14 +92,19 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
   };
 
   const pickCadence = async (c: Cadence) => {
-    if (!paid) { toast('Monitoring is a Pro feature — upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
+    if (!paid) { toast('Monitoring is a Pro feature, upgrade to enable auto re-scans.', '#E0932F'); router.push(billingHref()); return; }
     if (c === 'push' && !active?.githubRepo) { toast('Connect a repo to scan on every push', '#E0932F'); return; }
     const ok = await save({ cadence: c });
     if (ok) toast(c === 'off' ? 'Monitoring turned off' : 'Monitoring schedule saved', '#1F9D57');
   };
 
   const history: ScanDoc[] = active?.scans ?? [];
-  const appEvents = active ? events.filter((e) => e.appId === active.key) : [];
+  // Only show events that still have OPEN new findings, once a later re-scan resolves
+  // them, they're erased here (the "Scan timeline" card still records every re-scan).
+  const openSet = openFindingKeysByApp(events).get(active.key) ?? new Set<string>();
+  const appEvents = (active ? events.filter((e) => e.appId === active.key) : [])
+    .map((e) => ({ ...e, newFindings: (e.newFindings ?? []).filter((f) => openSet.has(f.key)) }))
+    .filter((e) => e.newFindings.length > 0);
 
   return (
     <div className="vg-fade">
@@ -106,7 +112,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
         /* Never configured → a minimal, box-less prompt centered on the page. */
         <div className="text-center max-w-[520px] mx-auto">
           <h2 className="font-semibold text-[20px] tracking-[-0.02em]">Set up monitoring</h2>
-          <p className="text-muted text-[15px] mt-2 leading-[1.55]">We’ll automatically re-scan {repoDisplay(active.name)} and alert you the moment a new hole appears — you only hear from us when something changes.</p>
+          <p className="text-muted text-[15px] mt-2 leading-[1.55]">We’ll automatically re-scan {repoDisplay(active.name)} and alert you the moment a new hole appears, you only hear from us when something changes.</p>
           <button onClick={startConfigure} className="cursor-pointer mt-4 inline-flex items-center gap-[6px] text-ink font-semibold text-[15px] hover:opacity-70 transition-opacity">
             Configure monitoring
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -115,8 +121,8 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
       ) : (
         <>
           {!paid && (
-            <div className="rounded-[12px] p-4 mb-4 flex items-center gap-3" style={{ background: 'rgba(243,197,0,.12)', border: '1px solid rgba(243,197,0,.4)' }}>
-              <span className="shrink-0" style={{ color: '#8a6d00' }}>
+            <div className="py-4 mb-4 flex items-center gap-3 border-b border-border">
+              <span className="shrink-0" style={{ color: '#5b5a56' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.7" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
               </span>
               <div className="flex-1 min-w-0">
@@ -127,8 +133,8 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
             </div>
           )}
 
-          {/* Schedule + email — clean toggles */}
-          <Card className="p-5" style={{ opacity: paid ? (busy ? 0.7 : 1) : 0.6 }}>
+          {/* Schedule + email, clean toggles */}
+          <Card flat className="py-7" style={{ opacity: paid ? (busy ? 0.7 : 1) : 0.6 }}>
             <SectionLabel>Automatic re-scans</SectionLabel>
             <div className="mt-2">
               <div className="flex items-start justify-between gap-4 py-[14px]">
@@ -136,7 +142,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
                   <div className="font-semibold text-[15px]">Re-scan after every deploy</div>
                   <div className="text-[13.5px] text-muted mt-[2px]">
                     {hasRepo
-                      ? 'We re-scan on each push — catches regressions the moment they ship.'
+                      ? 'We re-scan on each push, catches regressions the moment they ship.'
                       : <>Connect a repo to watch this app on every deploy. <button onClick={openRepoPicker} className="cursor-pointer text-ink font-semibold underline">Connect a repo</button></>}
                   </div>
                 </div>
@@ -145,7 +151,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
               <div className="flex items-start justify-between gap-4 py-[14px]" style={{ borderTop: '1px solid var(--color-hairline)' }}>
                 <div className="min-w-0">
                   <div className="font-semibold text-[15px]">Email me when a new issue appears</div>
-                  <div className="text-[13.5px] text-muted mt-[2px]">We stay silent when nothing changes — you only hear from us when it matters.</div>
+                  <div className="text-[13.5px] text-muted mt-[2px]">We stay silent when nothing changes, you only hear from us when it matters.</div>
                 </div>
                 <Toggle on={mon.emailAlerts} onClick={() => void save({ emailAlerts: !mon.emailAlerts })} label="Email alerts" />
               </div>
@@ -153,8 +159,8 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
           </Card>
 
           {/* Alerts + timeline */}
-          <div className="grid grid-cols-1 min-[820px]:grid-cols-2 gap-4 mt-4">
-            <Card className="p-5">
+          <div className="grid grid-cols-1 min-[820px]:grid-cols-2 mt-4 border-t border-border divide-y min-[820px]:divide-y-0 min-[820px]:divide-x divide-border">
+            <Card flat className="py-7 min-[820px]:pr-8">
               <SectionLabel>Alerts</SectionLabel>
               {appEvents.length === 0 ? (
                 <div className="text-[14px] text-muted mt-3">No alerts yet. When an automatic scan finds a new issue, it shows up here.</div>
@@ -162,38 +168,59 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
                 <div className="flex flex-col mt-2">
                   {appEvents.slice(0, 8).map((e, i) => {
                     const drop = e.gradeBefore && e.gradeAfter && e.gradeBefore !== e.gradeAfter;
-                    const top = e.newFindings[0];
                     const clean = e.newFindings.length === 0;
-                    return (
-                      <div key={e.id} className="flex gap-[10px] py-[13px]" style={{ borderTop: i === 0 ? undefined : '1px solid var(--color-hairline)' }}>
-                        <span className="shrink-0 mt-[5px] w-2 h-2 rounded-full" style={{ background: clean ? '#1F9D57' : '#E5484D' }} />
-                        <div className="flex-1 min-w-0">
-                          {clean ? (
-                            <div className="text-[14.5px] leading-[1.45]">Re-scanned — no new issues.</div>
-                          ) : (
-                            <div className="text-[14.5px] font-semibold leading-[1.45]">
-                              {e.newFindings.length} new {e.newFindings.length === 1 ? 'issue' : 'issues'}{top ? ` · ${top.title}` : ''}
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2 text-[12px] font-mono text-faint mt-[3px]">
-                            <span>{ago(e.createdAt)}</span>
-                            {drop && (
-                              <span className="inline-flex items-center gap-1 font-semibold" style={{ color: '#E5484D' }}>
-                                grade {e.gradeBefore}
-                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                {e.gradeAfter}
-                              </span>
-                            )}
+                    const gradeChip = drop && (
+                      <span className="inline-flex items-center gap-1 font-semibold" style={{ color: '#E5484D' }}>
+                        grade {e.gradeBefore}
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                        {e.gradeAfter}
+                      </span>
+                    );
+                    const border = { borderTop: i === 0 ? undefined : '1px solid var(--color-hairline)' };
+                    if (clean) {
+                      return (
+                        <div key={e.id} className="flex gap-[10px] py-[13px]" style={border}>
+                          <span className="shrink-0 mt-[5px] w-2 h-2 rounded-full" style={{ background: '#1F9D57' }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[14.5px] leading-[1.45]">Re-scanned, no new issues.</div>
+                            <div className="flex items-center gap-2 text-[12px] font-mono text-faint mt-[3px]"><span>{ago(e.createdAt)}</span>{gradeChip}</div>
                           </div>
                         </div>
-                      </div>
+                      );
+                    }
+                    // New issues → clicking opens the app's CURRENT findings.
+                    const goFindings = () => router.push(`/app?key=${encodeURIComponent(active.key)}&tab=findings`);
+                    return (
+                      <button key={e.id} onClick={goFindings} className="vg-row flex gap-[10px] py-[13px] w-full text-left cursor-pointer" style={border}>
+                        <span className="shrink-0 mt-[5px] w-2 h-2 rounded-full" style={{ background: '#E5484D' }} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[14.5px] font-semibold leading-[1.45]">
+                            {e.newFindings.length} new {e.newFindings.length === 1 ? 'issue' : 'issues'} found
+                          </div>
+                          {/* the actual new holes */}
+                          <div className="flex flex-col gap-[6px] mt-2">
+                            {e.newFindings.slice(0, 6).map((ref, j) => (
+                              <div key={ref.key ?? j} className="flex items-center gap-2 min-w-0">
+                                <SeverityChip sev={sevFromRaw(ref.severity)} />
+                                <span className="text-[13.5px] truncate">{ref.title}</span>
+                                {ref.where && <span className="font-mono text-[11.5px] text-faint truncate shrink-0">· {ref.where}</span>}
+                              </div>
+                            ))}
+                            {e.newFindings.length > 6 && (
+                              <span className="text-[12px] text-faint mt-[2px]">+{e.newFindings.length - 6} more</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-[12px] font-mono text-faint mt-[7px]"><span>{ago(e.createdAt)}</span>{gradeChip}</div>
+                        </div>
+                        <svg className="shrink-0 mt-[3px]" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: '#C7C7C2' }}><path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                      </button>
                     );
                   })}
                 </div>
               )}
             </Card>
 
-            <Card className="p-5">
+            <Card flat className="py-7 min-[820px]:pl-8">
               <SectionLabel>Scan timeline</SectionLabel>
               {history.length === 0 ? (
                 <div className="text-[14px] text-muted mt-3">No scans yet.</div>
@@ -209,7 +236,7 @@ export default function MonitoringScreen({ app, records }: { app: App; records: 
                           {i < arr.length - 1 && <span className="flex-1 w-[2px] bg-border my-[2px]" />}
                         </div>
                         <div className="pb-4 min-w-0">
-                          <div className="font-semibold text-[15px] truncate">{title} — {repoDisplay(scanLabel(s))}</div>
+                          <div className="font-semibold text-[15px] truncate">{title}, {repoDisplay(scanLabel(s))}</div>
                           <div className="font-mono text-[12.5px] text-faint mt-[2px]">{ago(s.createdAt)} · {s.status === 'done' ? `${s.counts?.critical ?? 0} critical` : s.status}</div>
                         </div>
                       </div>

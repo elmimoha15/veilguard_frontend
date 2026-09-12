@@ -102,7 +102,7 @@ export default function TermsPage() {
           <h2 className="text-lg! font-bold text-ink mb-3">9. Governing law &amp; contact</h2>
           <p>
             These Terms are governed by the laws of [your country / state]. Questions about these Terms? Email
-            us at <a href="mailto:support@veilguard.dev" className="text-yellow-dark hover:text-ink underline underline-offset-2">support@veilguard.dev</a>.
+            us at <a href="mailto:info@veilguard.dev" className="text-yellow-dark hover:text-ink underline underline-offset-2">info@veilguard.dev</a>.
           </p>
         </section>
       </div>

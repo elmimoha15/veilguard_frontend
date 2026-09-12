@@ -1,15 +1,5 @@
-import Navbar, { type NavMenus } from '@/components/layout/Navbar';
+import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
-import { SCANNERS } from '@/content/scanners';
-import { INDEXABLE_GUIDE_ARTICLES, INDEXABLE_SECURITY_ARTICLES } from '@/content/learn';
-
-// Built server-side so only these tiny {label, href} lists reach the client
-// navbar — the full article bodies never enter the browser bundle.
-const NAV_MENUS: NavMenus = {
-  scanners: SCANNERS.slice(0, 6).map((s) => ({ label: s.tool, href: `/scanners/${s.slug}` })),
-  guides: INDEXABLE_GUIDE_ARTICLES.slice(0, 6).map((a) => ({ label: a.title, href: `/guides/${a.slug}` })),
-  security: INDEXABLE_SECURITY_ARTICLES.slice(0, 6).map((a) => ({ label: a.title, href: `/security/${a.slug}` })),
-};
 
 /**
  * Marketing chrome: the public site (home, per-tool scanners, legal pages) gets
@@ -88,9 +78,14 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           }),
         }}
       />
-      <Navbar menus={NAV_MENUS} />
-      <main className="flex-1">{children}</main>
-      <Footer />
+      {/* Without JS, scroll-reveal can't fire — keep all content visible. */}
+      <noscript><style>{`.reveal{opacity:1!important;transform:none!important}`}</style></noscript>
+      <Navbar />
+      {/* Continuous vertical guide-lines frame the whole column (nav sits above it). */}
+      <div className="el-frame">
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
     </>
   );
 }

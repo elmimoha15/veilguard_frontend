@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import FeedbackForm from './FeedbackForm';
+import { ActionInner } from '@/components/ui/ActionButton';
 
 /**
- * The persistent feedback/help launcher — a small docked pill (bottom-right) that
+ * The persistent feedback/help launcher, a small docked pill (bottom-right) that
  * opens a compact panel with the shared form. Keyboard-usable: Esc closes, focus
  * moves into the panel on open and returns to the launcher on close, and Tab is
  * trapped within the open panel. Hidden on the full /feedback page (redundant).
@@ -47,7 +48,8 @@ export default function FeedbackWidget() {
     return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onClickOutside); };
   }, [open, close]);
 
-  if (pathname === '/feedback') return null;
+  // Only surface the launcher on the main dashboard, not across every app page.
+  if (pathname !== '/dashboard') return null;
 
   return (
     <>
@@ -77,18 +79,22 @@ export default function FeedbackWidget() {
         </div>
       )}
 
-      <button
-        ref={launcherRef}
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        className="vg-press fixed z-[9990] bottom-5 right-5 inline-flex items-center gap-2 bg-ink text-white rounded-full pl-[14px] pr-[16px] py-[10px] font-medium text-[14px] shadow-[0_10px_30px_-8px_rgba(0,0,0,.45)] cursor-pointer"
-      >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-          <path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-        </svg>
-        {open ? 'Close' : 'Feedback'}
-      </button>
+      {/* The fixed positioning lives on this wrapper, not on the button: `.vg-abtn`
+          sets `position: relative` (unlayered, so it would override a Tailwind
+          `fixed` utility on the same element and drop the FAB into normal flow). */}
+      <div className="fixed z-[9990] bottom-5 right-5">
+        <button
+          ref={launcherRef}
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          className="vg-abtn vg-abtn--primary shadow-[0_10px_30px_-8px_rgba(0,0,0,.45)]"
+        >
+          <ActionInner icon={<svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.5A8 8 0 1 1 21 12z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" /></svg>}>
+            {open ? 'Close' : 'Feedback'}
+          </ActionInner>
+        </button>
+      </div>
     </>
   );
 }

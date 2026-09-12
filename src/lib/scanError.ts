@@ -3,7 +3,7 @@ import { SUPPORT_MAILTO } from '@/content/site';
 
 /**
  * The single source of friendly, plain-English scan error copy. Every failure
- * says what happened, why, and what to do next — and whether it's the user's to
+ * says what happened, why, and what to do next, and whether it's the user's to
  * fix (gentle) or ours (apologize). Raw error strings/codes are NEVER surfaced
  * here; callers log those to the console only.
  */
@@ -47,21 +47,21 @@ export function scanFailure(scan: Pick<ScanDoc, 'type' | 'error' | 'errorReason'
   switch (reason) {
     case 'timeout':
       return kind === 'url'
-        ? { title: 'That scan took too long', body: 'Your site didn’t respond in time. Large sites can time out — make sure it’s live, then try again.', tone: 'ours', action: 'retry', showSupport: true }
-        : { title: `This ${noun} is large — the scan timed out`, body: `Big ${noun}s can run past our time limit. Try again${kind === 'deep' ? ', or upload just the folder instead' : ''} — you can leave it running in the background.`, tone: 'ours', action: 'retry', showSupport: true };
+        ? { title: 'That scan took too long', body: 'Your site didn’t respond in time. Large sites can time out, make sure it’s live, then try again.', tone: 'ours', action: 'retry', showSupport: true }
+        : { title: `This ${noun} is large, the scan timed out`, body: `Big ${noun}s can run past our time limit. Try again${kind === 'deep' ? ', or upload just the folder instead' : ''}, you can leave it running in the background.`, tone: 'ours', action: 'retry', showSupport: true };
     case 'unreachable':
       return { title: 'We couldn’t reach that address', body: 'Your site returned an error or looks offline. Check the URL is correct and the site is deployed and loading, then try again.', tone: 'user', action: 'retry', showSupport: false };
     case 'empty-upload':
-      return { title: 'We didn’t find any code in that upload', body: 'Make sure you zipped the project folder itself — not an empty or wrapper folder — then upload again.', tone: 'user', action: 'reupload', showSupport: false };
+      return { title: 'We didn’t find any code in that upload', body: 'Make sure you zipped the project folder itself, not an empty or wrapper folder, then upload again.', tone: 'user', action: 'reupload', showSupport: false };
     case 'needs-reconnect':
       return { title: 'Your connection needs refreshing', body: 'We lost access to your connected account. Reconnect it, then run the scan again.', tone: 'user', action: 'reconnect', showSupport: false };
     case 'not-found':
       return kind === 'deep'
         ? { title: 'We can’t access that repo anymore', body: 'Reconnect GitHub, or check the repo still exists and we still have access, then try again.', tone: 'user', action: 'reconnect', showSupport: true }
-        : { title: `We couldn’t open that ${noun}`, body: 'Try again — if it keeps happening, reach out and we’ll help.', tone: 'ours', action: 'retry', showSupport: true };
+        : { title: `We couldn’t open that ${noun}`, body: 'Try again, if it keeps happening, reach out and we’ll help.', tone: 'ours', action: 'retry', showSupport: true };
     case 'engine-error':
     default:
-      return { title: 'The scan hit a snag on our end', body: 'Not you — us. We’ve logged it. Please try again in a moment.', tone: 'ours', action: 'retry', showSupport: true };
+      return { title: 'The scan hit a snag on our end', body: 'Not you, us. We’ve logged it. Please try again in a moment.', tone: 'ours', action: 'retry', showSupport: true };
   }
 }
 
@@ -69,10 +69,17 @@ export interface StartFailure { message: string; tone: 'user' | 'ours'; upsell?:
 
 /** Friendly copy for a scan-START API result (createScan/createDeepScan/createUploadScan). */
 export function startFailure(status: number, data: { error?: string; code?: string }): StartFailure {
-  if (status === 0) return { message: 'Connection lost — check your internet and try again.', tone: 'ours' };
+  if (status === 0) {
+    // Distinguish "your internet is down" (guide) from "our server is unreachable"
+    // (apologize), the browser knows which via navigator.onLine.
+    const userOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    return userOffline
+      ? { message: 'You’re offline, check your internet connection and try again.', tone: 'user' }
+      : { message: 'We couldn’t reach our servers just now. Please try again in a moment.', tone: 'ours', showSupport: true };
+  }
   if (status >= 500) return { message: 'Something went wrong on our end, not yours. Please try again in a moment.', tone: 'ours', showSupport: true };
   if (data.code === 'E_SCAN_LIMIT') return { message: data.error || 'You’ve used all your scans this month.', tone: 'user', upsell: true };
-  if (status === 402) return { message: data.error || 'That’s a Guard feature — upgrade to use it.', tone: 'user', upsell: true };
-  // 400 / 409 etc. — the backend already returns short, human strings here.
+  if (status === 402) return { message: data.error || 'That’s a Guard feature, upgrade to use it.', tone: 'user', upsell: true };
+  // 400 / 409 etc., the backend already returns short, human strings here.
   return { message: data.error || 'Couldn’t start the scan. Please try again.', tone: 'user' };
 }

@@ -266,9 +266,9 @@ export function timeAgo(iso?: string): string {
 }
 
 export const GRADE_TINT: Record<string, { bg: string; fg: string }> = {
-  A: { bg: '#EAF6EF', fg: '#1F9D57' },
-  B: { bg: '#EAF6EF', fg: '#1F9D57' },
-  C: { bg: '#FBF1E1', fg: '#E0932F' },
-  D: { bg: '#FBEAEA', fg: '#E5484D' },
-  F: { bg: '#FBEAEA', fg: '#E5484D' },
+  A: { bg: '#F0FDF4', fg: '#15803D' },
+  B: { bg: '#F0FDF4', fg: '#15803D' },
+  C: { bg: '#FFFBEB', fg: '#B45309' },
+  D: { bg: '#FEF2F2', fg: '#DC2626' },
+  F: { bg: '#FEF2F2', fg: '#DC2626' },
 };

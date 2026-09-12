@@ -1,250 +1,281 @@
 'use client';
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Eyebrow from '@/components/ui/Eyebrow';
-import FadeIn from '@/components/ui/FadeIn';
+import { useEffect, useRef } from 'react';
+import { CenterHead } from '@/components/sections/annot/kit';
+import { ActionInner } from '@/components/ui/ActionButton';
+import { BrandLogo } from '@/components/ui/BrandLogo';
 
-type TabId = 'url' | 'repo' | 'upload';
+/* ---- helpers ---- */
+const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const CYCLE = 4200;
+const usesReduce = () => typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const GlobeIcon = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.7" />
-    <path d="M3 12h18M12 3c3 3.5 3 14 0 18M12 3c-3 3.5-3 14 0 18" stroke="currentColor" strokeWidth="1.4" />
-  </svg>
-);
-const RepoIcon = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <circle cx="6" cy="6" r="2.4" stroke="currentColor" strokeWidth="1.7" />
-    <circle cx="6" cy="18" r="2.4" stroke="currentColor" strokeWidth="1.7" />
-    <circle cx="18" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.7" />
-    <path d="M6 8.5v7M8.4 7.2C12 8 15.6 8 15.6 8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    <path d="M18 10.4c0 3-2 3.6-5 4.2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-  </svg>
-);
-const UploadIcon = () => (
-  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-    <path d="M12 15V4m0 0 4 4m-4-4-4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M4 15v2.5A2.5 2.5 0 0 0 6.5 20h11a2.5 2.5 0 0 0 2.5-2.5V15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-  </svg>
-);
-const GithubMark = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="#0A0A0A" aria-hidden>
-    <path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.5 2.9 8.4 6.8 9.7.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.4-3.4-1.4-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5.1 0-1.1.4-2 1-2.7-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.8 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .6 1.4.2 2.4.1 2.7.7.7 1 1.6 1 2.7 0 4-2.4 4.8-4.7 5.1.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.1 10.1 0 0 0 22 12.3C22 6.6 17.5 2 12 2Z" />
-  </svg>
-);
-
-const TABS: {
-  id: TabId;
-  label: string;
-  icon: React.ReactNode;
-  plan: 'Free' | 'Guard';
-  title: string;
-  desc: string;
-  steps: string[];
-  bestFor: string;
-}[] = [
-  {
-    id: 'url',
-    label: 'Live URL',
-    icon: <GlobeIcon />,
-    plan: 'Free',
-    title: 'Scan a live URL',
-    desc: 'See exactly what an attacker sees from the outside, no access to your code required. Just paste the link to your deployed app.',
-    steps: [
-      'Paste your app’s URL (Lovable, Bolt, Vercel, anywhere it’s live).',
-      'We probe it the way an attacker would, from the outside in.',
-      'Get an A–F grade and every exposed issue explained in ~60 seconds.',
-    ],
-    bestFor: 'A fast first check of any app that’s already deployed.',
-  },
-  {
-    id: 'repo',
-    label: 'Connect repo',
-    icon: <RepoIcon />,
-    plan: 'Guard',
-    title: 'Connect your GitHub repo',
-    desc: 'Link a repo for a deeper, read-only scan of your actual source, config and database rules, the issues that never show from the outside.',
-    steps: [
-      'Connect GitHub once, read-only and encrypted. We never write to your code.',
-      'Pick the repo you want graded.',
-      'We scan the source plus your Supabase and Firebase rules, then grade it.',
-    ],
-    bestFor: 'Catching risks hidden in the code, like open RLS or leaked env vars.',
-  },
-  {
-    id: 'upload',
-    label: 'Upload folder',
-    icon: <UploadIcon />,
-    plan: 'Guard',
-    title: 'Upload a folder or ZIP',
-    desc: 'No Git? Drag in your project folder or a .zip and we scan the code directly. Nothing leaves encrypted storage.',
-    steps: [
-      'Drop your project folder or a .zip file.',
-      'We read the code, skipping node_modules and honoring your .gitignore.',
-      'Same A–F grade and exact fixes, straight from your source.',
-    ],
-    bestFor: 'Local projects or code that doesn’t live on GitHub.',
-  },
-];
-
-const SOFT_SHADOW = '0 18px 50px -30px rgba(0,0,0,0.4)';
-
-function TabVisual({ id }: { id: TabId }) {
-  if (id === 'url') {
-    return (
-      <div>
-        <div className="flex items-center gap-2 rounded-2xl bg-card border border-border px-4 h-16" style={{ boxShadow: SOFT_SHADOW }}>
-          <span className="font-mono text-[14px] text-tertiary select-none">https://</span>
-          <span className="text-[16px] text-ink truncate">myapp.lovable.app</span>
-          <span className="ml-auto inline-flex items-center justify-center h-10 px-5 rounded-xl bg-ink text-white text-[14px] font-semibold shrink-0">
-            Run scan
-          </span>
-        </div>
-        <p className="mt-3 text-center text-[13px] text-faint">Free · A–F grade in ~60s</p>
-      </div>
-    );
-  }
-  if (id === 'repo') {
-    return (
-      <div className="flex items-center gap-3 rounded-2xl bg-card border border-border px-5 h-[72px]" style={{ boxShadow: SOFT_SHADOW }}>
-        <GithubMark />
-        <span className="font-semibold text-[16px] text-ink">GitHub</span>
-        <span
-          className="ml-auto inline-flex items-center justify-center h-10 px-5 rounded-xl text-white text-[14px] font-semibold shadow-[0_10px_24px_-10px_rgba(31,157,87,0.7)]"
-          style={{ background: '#1F9D57' }}
-        >
-          Connect
-        </span>
-      </div>
-    );
-  }
+function Cursor() {
   return (
-    <div className="rounded-2xl border-2 border-dashed border-border bg-card flex flex-col items-center justify-center text-center py-10 px-6">
-      <span className="flex items-center justify-center w-12 h-12 rounded-2xl mb-3" style={{ background: 'rgba(243,197,0,0.16)', color: '#8A6D00' }}>
-        <UploadIcon />
-      </span>
-      <div className="font-semibold text-[15px] text-ink">Drop your folder or .zip</div>
-      <div className="text-[13px] text-muted mt-1">skips node_modules · honors .gitignore</div>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,.32))' }} aria-hidden>
+      <path d="M5.6 3.2 L5.6 20.4 L10 16.1 L13.1 22.6 L15.7 21.3 L12.6 15 L18.6 14.9 Z" fill="#0A0A0A" stroke="#ffffff" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+const Check = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M5 12.5l4 4 10-10" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+);
+const Fade = () => <div className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-white to-transparent" />;
+
+/* Ship the demo's button CSS with the component (reliable regardless of global-CSS chunking). */
+const SM_CSS = `
+.vg-abtn.is-on .vg-abtn__label{transform:translateY(-140%);opacity:0}
+.vg-abtn.is-on .vg-abtn__icon{transform:translateY(0)}
+.vg-abtn--primary.is-on{background:#FFE24D;color:#0A0A0A}
+.vg-abtn--green{background:#16A34A;color:#fff}
+.vg-abtn--green:not(:disabled):hover{background:#15803D;color:#fff}
+.vg-abtn--green.is-on{background:#F0FDF4;color:#15803D}
+`;
+
+/* ============================= URL demo ============================= */
+function UrlDemo() {
+  const txt = useRef<HTMLSpanElement>(null);
+  const cur = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const URL = 'invoicekit.lovable.app';
+
+  useEffect(() => {
+    const paint = (t: number) => {
+      if (txt.current) txt.current.textContent = URL.slice(0, Math.round(clamp(t / 0.36) * URL.length));
+      const A = { x: 214, y: 44 };
+      const B = { x: 198, y: 100 }; // right side of the Scan button, clear of the text
+      let cx = A.x;
+      let cy = A.y;
+      let cs = 1;
+      let cop = 0;
+      if (t >= 0.42 && t < 0.6) {
+        const p = easeInOut((t - 0.42) / 0.18);
+        cx = lerp(A.x, B.x, p);
+        cy = lerp(A.y, B.y, p);
+        cop = 1;
+      } else if (t >= 0.6) {
+        cx = B.x;
+        cy = B.y;
+        cop = t < 0.94 ? 1 : clamp(1 - (t - 0.94) / 0.06);
+        cs = t >= 0.6 && t < 0.68 ? 0.82 : 1;
+      }
+      if (cur.current) {
+        cur.current.style.transform = `translate(${cx}px,${cy}px) scale(${cs})`;
+        cur.current.style.opacity = String(cop);
+      }
+      const on = t >= 0.6 && t < 0.92;
+      const pressed = t >= 0.6 && t < 0.68;
+      if (btn.current) {
+        btn.current.classList.toggle('is-on', on);
+        btn.current.style.transform = pressed ? 'scale(.97)' : 'scale(1)';
+      }
+    };
+    if (usesReduce()) {
+      paint(0.5);
+      return;
+    }
+    let raf = 0;
+    let start = 0;
+    const loop = (now: number) => {
+      if (!start) start = now;
+      paint(((now - start) % CYCLE) / CYCLE);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  return (
+    <div className="relative mx-auto flex h-[180px] w-full max-w-[260px] items-center overflow-hidden">
+      <div className="w-full">
+        <div className="flex items-center gap-1.5 border-b border-border pb-2 text-[13.5px]">
+          <span className="text-faint">https://</span>
+          <span ref={txt} className="text-ink" />
+          <span className="sm-caret" />
+        </div>
+        <button ref={btn} type="button" className="vg-abtn vg-abtn--primary mt-4 h-11 w-full text-[14px] transition-transform">
+          <ActionInner>Scan my app</ActionInner>
+        </button>
+      </div>
+      <div ref={cur} className="absolute left-0 top-0 pointer-events-none" style={{ opacity: 0 }}><Cursor /></div>
+      <Fade />
     </div>
   );
 }
 
-/**
- * ScanTypes — a modern, tabbed explainer of the three ways to scan: a live URL
- * (free), a connected GitHub repo, or a folder/ZIP upload. Clear tab affordances
- * (hover, hint, dot indicators) with simple, on-brand visuals per tab.
- */
-export default function ScanTypes() {
-  const [active, setActive] = useState(0);
-  const tab = TABS[active];
+/* ============================ Repo demo ============================ */
+function RepoDemo() {
+  const cur = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const paint = (t: number) => {
+      const A = { x: 208, y: 34 };
+      const B = { x: 176, y: 84 }; // right side of the Connect button
+      let cx = A.x;
+      let cy = A.y;
+      let cs = 1;
+      let cop = 0;
+      if (t >= 0.16 && t < 0.36) {
+        const p = easeInOut((t - 0.16) / 0.2);
+        cx = lerp(A.x, B.x, p);
+        cy = lerp(A.y, B.y, p);
+        cop = 1;
+      } else if (t >= 0.36) {
+        cx = B.x;
+        cy = B.y;
+        cop = t < 0.94 ? 1 : clamp(1 - (t - 0.94) / 0.06);
+        cs = t >= 0.36 && t < 0.44 ? 0.82 : 1;
+      }
+      if (cur.current) {
+        cur.current.style.transform = `translate(${cx}px,${cy}px) scale(${cs})`;
+        cur.current.style.opacity = String(cop);
+      }
+      const on = t >= 0.38 && t < 0.92;
+      const pressed = t >= 0.38 && t < 0.46;
+      if (btn.current) {
+        btn.current.classList.toggle('is-on', on);
+        btn.current.style.transform = pressed ? 'scale(.97)' : 'scale(1)';
+      }
+    };
+    if (usesReduce()) {
+      paint(0.6);
+      return;
+    }
+    let raf = 0;
+    let start = 0;
+    const loop = (now: number) => {
+      if (!start) start = now;
+      paint(((now - start) % CYCLE) / CYCLE);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   return (
-    <section id="scan-types" className="bg-bg-soft scroll-mt-20">
-      <div className="mx-auto max-w-[1160px] px-6 py-[clamp(56px,8vw,96px)]">
-        <FadeIn className="max-w-[720px]">
-          <Eyebrow className="text-yellow-dark">{'// THREE WAYS TO SCAN'}</Eyebrow>
-          <h2 className="el-h mt-4 text-[clamp(26px,3.4vw,42px)]">Scan however you build.</h2>
-          <p className="mt-4 text-[16.5px] leading-[1.6] text-muted max-w-[56ch]">
-            From a 60-second check of a live URL to a deep read of your actual code, pick the scan that fits
-            where your app lives.
-          </p>
-        </FadeIn>
+    <div className="relative mx-auto flex h-[180px] w-full max-w-[260px] items-center justify-center overflow-hidden">
+      <button ref={btn} type="button" className="vg-abtn vg-abtn--green h-11 px-6 text-[14px] transition-transform">
+        <ActionInner icon={<Check />}>
+          <span className="inline-flex items-center gap-2"><BrandLogo name="github" size={16} invert /> Connect GitHub</span>
+        </ActionInner>
+      </button>
+      <div ref={cur} className="absolute left-0 top-0 pointer-events-none" style={{ opacity: 0 }}><Cursor /></div>
+      <Fade />
+    </div>
+  );
+}
 
-        {/* segmented tabs */}
-        <div className="mt-9 flex justify-start">
-          <div className="flex w-full sm:w-auto items-center gap-1 p-1 rounded-full border border-border bg-card">
-            {TABS.map((t, i) => {
-              const on = i === active;
-              return (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setActive(i)}
-                  className={`relative flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-3 sm:px-5 h-11 rounded-full text-[13.5px] sm:text-[14px] font-semibold transition-colors ${on ? '' : 'hover:bg-bg-soft'}`}
-                  aria-pressed={on}
-                >
-                  {on && (
-                    <motion.span
-                      layoutId="scanTabPill"
-                      className="absolute inset-0 rounded-full bg-ink"
-                      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    />
-                  )}
-                  <span className={`relative flex items-center gap-2 ${on ? 'text-white' : 'text-muted hover:text-ink'}`}>
-                    {t.icon}
-                    {t.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-        <p className="mt-3 text-[12.5px] text-faint">Tap a tab to see how each one works</p>
+/* =========================== Upload demo =========================== */
+function UploadDemo() {
+  const zone = useRef<HTMLDivElement>(null);
+  const label = useRef<HTMLSpanElement>(null);
+  const folder = useRef<HTMLDivElement>(null);
 
-        {/* panel */}
-        <div className="mt-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={tab.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="grid gap-8 lg:grid-cols-2 lg:items-center"
-            >
-              {/* left: explanation */}
-              <div>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center justify-center w-10 h-10 rounded-xl" style={{ background: 'rgba(243,197,0,0.16)', color: '#8A6D00' }}>
-                    {tab.icon}
-                  </span>
-                  <span className="font-mono text-[11.5px] tracking-[0.1em] uppercase text-faint">
-                    {tab.plan === 'Free' ? 'Free · no signup' : 'Guard plan'}
-                  </span>
-                </div>
-                <h3 className="mt-4 font-semibold text-[24px] tracking-[-0.02em] text-ink">{tab.title}</h3>
-                <p className="mt-3 text-[16px] leading-[1.6] text-muted max-w-[52ch]">{tab.desc}</p>
+  useEffect(() => {
+    const paint = (t: number) => {
+      const A = { x: 190, y: 2 };
+      const B = { x: 66, y: 62 };
+      let fx = A.x;
+      let fy = A.y;
+      let fop = 0;
+      if (t < 0.08) fop = clamp(t / 0.08);
+      else if (t >= 0.08 && t < 0.46) {
+        const p = easeInOut((t - 0.08) / 0.38);
+        fx = lerp(A.x, B.x, p);
+        fy = lerp(A.y, B.y, p);
+        fop = 1;
+      } else if (t >= 0.46 && t < 0.54) {
+        fx = B.x;
+        fy = B.y;
+        fop = clamp(1 - (t - 0.46) / 0.08);
+      }
+      if (folder.current) {
+        folder.current.style.transform = `translate(${fx}px,${fy}px)`;
+        folder.current.style.opacity = String(fop);
+      }
+      const hovering = t >= 0.34 && t < 0.5; // dragging over
+      const dropped = t >= 0.5 && t < 0.94; // success
+      if (zone.current) {
+        if (dropped) {
+          zone.current.style.borderColor = '#16A34A';
+          zone.current.style.background = '#F0FDF4';
+          zone.current.style.color = '#15803D';
+        } else if (hovering) {
+          zone.current.style.borderColor = '#F3C500';
+          zone.current.style.background = 'rgba(243,197,0,0.07)';
+          zone.current.style.color = 'var(--color-muted)';
+        } else {
+          zone.current.style.borderColor = 'var(--color-border)';
+          zone.current.style.background = 'transparent';
+          zone.current.style.color = 'var(--color-muted)';
+        }
+      }
+      if (label.current) label.current.textContent = dropped ? '✓ invoicekit/ · 214 files' : 'Drop your folder or .zip';
+    };
+    if (usesReduce()) {
+      paint(0.7);
+      return;
+    }
+    let raf = 0;
+    let start = 0;
+    const loop = (now: number) => {
+      if (!start) start = now;
+      paint(((now - start) % CYCLE) / CYCLE);
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
-                <div className="mt-6 flex flex-col gap-3.5">
-                  {tab.steps.map((s, i) => (
-                    <div key={s} className="flex gap-3">
-                      <span className="shrink-0 flex items-center justify-center w-7 h-7 rounded-full text-[13px] font-bold" style={{ background: 'rgba(243,197,0,0.16)', color: '#8A6D00' }}>
-                        {i + 1}
-                      </span>
-                      <p className="text-[15px] leading-[1.5] text-ink pt-[3px]">{s}</p>
-                    </div>
-                  ))}
-                </div>
+  return (
+    <div className="relative mx-auto flex h-[180px] w-full max-w-[260px] items-center justify-center overflow-hidden">
+      <div ref={zone} className="flex h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed text-[13px] text-muted transition-colors" style={{ borderColor: 'var(--color-border)' }}>
+        <span ref={label}>Drop your folder or .zip</span>
+      </div>
+      <div ref={folder} className="absolute left-0 top-0 flex items-center gap-2 rounded-lg border border-border bg-white px-2.5 py-1.5 shadow-[0_10px_26px_-10px_rgba(0,0,0,0.4)] pointer-events-none" style={{ opacity: 0 }}>
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M3 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" fill="#F3C500" stroke="#C79A00" strokeWidth="1.2" strokeLinejoin="round" /></svg>
+        <span className="text-[12px] text-ink">invoicekit/</span>
+      </div>
+      <Fade />
+    </div>
+  );
+}
 
-                <div className="mt-6 flex items-start gap-2.5 text-[14px] text-muted">
-                  <svg className="shrink-0 mt-[2px]" width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path d="M5 12.5l4 4 10-11" stroke="#1F9D57" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  <span><span className="font-semibold text-ink">Best for:</span> {tab.bestFor}</span>
-                </div>
+/* ============================= Section ============================= */
+const COLS = [
+  { demo: <UrlDemo />, title: 'Paste a live URL', desc: 'No access to your code. We probe your deployed app the way a stranger on the internet would.' },
+  { demo: <RepoDemo />, title: 'Connect your repo', desc: 'A deeper read of your actual source, config and database rules, the issues that never show from the outside.' },
+  { demo: <UploadDemo />, title: 'Upload a folder or ZIP', desc: 'No Git needed. Drag in your project and we scan the code directly. Same grade, same exact fixes.' },
+];
+
+export default function ScanTypes() {
+  return (
+    <section id="scan-types" className="an-x an-sec scroll-mt-20">
+      <style dangerouslySetInnerHTML={{ __html: SM_CSS }} />
+      <div className="an-max">
+        <CenterHead
+          eyebrow="How it works"
+          title="Three ways to scan your app."
+          sub="From a 60-second check of a live URL to a deep read of your actual code, pick the scan that fits where your app lives."
+        />
+
+        <div className="mt-14 grid gap-y-14 md:grid-cols-3 md:gap-y-0 md:divide-x md:divide-border">
+          {COLS.map((c) => (
+            <div key={c.title} className="flex flex-col px-0 md:px-8 first:md:pl-0 last:md:pr-0">
+              {c.demo}
+              <div className="mt-8 text-center">
+                <h3 className="text-[19px] font-semibold tracking-[-0.01em] text-ink">{c.title}</h3>
+                <p className="mt-2.5 mx-auto text-[14.5px] leading-[1.55] text-muted max-w-[32ch]">{c.desc}</p>
               </div>
-
-              {/* right: simple visual */}
-              <div>
-                <TabVisual id={tab.id} />
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* dot indicators — reinforce that there are switchable tabs */}
-        <div className="mt-8 flex justify-start gap-2">
-          {TABS.map((t, i) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setActive(i)}
-              aria-label={`Show ${t.label}`}
-              className="h-2 rounded-full transition-all duration-200"
-              style={{ width: i === active ? 22 : 8, background: i === active ? '#F3C500' : 'var(--color-border)' }}
-            />
+            </div>
           ))}
+        </div>
+
+        <div className="mt-12 text-center text-[12.5px] text-muted">
+          Read-only and non-destructive. We never write to your code, and nothing is stored after the scan.
         </div>
       </div>
     </section>

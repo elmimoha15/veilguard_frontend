@@ -1,197 +1,164 @@
-"use client";
+'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import Logo from '@/components/ui/Logo';
+import { ActionInner } from '@/components/ui/ActionButton';
+import { BrandLogo, type BrandLogoName } from '@/components/ui/BrandLogo';
+import { SCANNER_CATEGORIES } from '@/content/scanner-categories';
+import { INDEXABLE_GUIDE_ARTICLES, INDEXABLE_SECURITY_ARTICLES, articleHref } from '@/content/learn';
 
+/** Kept for the marketing layout's prop; the Annot nav uses anchor links instead. */
 export type LinkItem = { label: string; href: string };
 export type NavMenus = { scanners: LinkItem[]; guides: LinkItem[]; security: LinkItem[] };
 
+type MenuItem = { href: string; title: string; desc?: string; brand?: BrandLogoName };
+
+const CATEGORY_DESC: Record<string, string> = {
+  'ai-coding-agents': 'Cursor, Windsurf, Claude, Copilot',
+  'vibecoding-tools': 'Lovable, Bolt, Replit, v0',
+  backends: 'Supabase, Firebase',
+};
+const SCANNER_ITEMS: MenuItem[] = SCANNER_CATEGORIES.map((c) => ({
+  href: `/scanners/${c.slug}`,
+  title: c.name,
+  desc: CATEGORY_DESC[c.slug],
+}));
+const GUIDE_ITEMS: MenuItem[] = INDEXABLE_GUIDE_ARTICLES.slice(0, 5).map((a) => ({
+  href: articleHref(a.slug),
+  title: a.title,
+  desc: a.metaDescription,
+}));
+const SECURITY_ITEMS: MenuItem[] = INDEXABLE_SECURITY_ARTICLES.slice(0, 5).map((a) => ({
+  href: articleHref(a.slug),
+  title: a.title,
+  desc: a.metaDescription,
+}));
+
+const Chevron = ({ open }: { open: boolean }) => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`} aria-hidden>
+    <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+function NavDropdown({ label, href, items, allLabel, columns = 1, width }: { label: string; href: string; items: MenuItem[]; allLabel: string; columns?: 1 | 2; width: number }) {
+  const [open, setOpen] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enter = () => {
+    if (timer.current) clearTimeout(timer.current);
+    setOpen(true);
+  };
+  const leave = () => {
+    timer.current = setTimeout(() => setOpen(false), 110);
+  };
+  const close = () => setOpen(false);
+
+  return (
+    <div className="relative" onMouseEnter={enter} onMouseLeave={leave}>
+      <Link
+        href={href}
+        className="inline-flex items-center gap-1 text-[14.5px] font-medium text-muted hover:text-ink transition-colors"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onFocus={enter}
+      >
+        {label}
+        <Chevron open={open} />
+      </Link>
+
+      {/* pt-3 keeps a hover bridge between trigger and panel */}
+      <div className={`absolute left-1/2 top-full -translate-x-1/2 pt-3 ${open ? '' : 'pointer-events-none'}`} style={{ width }}>
+        <div
+          className={`rounded-2xl border border-border bg-white p-2 shadow-[0_28px_70px_-28px_rgba(23,23,22,0.35)] origin-top transition-all duration-200 ${open ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'}`}
+          role="menu"
+        >
+          <div className={columns === 2 ? 'grid grid-cols-2 gap-0.5' : 'flex flex-col gap-0.5'}>
+            {items.map((it) => (
+              <Link
+                key={it.href}
+                href={it.href}
+                onClick={close}
+                role="menuitem"
+                className="flex items-start gap-2.5 rounded-xl px-3 py-2.5 hover:bg-[#F6F5F2] transition-colors"
+              >
+                {it.brand && (
+                  <span className="mt-[1px] flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#F6F5F2]">
+                    <BrandLogo name={it.brand} size={16} icon />
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block text-[13.5px] font-medium text-ink leading-snug">{it.title}</span>
+                  {it.desc && <span className="mt-0.5 block text-[12px] leading-snug text-muted line-clamp-1">{it.desc}</span>}
+                </span>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-1 border-t border-border px-3 pt-2 pb-1">
+            <Link href={href} onClick={close} className="inline-flex items-center gap-1 text-[13px] font-semibold text-yellow-dark hover:opacity-80 transition-opacity">
+              {allLabel}
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const MOBILE_LINKS: LinkItem[] = [
-  { href: '/#how', label: 'How it works' },
-  { href: '/scanners', label: 'Scanners' },
+  { href: '/#scan-types', label: 'How it works' },
+  { href: '/scanners', label: 'Tools' },
   { href: '/guides', label: 'Guides' },
   { href: '/security', label: 'Security' },
   { href: '/#pricing', label: 'Pricing' },
   { href: '/#faq', label: 'FAQ' },
 ];
 
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="12"
-      height="12"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden
-      className="transition-transform duration-200"
-      style={{ transform: open ? 'rotate(180deg)' : 'none' }}
-    >
-      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-/** A nav link that reveals a clean dropdown of its hub pages on hover/focus. */
-function NavDropdown({ label, href, allLabel, items }: { label: string; href: string; allLabel: string; items: LinkItem[] }) {
+/** Annot-style floating nav bar with modern dropdowns for the multi-page sections. */
+export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const linkCls = 'text-[14.5px] font-medium text-muted hover:text-ink transition-colors';
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <Link
-        href={href}
-        className="flex items-center gap-1 text-[14.5px] font-medium text-muted hover:text-ink transition-colors"
-        onFocus={() => setOpen(true)}
-        aria-expanded={open}
-      >
-        {label}
-        <Chevron open={open} />
-      </Link>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 6 }}
-            transition={{ duration: 0.16, ease: 'easeOut' }}
-            // pt-3 keeps an invisible hover bridge between trigger and panel
-            className="absolute left-1/2 -translate-x-1/2 top-full pt-3"
-          >
-            <div className="w-[300px] rounded-2xl border border-border bg-white shadow-[0_24px_70px_-28px_rgba(0,0,0,0.4)] p-2">
-              {items.map((it) => (
-                <Link
-                  key={it.href}
-                  href={it.href}
-                  className="block rounded-xl px-3 py-2.5 text-[14px] font-medium text-ink leading-snug hover:bg-bg-soft transition-colors"
-                >
-                  {it.label}
-                </Link>
-              ))}
-              <div className="mt-1 pt-1 border-t border-border">
-                <Link
-                  href={href}
-                  className="flex items-center justify-between rounded-xl px-3 py-2.5 text-[13.5px] font-semibold text-yellow-dark hover:bg-bg-soft transition-colors"
-                >
-                  {allLabel}
-                  <span aria-hidden>→</span>
-                </Link>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-export default function Navbar({ menus }: { menus: NavMenus }) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  return (
-    <>
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-border">
-        <nav className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="relative z-50" aria-label="Veilguard home">
-            <Logo size={36} />
+    <div className="sticky top-4 z-50 an-x">
+      <div className="an-max">
+        <div className="an-nav relative flex items-center justify-between h-14 pl-5 pr-2">
+          <Link href="/" className="flex items-center relative z-10" aria-label="Veilguard home">
+            <Logo size={26} />
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-7">
-            <Link href="/#how" className="text-[14.5px] font-medium text-muted hover:text-ink transition-colors">
-              How it works
-            </Link>
-            <NavDropdown label="Scanners" href="/scanners" allLabel="All scanners" items={menus.scanners} />
-            <NavDropdown label="Guides" href="/guides" allLabel="All guides" items={menus.guides} />
-            <NavDropdown label="Security" href="/security" allLabel="All security" items={menus.security} />
-            <Link href="/#pricing" className="text-[14.5px] font-medium text-muted hover:text-ink transition-colors">
-              Pricing
-            </Link>
-            <Link href="/#faq" className="text-[14.5px] font-medium text-muted hover:text-ink transition-colors">
-              FAQ
-            </Link>
+          <nav className="hidden lg:flex items-center gap-6 absolute left-1/2 -translate-x-1/2">
+            <Link href="/#scan-types" className={linkCls}>How it works</Link>
+            <NavDropdown label="Tools" href="/scanners" items={SCANNER_ITEMS} allLabel="All tools" width={320} />
+            <NavDropdown label="Guides" href="/guides" items={GUIDE_ITEMS} allLabel="All guides" width={340} />
+            <NavDropdown label="Security" href="/security" items={SECURITY_ITEMS} allLabel="All topics" width={340} />
+            <Link href="/#pricing" className={linkCls}>Pricing</Link>
+            <Link href="/#faq" className={linkCls}>FAQ</Link>
+          </nav>
+
+          <div className="hidden lg:flex items-center gap-2 relative z-10">
+            <Link href="/login" className="text-[14.5px] font-medium text-muted hover:text-ink transition-colors px-3 h-9 inline-flex items-center">Log in</Link>
+            <Link href="/onboarding" className="vg-abtn vg-abtn--primary h-10 px-5"><ActionInner>Get Started</ActionInner></Link>
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-[14.5px] font-medium text-muted hover:text-ink transition-colors px-3 h-10 inline-flex items-center"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/#scan"
-              className="text-[14px] font-semibold bg-ink text-white px-5 h-10 inline-flex items-center rounded-full hover:opacity-90 transition-opacity duration-150"
-            >
-              Scan my app
-            </Link>
-          </div>
-
-          {/* Mobile Toggle */}
-          <button
-            className="md:hidden relative z-50 text-ink p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-            aria-expanded={mobileMenuOpen}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              {mobileMenuOpen ? (
-                <>
-                  <path d="M18 6L6 18" />
-                  <path d="M6 6l12 12" />
-                </>
-              ) : (
-                <>
-                  <line x1="4" y1="12" x2="20" y2="12" />
-                  <line x1="4" y1="6" x2="20" y2="6" />
-                  <line x1="4" y1="18" x2="20" y2="18" />
-                </>
-              )}
+          <button className="lg:hidden relative z-10 p-2 text-ink" onClick={() => setOpen((v) => !v)} aria-label="Toggle menu" aria-expanded={open}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              {open ? <><path d="M18 6L6 18" /><path d="M6 6l12 12" /></> : <><line x1="4" y1="8" x2="20" y2="8" /><line x1="4" y1="16" x2="20" y2="16" /></>}
             </svg>
           </button>
-        </nav>
-      </header>
+        </div>
 
-      {/* Mobile Menu Panel */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-bg/95 backdrop-blur-2xl px-6 pt-24 pb-6 flex flex-col md:hidden"
-          >
-            <div className="flex flex-col gap-6 text-lg">
-              {MOBILE_LINKS.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-ink font-medium border-b border-border pb-4"
-                >
-                  {l.label}
-                </Link>
-              ))}
+        {open && (
+          <div className="lg:hidden mt-2 an-card p-4 flex flex-col gap-1">
+            {MOBILE_LINKS.map((l) => (
+              <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className="px-2 py-2.5 text-[15px] font-medium text-ink">{l.label}</Link>
+            ))}
+            <div className="mt-2 flex flex-col gap-2">
+              <Link href="/login" onClick={() => setOpen(false)} className="text-center border border-border rounded-[10px] py-2.5 text-[15px] font-medium">Login</Link>
+              <Link href="/onboarding" onClick={() => setOpen(false)} className="vg-abtn vg-abtn--primary w-full h-11"><ActionInner>Get Started</ActionInner></Link>
             </div>
-            <div className="mt-auto flex flex-col gap-3">
-              <Link
-                href="/login"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center border border-border text-ink px-6 py-4 rounded-xl font-semibold"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/#scan"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center bg-ink text-white px-6 py-4 rounded-xl font-semibold"
-              >
-                Scan my app
-              </Link>
-            </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
-    </>
+      </div>
+    </div>
   );
 }

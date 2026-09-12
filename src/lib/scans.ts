@@ -45,12 +45,14 @@ export async function markOnboarded(uid: string): Promise<void> {
 
 /** The onboarding quiz answers we persist for segmentation. */
 export interface OnboardingAnswers {
-  builtWith?: string;
-  backend?: string;
+  builtWith?: string[];
+  backend?: string[];
   handles?: string[];
   codeComfort?: string;
   scanTarget?: 'url' | 'repo' | 'upload' | '';
   shipFrequency?: string;
+  /** Attribution: where the user first heard about Veilguard (multi-select). */
+  heardFrom?: string[];
 }
 
 /**
@@ -106,9 +108,21 @@ export interface ScanDoc {
   error?: string;
   errorReason?: 'timeout' | 'unreachable' | 'empty-upload' | 'not-found' | 'needs-reconnect' | 'engine-error';
   stack?: { supabase?: boolean; firebase?: boolean; firebaseRulesInRepo?: boolean };
+  /** Claude usage for this scan's AI fixes (deep/upload) — tokens + est. USD cost. */
+  aiUsage?: { model?: string; calls?: number; inputTokens?: number; outputTokens?: number; estCostUsd?: number };
   createdAt: string;
   finishedAt?: string;
   progress?: { done: number; total: number; phase: string };
+}
+
+/** A short, muted "AI fixes · N findings · ~$X (Haiku)" label, or null if none. */
+export function aiUsageLabel(u?: ScanDoc['aiUsage']): string | null {
+  if (!u || !u.calls) return null;
+  const cost = u.estCostUsd ?? 0;
+  const money = cost > 0 && cost < 0.01 ? `$${cost.toFixed(4)}` : `$${cost.toFixed(2)}`;
+  const m = (u.model || '').toLowerCase();
+  const model = m.includes('haiku') ? 'Haiku' : m.includes('sonnet') ? 'Sonnet' : m.includes('opus') ? 'Opus' : 'AI';
+  return `AI fixes · ${u.calls} ${u.calls === 1 ? 'finding' : 'findings'} · ~${money} (${model})`;
 }
 
 export function subscribeScan(scanId: string, cb: (scan: ScanDoc | null) => void): () => void {
@@ -130,10 +144,16 @@ export function subscribeFindings(
   );
 }
 
-/** One-shot read of a (historical) scan's findings — used to diff against the previous scan. */
+/** One-shot read of a (historical) scan's findings — used to diff against the previous scan.
+ *  Returns [] on error (missing/permission-denied) so a diff can't reject unhandled. */
 export async function getFindings(scanId: string): Promise<(BackendFinding & { id: string })[]> {
-  const snap = await getDocs(collection(db(), 'scans', scanId, 'findings'));
-  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as BackendFinding) }));
+  try {
+    const snap = await getDocs(collection(db(), 'scans', scanId, 'findings'));
+    return snap.docs.map((d) => ({ id: d.id, ...(d.data() as BackendFinding) }));
+  } catch (e) {
+    console.error('[getFindings] read failed:', e);
+    return [];
+  }
 }
 
 export function subscribeFinding(
@@ -202,6 +222,32 @@ export interface MonitorEvent {
   gradeAfter: string | null;
   alerted: boolean;
   createdAt: string;
+}
+
+/**
+ * The finding keys that are STILL OPEN right now, per app, derived from the monitor
+ * event history. Walk events oldest→newest; a key is "open" when it last appeared as a
+ * NEW finding and "resolved" when it last appeared in resolvedFindings (last mention
+ * wins, so a fixed-then-reintroduced finding reads as open again). Alerts / Monitoring
+ * use this to ERASE findings that a later re-scan resolved, instead of showing the
+ * immutable historical event forever.
+ */
+export function openFindingKeysByApp(events: MonitorEvent[]): Map<string, Set<string>> {
+  const byApp = new Map<string, Map<string, boolean>>();
+  const ordered = [...events].sort((a, b) => (a.createdAt < b.createdAt ? -1 : 1)); // oldest→newest
+  for (const e of ordered) {
+    const m = byApp.get(e.appId) ?? new Map<string, boolean>();
+    for (const r of e.resolvedFindings ?? []) m.set(r.key, false);
+    for (const n of e.newFindings ?? []) m.set(n.key, true);
+    byApp.set(e.appId, m);
+  }
+  const out = new Map<string, Set<string>>();
+  for (const [appId, m] of byApp) {
+    const open = new Set<string>();
+    for (const [k, isOpen] of m) if (isOpen) open.add(k);
+    out.set(appId, open);
+  }
+  return out;
 }
 
 /** Live list of the user's app-registry entries (from their profile doc). */

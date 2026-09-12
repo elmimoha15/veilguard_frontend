@@ -11,11 +11,11 @@ import { SUPPORT_EMAIL } from '@/content/site';
  * a plain-email fallback. Rendered inside the app Shell.
  */
 
-// Real, existing destinations — deliberately not placeholder /help URLs.
+// Real, existing destinations, deliberately not placeholder /help URLs.
 const HELP_LINKS: { label: string; href: string }[] = [
   { label: 'How we handle your data & code', href: '/privacy' },
   { label: 'Is my Supabase database exposed?', href: '/security/how-do-i-know-if-my-supabase-database-is-exposed' },
-  { label: 'Exposed API keys — how to find & fix them', href: '/security/exposed-api-keys' },
+  { label: 'Exposed API keys, how to find & fix them', href: '/security/exposed-api-keys' },
   { label: 'The security checklist for AI-built apps', href: '/guides/complete-security-checklist-for-ai-built-apps' },
   { label: 'Billing, plans & receipts', href: '/billing' },
 ];
@@ -28,14 +28,14 @@ export default function FeedbackScreen() {
         subtitle="Found a bug, stuck on something, or have an idea? We read every message."
       />
 
-      <Card className="p-6">
+      <Card flat className="pb-8 border-b border-border">
         <FeedbackForm variant="page" />
       </Card>
 
-      {/* Before you write — top answers */}
+      {/* Before you write, top answers */}
       <div className="mt-8">
-        <div className="kicker mb-3">Before you write — these might help</div>
-        <Card className="overflow-hidden">
+        <div className="kicker mb-3">Before you write, these might help</div>
+        <Card flat className="overflow-hidden border-t border-border">
           {HELP_LINKS.map((l, i) => {
             const internalGuide = l.href.startsWith('/security') || l.href.startsWith('/guides') || l.href === '/privacy';
             const cls = 'vg-row flex items-center gap-3 px-[16px] py-[13px] text-[14.5px] text-ink no-underline';
@@ -58,7 +58,7 @@ export default function FeedbackScreen() {
       </div>
 
       <p className="text-[14px] text-muted mt-6">
-        Prefer email? Reach us at <a href={`mailto:${SUPPORT_EMAIL}`} className="text-yellow-dark font-semibold underline">{SUPPORT_EMAIL}</a>.
+        Prefer email? Reach us at <a href={`mailto:${SUPPORT_EMAIL}`} className="text-ink font-semibold underline hover:text-muted">{SUPPORT_EMAIL}</a>.
       </p>
     </div>
   );

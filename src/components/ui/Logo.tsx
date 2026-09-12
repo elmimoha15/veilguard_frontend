@@ -1,50 +1,73 @@
-import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
 /**
- * The Veilguard mark: the redesigned angular "V", ink-black on a rounded yellow
- * square. Rendered from the brand PNG (public/logos/logo-icon.png) so it stays
- * pixel-identical to the exported brand asset across the site and favicons. The
- * yellow chip reads on both light and dark backgrounds. Optionally followed by
- * the wordmark.
+ * The Veilguard brand marks.
+ *
+ *  - <Logo>      the full lockup: the square icon + "Veilguard" set as real text
+ *                (crisp at any size, unlike the exported wordmark PNG). Sized by
+ *                icon HEIGHT; the word scales with it. `tone="onDark"` for dark
+ *                backgrounds (white word).
+ *  - <LogoIcon>  the square icon mark alone — `yellow` (default) for dark chips
+ *                and the dashboard, `dark` for light chips/avatars.
  */
-export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
+export function LogoIcon({
+  size = 32,
+  variant = 'yellow',
+  className,
+}: {
+  size?: number;
+  variant?: 'yellow' | 'dark';
+  className?: string;
+}) {
   return (
-    <Image
-      src="/logos/logo-mark.png"
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={variant === 'dark' ? '/logos/logo-icon-dark.png' : '/logos/logo-icon.png'}
       alt="Veilguard"
       width={size}
       height={size}
-      className={cn('rounded-[22%] select-none', className)}
-      priority
+      draggable={false}
+      className={cn('select-none', className)}
+      style={{ width: size, height: size, objectFit: 'contain' }}
     />
   );
 }
 
+/** Back-compat alias — the square yellow mark. */
+export function LogoMark({ size = 32, className }: { size?: number; className?: string }) {
+  return <LogoIcon size={size} className={className} />;
+}
+
 export default function Logo({
-  size = 32,
-  wordmark = true,
+  size = 28,
+  tone = 'default',
   className,
-  wordmarkClassName,
 }: {
+  /** Icon height in px; the wordmark scales with it. */
   size?: number;
-  wordmark?: boolean;
+  /** `onDark` renders the word in white for dark backgrounds. */
+  tone?: 'default' | 'onDark';
   className?: string;
-  wordmarkClassName?: string;
 }) {
   return (
-    <span className={cn('inline-flex items-center gap-[11px]', className)}>
-      <LogoMark size={size} />
-      {wordmark && (
-        <span
-          // Pinned to Hanken so the wordmark keeps its brand type while the rest
-          // of the UI runs on Inter (--font-sans).
-          style={{ fontFamily: 'var(--font-hanken), sans-serif' }}
-          className={cn('font-bold tracking-[-0.02em] text-[21px] leading-none', wordmarkClassName)}
-        >
-          Veilguard
-        </span>
-      )}
+    <span
+      className={cn('inline-flex items-center select-none', className)}
+      style={{ gap: Math.round(size * 0.34) }}
+      aria-label="Veilguard"
+    >
+      <LogoIcon size={size} />
+      <span
+        style={{
+          fontFamily: 'var(--font-hanken), sans-serif',
+          fontWeight: 700,
+          letterSpacing: '-0.02em',
+          fontSize: Math.round(size * 0.74),
+          lineHeight: 1,
+          color: tone === 'onDark' ? '#fff' : '#0A0A0A',
+        }}
+      >
+        Veilguard
+      </span>
     </span>
   );
 }

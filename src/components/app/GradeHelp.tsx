@@ -2,17 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 
-/** One reassuring line per grade — plain English for non-technical founders. */
+/** One reassuring line per grade, plain English for non-technical founders. */
 const GRADE_MEANINGS: { g: string; color: string; text: string }[] = [
-  { g: 'A', color: '#1FB86B', text: 'Looking great — no urgent issues.' },
+  { g: 'A', color: '#1FB86B', text: 'Looking great, no urgent issues.' },
   { g: 'B', color: '#1FB86B', text: 'Solid, with a few small things to tidy.' },
   { g: 'C', color: '#F2851F', text: 'Some real gaps worth fixing soon.' },
-  { g: 'D', color: '#E5352B', text: 'Serious holes — worth fixing now.' },
-  { g: 'F', color: '#E5352B', text: 'Urgent — fix these before attackers find them.' },
+  { g: 'D', color: '#E5352B', text: 'Serious holes, worth fixing now.' },
+  { g: 'F', color: '#E5352B', text: 'Urgent, fix these before attackers find them.' },
 ];
 
 /**
- * A small, keyboard-reachable "?" popover that explains the A–F grade scale.
+ * A small, keyboard-reachable "?" popover that explains the A, F grade scale.
  * Escape or an outside click closes it. Reusable next to any grade display.
  */
 export function GradeHelp({ className }: { className?: string }) {

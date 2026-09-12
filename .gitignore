@@ -59,3 +59,14 @@ skills-lock.json
 # Installed design-skill tooling
 .claude/skills/
 .agents/
+
+# Local scratch / design exports (not part of the site)
+/.design-export/
+/veilguard-redsign/
+/hdr.png
+/hub.png
+/hub_c.png
+/lp_header.png
+/veilguard-content-package.md
+/public/MongoDB Icon - Colored - zonalogo.com.svg
+/public/MongoDB Logo - Colored - zonalogo.com.svg

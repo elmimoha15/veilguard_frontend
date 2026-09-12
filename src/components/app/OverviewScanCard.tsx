@@ -11,7 +11,7 @@ import { GradeRing } from './ui';
 /**
  * Inline scan-progress card for the Overview page. Watches the pending scan and
  * renders under the page heading while it's queued/running, then UNMOUNTS the
- * instant it finishes (done or error) — the persistent floating ScanWatcher chip
+ * instant it finishes (done or error), the persistent floating ScanWatcher chip
  * still carries the "view results" affordance across pages. Matches the app's
  * card language (Card + SectionLabel + the same GradeRing used on the scan page).
  */
@@ -26,7 +26,7 @@ export default function OverviewScanCard() {
     return subscribeScan(pendingScanId, setScan);
   }, [pendingScanId]);
 
-  // Only while actively scanning — vanish the moment it's done/errored/cleared.
+  // Only while actively scanning, vanish the moment it's done/errored/cleared.
   if (!pendingScanId || !scan || (scan.status !== 'queued' && scan.status !== 'running')) return null;
 
   const p = scan.progress;
@@ -35,9 +35,9 @@ export default function OverviewScanCard() {
   const kind = scan.type === 'deep' ? 'Deep scan' : scan.type === 'upload' ? 'Upload scan' : 'URL scan';
 
   return (
-    <Card className="p-5 mb-4">
+    <Card flat className="pb-5 mb-4 border-b border-border">
       <div className="flex items-center gap-4">
-        <GradeRing size={48} pct={pct || 6} color="#F3C500" strokeWidth={7} animate>
+        <GradeRing size={48} pct={pct || 6} color="#0A0A0A" strokeWidth={7} animate>
           <span className="tnum text-[12px] font-semibold leading-none">{pct}<span className="text-[8px]">%</span></span>
         </GradeRing>
         <div className="flex-1 min-w-0">

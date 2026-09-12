@@ -1,237 +1,214 @@
 import Link from 'next/link';
-import Eyebrow from '@/components/ui/Eyebrow';
-import FadeIn from '@/components/ui/FadeIn';
-import Pill from '@/components/ui/Pill';
 import ScanForm from '@/components/ui/ScanForm';
 import { BrandLogo } from '@/components/ui/BrandLogo';
-import { STEPS, TRUST_LINE } from '@/content/landing';
+import { TRUST_LINE } from '@/content/landing';
 import { SCANNERS, type ScannerPage } from '@/content/scanners';
+import { rich } from './rich';
 
 const BASE = 'https://veilguard.dev';
 
 /**
- * Shared layout for every per-tool security-scanner page. All copy comes from
- * the `page` record so each URL renders unique, keyword-targeted content while
- * sharing one consistent design. Emits BreadcrumbList + FAQPage JSON-LD.
+ * Shared clean article layout for every per-tool scanner page. A page supplies
+ * either prose `sections` (the AI-agent pages) or the legacy `checks[]` + `why`
+ * (the other tools); both render in the same hairline style. Emits Article +
+ * BreadcrumbList + FAQPage JSON-LD.
  */
 export default function ToolLanding({ page }: { page: ScannerPage }) {
-  const others = SCANNERS.filter((s) => s.slug !== page.slug);
+  const url = `${BASE}/scanners/${page.slug}`;
+  const siblings = SCANNERS.filter((s) => s.category === page.category && s.slug !== page.slug);
+  const codeScan = page.scanKind === 'code';
 
+  const articleLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: page.h1,
+    description: page.metaDescription,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    author: { '@type': 'Organization', name: 'Veilguard', url: BASE },
+    publisher: { '@type': 'Organization', name: 'Veilguard', url: BASE, logo: { '@type': 'ImageObject', url: `${BASE}/logos/logo-icon.png` } },
+  };
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${BASE}/` },
       { '@type': 'ListItem', position: 2, name: 'Scanners', item: `${BASE}/scanners` },
-      { '@type': 'ListItem', position: 3, name: `${page.tool} security scanner`, item: `${BASE}/scanners/${page.slug}` },
+      { '@type': 'ListItem', position: 3, name: `${page.tool} scanner`, item: url },
     ],
   };
-
-  const faqLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: page.faqs.map((f) => ({
-      '@type': 'Question',
-      name: f.q,
-      acceptedAnswer: { '@type': 'Answer', text: f.a },
-    })),
-  };
+  const faqLd = page.faqs?.length
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: page.faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      }
+    : null;
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />
+      {faqLd && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} />}
 
-      {/* Hero */}
-      <section className="px-[clamp(14px,2vw,26px)] pt-[clamp(14px,2vw,26px)]">
-        <div className="relative mx-auto max-w-[1200px] bg-card rounded-[30px] overflow-hidden shadow-[0_30px_80px_-50px_rgba(0,0,0,0.4)]">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute left-1/2 top-[24%] -translate-x-1/2 -translate-y-1/2 w-[520px] h-[320px] glow-yellow"
-          />
-          <div className="relative px-6 py-[clamp(44px,7vw,84px)] flex flex-col items-center text-center">
-            {/* Breadcrumb */}
-            <nav aria-label="Breadcrumb" className="mb-7">
-              <ol className="flex items-center gap-1.5 font-mono text-[11px] tracking-[0.06em] uppercase text-faint">
-                <li><Link href="/" className="hover:text-yellow-dark transition-colors">Home</Link></li>
-                <li aria-hidden>/</li>
-                <li><Link href="/scanners" className="hover:text-yellow-dark transition-colors">Scanners</Link></li>
-                <li aria-hidden>/</li>
-                <li className="text-muted" aria-current="page">{page.tool} scanner</li>
-              </ol>
-            </nav>
+      <article className="mx-auto max-w-[820px] px-6 py-[clamp(36px,6vw,72px)]">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="mb-8">
+          <ol className="flex items-center gap-1.5 text-[13px] text-faint">
+            <li><Link href="/" className="hover:text-ink transition-colors">Home</Link></li>
+            <li aria-hidden>/</li>
+            <li><Link href="/scanners" className="hover:text-ink transition-colors">Scanners</Link></li>
+            <li aria-hidden>/</li>
+            <li className="text-muted" aria-current="page">{page.tool} scanner</li>
+          </ol>
+        </nav>
 
-            <span className="flex items-center justify-center w-[68px] h-[68px] rounded-[20px] bg-white shadow-[0_12px_30px_rgba(0,0,0,0.12)] ring-1 ring-black/[0.04]">
-              <BrandLogo name={page.brand} size={38} />
-            </span>
-            <Eyebrow className="mt-6 text-yellow-dark">{page.eyebrow}</Eyebrow>
-            <h1 className="mt-4 max-w-[20ch]">{page.h1}</h1>
-            <p className="mt-5 max-w-[62ch] text-[clamp(15px,1.4vw,18px)] leading-[1.55] text-muted">
-              {page.intro}
-            </p>
-
-            <div className="mt-9 w-full flex flex-col items-center gap-5">
-              <ScanForm />
-              <p className="font-mono text-[11px] tracking-[0.06em] uppercase text-muted">{TRUST_LINE}</p>
-            </div>
-          </div>
+        {/* Hero (left-aligned, no scan box; the CTA at the bottom has it) */}
+        <div>
+          <BrandLogo name={page.brand} size={40} icon />
+          <div className="mt-5 text-[13px] font-semibold tracking-[0.04em] uppercase text-ink">{page.eyebrow}</div>
+          <h1 className="mt-3 text-[clamp(28px,4.4vw,44px)] leading-[1.1] max-w-[24ch]">{page.h1}</h1>
         </div>
-      </section>
 
-      {/* What we check */}
-      <section className="px-6 py-[clamp(56px,8vw,96px)]">
-        <div className="mx-auto max-w-[1160px]">
-          <FadeIn className="max-w-[720px]">
-            <Eyebrow className="text-yellow-dark">{'// WHAT WE CHECK'}</Eyebrow>
-            <h2 className="mt-4">{page.checksHeading}</h2>
-          </FadeIn>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {page.checks.map((c, i) => (
-              <FadeIn key={c.title} delay={i * 0.06}>
-                <div className="h-full rounded-[18px] border border-border bg-card p-6">
-                  <Pill
-                    className={
-                      c.severity === 'critical'
-                        ? 'bg-red/[0.10] text-red'
-                        : 'bg-orange/[0.14] text-orange'
-                    }
-                  >
-                    {c.severity === 'critical' ? 'Critical' : 'Warning'}
-                  </Pill>
-                  <h3 className="mt-4 text-[18px]">{c.title}</h3>
-                  <p className="mt-2 text-[14.5px] leading-[1.55] text-muted">{c.body}</p>
+        {/* Short answer — a prominent lead paragraph, same font family as the body */}
+        <div className="mt-8">
+          <div className="text-[14px] font-semibold text-muted mb-2">The short answer</div>
+          <p className="text-[19px] leading-[1.6] text-ink">{rich(page.intro)}</p>
+        </div>
+
+        {/* Body: prose sections (agent pages) OR why + checks (legacy tools) */}
+        {page.sections?.length ? (
+          page.sections.map((s) => (
+            <section key={s.heading} className="mt-12 border-t border-[#E8E7E3] pt-9">
+              <h2 className="text-[clamp(21px,2.6vw,26px)]">{s.heading}</h2>
+              {s.paras?.map((p, i) => <p key={i} className="mt-3 text-[17px] leading-[1.7] text-[#3c4043]">{rich(p)}</p>)}
+              {s.bullets && (
+                s.numbered ? (
+                  <ol className="mt-5 flex flex-col gap-4">
+                    {s.bullets.map((b, i) => (
+                      <li key={i} className="flex gap-3 text-[17px] leading-[1.6] text-[#3c4043]">
+                        <span className="shrink-0 tnum font-semibold text-ink">{i + 1}.</span>
+                        <span>{rich(b)}</span>
+                      </li>
+                    ))}
+                  </ol>
+                ) : (
+                  <ul className="mt-4 border-t border-[#E8E7E3] divide-y divide-[#E8E7E3]">
+                    {s.bullets.map((b, i) => <li key={i} className="py-3.5 text-[17px] leading-[1.6] text-[#3c4043]">{rich(b)}</li>)}
+                  </ul>
+                )
+              )}
+              {s.code && (
+                <div className="mt-5 rounded-[14px] border border-border bg-ink overflow-hidden">
+                  {s.code.label && <div className="px-4 py-2 border-b border-white/10 font-mono text-[11px] tracking-[0.06em] uppercase text-white/50">{s.code.label}</div>}
+                  <pre className="p-4 overflow-x-auto text-[13.5px] leading-[1.7] text-white/90"><code>{s.code.content}</code></pre>
                 </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why exposed */}
-      <section className="bg-ink text-white bg-dots-dark">
-        <div className="mx-auto max-w-[1160px] px-6 py-[clamp(56px,8vw,92px)]">
-          <FadeIn className="max-w-[760px]">
-            <Eyebrow className="text-yellow">{'// THE GAP'}</Eyebrow>
-            <h2 className="mt-4 text-white">{page.whyHeading}</h2>
-            <p className="mt-5 text-[17px] leading-[1.6] text-white/70">{page.why}</p>
-            {page.sources && page.sources.length > 0 && (
-              <div className="mt-7">
-                <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/40">Sources</p>
-                <ul className="mt-3 space-y-1.5">
-                  {page.sources.map((s) => (
-                    <li key={s.href}>
-                      <a
-                        href={s.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[13.5px] leading-[1.5] text-white/60 hover:text-white underline decoration-white/25 underline-offset-2 transition-colors"
-                      >
-                        {s.label} ↗
-                      </a>
+              )}
+            </section>
+          ))
+        ) : (
+          <>
+            {page.why && (
+              <section className="mt-12 border-t border-[#E8E7E3] pt-9">
+                <h2 className="text-[clamp(21px,2.6vw,26px)]">{page.whyHeading}</h2>
+                <p className="mt-3 text-[17px] leading-[1.7] text-[#3c4043]">{rich(page.why)}</p>
+              </section>
+            )}
+            {page.checks?.length ? (
+              <section className="mt-12 border-t border-[#E8E7E3] pt-9">
+                <h2 className="text-[clamp(21px,2.6vw,26px)]">{page.checksHeading}</h2>
+                <ul className="mt-4 border-t border-[#E8E7E3] divide-y divide-[#E8E7E3]">
+                  {page.checks.map((c) => (
+                    <li key={c.title} className="py-4 text-[17px] leading-[1.6] text-[#3c4043]">
+                      <span className="font-semibold text-ink">{c.title}</span>{' '}
+                      <span className="align-middle text-[11px] font-medium uppercase tracking-[0.04em]" style={{ color: c.severity === 'critical' ? '#DC2626' : '#D97706' }}>· {c.severity}</span>
+                      <br />{rich(c.body)}
                     </li>
                   ))}
                 </ul>
-              </div>
-            )}
-          </FadeIn>
-        </div>
-      </section>
+              </section>
+            ) : null}
+          </>
+        )}
 
-      {/* How it works */}
-      <section className="bg-bg-soft">
-        <div className="mx-auto max-w-[1160px] px-6 py-[clamp(56px,8vw,92px)]">
-          <FadeIn className="max-w-[760px]">
-            <Eyebrow className="text-yellow-dark">{'// HOW IT WORKS'}</Eyebrow>
-            <h2 className="mt-4">Scan. Understand. Fix.</h2>
-          </FadeIn>
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {STEPS.map((s, i) => (
-              <FadeIn key={s.n} delay={i * 0.08}>
-                <div className="h-full rounded-[18px] border border-border bg-card p-7">
-                  <span className="font-mono text-[13px] font-bold text-muted">{s.n}</span>
-                  <div className="mt-3 h-[3px] w-8 rounded-full bg-yellow" />
-                  <h3 className="mt-4">{s.title}</h3>
-                  <p className="mt-2 text-[15px] leading-[1.55] text-muted">{s.body}</p>
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="bg-card">
-        <div className="mx-auto max-w-[820px] px-6 py-[clamp(56px,8vw,92px)]">
-          <FadeIn className="text-center">
-            <Eyebrow className="text-yellow-dark">{'// FAQ'}</Eyebrow>
-            <h2 className="mt-4">{page.tool} security, answered.</h2>
-          </FadeIn>
-          <div className="mt-10 space-y-3">
-            {page.faqs.map((f) => (
-              <details
-                key={f.q}
-                className="group rounded-[14px] border border-border bg-bg-soft px-6 [&_summary]:list-none [&_summary::-webkit-details-marker]:hidden"
-              >
-                <summary className="flex cursor-pointer items-center justify-between gap-4 py-5 text-[16px] font-semibold text-ink">
-                  {f.q}
-                  <span
-                    aria-hidden
-                    className="flex-shrink-0 text-[22px] leading-none text-yellow-dark transition-transform duration-200 group-open:rotate-45"
-                  >
-                    +
-                  </span>
-                </summary>
-                <p className="pb-5 -mt-1 text-[15px] leading-[1.6] text-muted">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Scan another tool — internal linking */}
-      <section className="bg-bg-soft">
-        <div className="mx-auto max-w-[1160px] px-6 py-[clamp(48px,7vw,80px)]">
-          <FadeIn>
-            <h2 className="text-[clamp(22px,3vw,32px)]">Scan another tool</h2>
-            <p className="mt-3 text-[16px] text-muted max-w-[52ch]">
-              Veilguard checks apps built with every major AI builder and backend.
-            </p>
-          </FadeIn>
-          <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {others.map((s) => {
-              return (
-                <li key={s.slug}>
-                  <Link
-                    href={`/scanners/${s.slug}`}
-                    className="card-lift flex items-center gap-3 rounded-[14px] border border-border bg-card p-4"
-                  >
-                    <span className="flex items-center justify-center w-10 h-10 rounded-[12px] bg-bg-soft">
-                      <BrandLogo name={s.brand} size={24} />
+        {/* FAQ */}
+        {page.faqs?.length > 0 && (
+          <section className="mt-12 border-t border-[#E8E7E3] pt-9">
+            <h2 className="text-[clamp(20px,2.6vw,26px)]">Frequently asked</h2>
+            <div className="mt-4 border-t border-[#E8E7E3] divide-y divide-[#E8E7E3]">
+              {page.faqs.map((f) => (
+                <details key={f.q} className="group [&_summary]:list-none [&_summary::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer items-start justify-between gap-4 py-[22px] text-[16px] font-semibold text-ink">
+                    {f.q}
+                    <span aria-hidden className="shrink-0 mt-[3px] text-faint transition-transform duration-200 group-open:rotate-180">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     </span>
-                    <span className="font-semibold text-ink">{s.tool} security scanner</span>
-                    <span aria-hidden className="ml-auto text-yellow-dark">→</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="bg-yellow bg-dots-ink text-ink">
-        <div className="mx-auto max-w-[1160px] px-6 py-[clamp(60px,8vw,96px)] flex flex-col items-center text-center">
-          <FadeIn className="w-full flex flex-col items-center">
-            <h2 className="text-[clamp(30px,5vw,54px)] max-w-[18ch]">
-              Grade your {page.tool} app in 60 seconds.
-            </h2>
-            <div className="mt-8 w-full flex justify-center">
-              <ScanForm tone="onYellow" />
+                  </summary>
+                  <p className="pb-[22px] -mt-1 text-[16px] leading-[1.65] text-[#3c4043]">{rich(f.a)}</p>
+                </details>
+              ))}
             </div>
-            <p className="mt-5 font-mono text-[11px] tracking-[0.06em] uppercase text-ink/70">
-              {TRUST_LINE}
-            </p>
-          </FadeIn>
+          </section>
+        )}
+
+        {/* Sources */}
+        {page.sources && page.sources.length > 0 && (
+          <section className="mt-12 border-t border-[#E8E7E3] pt-9">
+            <h2 className="text-[19px]">Sources</h2>
+            <ul className="mt-4 flex flex-col gap-2 text-[14.5px] leading-[1.5]">
+              {page.sources.map((s) => (
+                <li key={s.label}>
+                  {s.href ? (
+                    <a href={s.href} target="_blank" rel="noopener noreferrer" className="text-ink hover:text-yellow-dark underline decoration-2 decoration-[#F3C500] underline-offset-2 transition-colors">{s.label} ↗</a>
+                  ) : (
+                    <span className="text-muted">{s.label}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Cross-links */}
+        <section className="mt-12 border-t border-[#E8E7E3] pt-9">
+          <h2 className="text-[19px]">Keep exploring</h2>
+          <ul className="mt-4 grid sm:grid-cols-2 border-t border-l border-[#E8E7E3]">
+            {siblings.map((s) => (
+              <li key={s.slug} className="border-r border-b border-[#E8E7E3]">
+                <Link href={`/scanners/${s.slug}`} className="group flex items-center gap-3 px-5 py-4 hover:bg-[#FAFAF8] transition-colors">
+                  <BrandLogo name={s.brand} size={22} icon className="shrink-0" />
+                  <span className="font-semibold text-ink">{s.tool} scanner</span>
+                  <span aria-hidden className="ml-auto text-faint group-hover:text-ink transition-colors">→</span>
+                </Link>
+              </li>
+            ))}
+            {page.related?.map((r) => (
+              <li key={r.href} className="border-r border-b border-[#E8E7E3]">
+                <Link href={r.href} className="group flex items-center gap-3 px-5 py-4 hover:bg-[#FAFAF8] transition-colors">
+                  <span className="font-semibold text-ink">{r.label}</span>
+                  <span aria-hidden className="ml-auto text-faint group-hover:text-ink transition-colors">→</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </article>
+
+      {/* Scan CTA */}
+      <section className="border-t border-[#E8E7E3]">
+        <div className="mx-auto max-w-[760px] px-6 py-[clamp(48px,7vw,80px)] flex flex-col items-center text-center">
+          {codeScan ? (
+            <>
+              <h2 className="text-[clamp(26px,4vw,40px)] max-w-[22ch]">Scan your {page.tool} app&apos;s code.</h2>
+              <p className="mt-3 max-w-[52ch] text-[16px] text-muted">Connect your repo or upload your code and get a plain-English A to F grade, plus the exact fix for every exposed secret and access gap we find.</p>
+            </>
+          ) : (
+            <>
+              <h2 className="text-[clamp(26px,4vw,40px)] max-w-[22ch]">Grade your {page.tool} app in 60 seconds.</h2>
+              <p className="mt-3 max-w-[52ch] text-[16px] text-muted">Paste your app&apos;s link and get a plain-English A to F grade in about 60 seconds, plus the exact fix for every issue.</p>
+            </>
+          )}
+          <div className="mt-8 w-full flex justify-center"><ScanForm /></div>
+          <p className="mt-5 font-mono text-[11px] tracking-[0.06em] uppercase text-faint">{TRUST_LINE}</p>
         </div>
       </section>
     </>

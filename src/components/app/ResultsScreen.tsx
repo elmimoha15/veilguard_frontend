@@ -73,15 +73,15 @@ export default function ResultsScreen() {
       <div className="min-h-screen bg-bg vg-fade pb-16">
         <div className="bg-card border-b border-border px-6 py-4">
           <div className="max-w-[960px] mx-auto flex items-center gap-[11px]">
-            <Logo size={32} wordmarkClassName="text-[17px]" />
+            <Logo size={28} />
             <span className="ml-auto font-mono text-[13.5px] text-label">{scan ? repoDisplay(scanLabel(scan)) : '…'}</span>
           </div>
         </div>
         <div className="max-w-[560px] mx-auto px-6 pt-16 text-center">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={f.tone === 'ours' ? '#5b5a56' : '#C23B3F'} strokeWidth="1.8" aria-hidden className="mx-auto mb-3">
             <path d="M12 3l9 16H3z" strokeLinejoin="round" />
             <path d="M12 10v4" strokeLinecap="round" />
-            <circle cx="12" cy="16.8" r="0.7" fill={f.tone === 'ours' ? '#8a6d00' : '#C23B3F'} stroke="none" />
+            <circle cx="12" cy="16.8" r="0.7" fill={f.tone === 'ours' ? '#5b5a56' : '#C23B3F'} stroke="none" />
           </svg>
           <h1 className="font-semibold text-[24px] text-ink">{f.title}</h1>
           <p className="text-[15.5px] text-muted mt-3 leading-[1.5]">{f.body}</p>
@@ -95,11 +95,11 @@ export default function ResultsScreen() {
         {findings.length > 0 && (
           <div className="max-w-[960px] mx-auto px-6 mt-12">
             <p className="text-center text-[14px] text-muted mb-4">
-              We found these before the scan stopped — run again for a complete result.
+              We found these before the scan stopped, run again for a complete result.
             </p>
-            <div className="flex flex-col gap-3 opacity-90">
+            <div className="flex flex-col divide-y divide-border border-y border-border opacity-90">
               {findings.map((f2) => (
-                <div key={f2.id} className="vg-card block vg-surface p-5">
+                <div key={f2.id} className="py-5">
                   <div className="flex items-start gap-3">
                     <span className="shrink-0 mt-[5px] w-[9px] h-[9px] rounded-full" style={{ background: f2.color }} />
                     <div className="flex-1 min-w-0">
@@ -125,7 +125,7 @@ export default function ResultsScreen() {
     <div className="min-h-screen bg-bg vg-fade pb-28">
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="max-w-[960px] mx-auto flex items-center gap-[11px]">
-          <Logo size={32} wordmarkClassName="text-[17px]" />
+          <Logo size={28} />
           <span className="ml-auto font-mono text-[13.5px] text-label">{scan ? repoDisplay(scanLabel(scan)) : '…'}</span>
         </div>
       </div>
@@ -134,7 +134,7 @@ export default function ResultsScreen() {
         {/* grade hero */}
         <div className="text-center">
           <GradeLetter letter={grade ?? '…'} color={grade ? GRADE_COLOR[grade] : '#B0B0AC'} size={130} className="inline-block vg-pop" />
-          <div className="mt-1 inline-flex items-center gap-[7px] font-mono text-[13px] tracking-[0.1em]" style={{ color: hero?.labelColor ?? '#8a6d00' }}>
+          <div className="mt-1 inline-flex items-center gap-[7px] font-mono text-[13px] tracking-[0.1em]" style={{ color: hero?.labelColor ?? '#5b5a56' }}>
             {running ? 'SCANNING…' : (hero?.label ?? 'RESULT')}
             {!running && <GradeHelp />}
           </div>
@@ -157,13 +157,13 @@ export default function ResultsScreen() {
         </div>
 
         {/* findings with locked fixes */}
-        <div className="mt-6 flex flex-col gap-3">
+        <div className="mt-6 flex flex-col divide-y divide-border border-y border-border">
           {findings.length === 0 && running && <div className="text-center text-muted py-10">Findings will appear here as they’re found…</div>}
           {findings.length === 0 && !running && <div className="text-center text-muted py-10">No issues found.</div>}
           {findings.map((f, i) => (
             <div
               key={f.id}
-              className="vg-card block vg-surface p-5 vg-rise"
+              className="py-5 vg-rise"
               style={{ animationDelay: `${Math.min(i, 8) * 0.06}s` }}
             >
               <div className="flex items-start gap-3">
@@ -215,7 +215,7 @@ export default function ResultsScreen() {
                 <Link href="/dashboard" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Go to dashboard</Link>
               )
             ) : (
-              <Link href="/signup" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Unlock fixes</Link>
+              <Link href="/onboarding" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Unlock fixes</Link>
             )}
           </div>
         </div>

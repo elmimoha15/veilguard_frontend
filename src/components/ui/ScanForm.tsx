@@ -2,9 +2,9 @@
 
 import { useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ActionButton from '@/components/ui/ActionButton';
 import { cn } from '@/lib/utils';
-import { checkUrl } from '@/lib/url';
-import { api } from '@/lib/api';
+import { checkUrl, probeReachable } from '@/lib/url';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 const EXAMPLES = ['myapp.lovable.app', 'dashboard.bolt.new', 'app.replit.dev', 'store.supabase.co'];
@@ -41,9 +41,10 @@ function useTypingPlaceholder(paused: boolean) {
 
 /**
  * The primary CTA everywhere: an "https://" prefix + URL input + "Run free scan".
- * Validates the URL client-side (the "is it a real URL?" check), kicks off a
- * real anonymous scan via the backend, stashes the scanId (so it can be claimed
- * after signup), and navigates to the live scanning screen.
+ * Validates the URL client-side (the "is it a real URL?" check), then hands the
+ * URL to onboarding (`/onboarding?url=…`). Onboarding skips its own URL step,
+ * signs the user up, and runs the scan on their account (gated result). Marketing
+ * pages can't reach the app's AppStateProvider, so the URL travels as a query param.
  */
 export default function ScanForm({
   className,
@@ -62,18 +63,19 @@ export default function ScanForm({
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     const check = checkUrl(url);
     if (!check.ok) { setError(check.error!); return; }
     setError('');
     setBusy(true);
-    const res = await api.createScan(check.url!);
-    if (!res.ok || !res.data.scanId) {
+    // Refuse a URL we can't reach so onboarding only ever gets a live, working app.
+    const live = await probeReachable(check.url!);
+    if (!live) {
       setBusy(false);
-      setError(res.data.error || 'Could not start the scan. Is the backend running?');
+      setError('We couldn’t reach that URL. Enter a live, working app that’s deployed and loading.');
       return;
     }
-    try { localStorage.setItem('vg_pending_scan', res.data.scanId); } catch { /* ignore */ }
-    router.push(`/scanning?scanId=${res.data.scanId}`);
+    router.push(`/onboarding?url=${encodeURIComponent(check.url!)}`);
   };
 
   return (
@@ -106,13 +108,15 @@ export default function ScanForm({
           style={{ outline: 'none' }}
           className="flex-1 min-w-0 bg-transparent border-0 appearance-none shadow-none text-[16.5px] text-ink placeholder:text-tertiary"
         />
-        <button
+        <ActionButton
           type="submit"
           disabled={busy}
-          className="flex-shrink-0 inline-flex items-center justify-center h-[48px] px-6 rounded-xl bg-ink text-white font-semibold text-[14.5px] transition-transform duration-150 hover:scale-[1.02] active:scale-[0.99] focus-visible:outline-none disabled:opacity-70"
+          icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 8 8" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M12 12l5-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><circle cx="12" cy="12" r="1.9" fill="currentColor" /></svg>}
+          tooltip="~60s · free, no signup"
+          className="flex-shrink-0 h-[48px] px-6 text-[14.5px]"
         >
-          {busy ? 'Starting…' : 'Run free scan'}
-        </button>
+          {busy ? 'Checking…' : 'Run free scan'}
+        </ActionButton>
       </div>
       {error && <p className="mt-2 text-[13px] text-red font-semibold">{error}</p>}
     </form>

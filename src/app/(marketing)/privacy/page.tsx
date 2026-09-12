@@ -74,7 +74,7 @@ export default function PrivacyPage() {
           <h2 className="text-lg! font-bold text-ink mb-3">Your rights &amp; contact</h2>
           <p>
             You can request access to or deletion of any personal data associated with your account by
-            emailing <a href="mailto:support@veilguard.dev" className="text-yellow-dark hover:text-ink underline underline-offset-2">support@veilguard.dev</a>.
+            emailing <a href="mailto:info@veilguard.dev" className="text-yellow-dark hover:text-ink underline underline-offset-2">info@veilguard.dev</a>.
             For payment-related data, you can also contact Polar directly through their customer portal.
           </p>
         </section>
