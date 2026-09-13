@@ -383,6 +383,7 @@ function OnboardingResult({ scanId, onContinue, onRetried }: { scanId: string | 
   const [scan, setScan] = useState<ScanDoc | null>(null);
   const [raw, setRaw] = useState<(BackendFinding & { id: string })[]>([]);
   const [retrying, setRetrying] = useState(false);
+  const [display, setDisplay] = useState(0);
   useEffect(() => {
     if (!scanId) return;
     const u1 = subscribeScan(scanId, setScan);
@@ -392,11 +393,24 @@ function OnboardingResult({ scanId, onContinue, onRetried }: { scanId: string | 
 
   const status = scan?.status;
   const p = scan?.progress;
-  const pct = p && p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
   const done = status === 'done';
   const errored = status === 'error';
   const grade = scan?.grade;
   const fail = errored && scan ? scanFailure(scan) : null;
+
+  // Smoothly climb the ring instead of sitting at 0 then snapping to 100 (a URL
+  // scan often reports no progress until it finishes). Ease toward a soft cap and
+  // snap to 100 on done; never move backward. Mirrors ScanningScreen.
+  const realPct = p && p.total > 0 ? Math.min(100, Math.round((p.done / Math.max(1, p.total)) * 100)) : 0;
+  useEffect(() => {
+    if (done || errored || !scanId) return; // stop easing; `pct` shows 100 on done
+    const id = setInterval(() => {
+      const cap = realPct > 0 ? 96 : 90;
+      setDisplay((d) => Math.max(d, realPct, Math.min(cap, d + Math.max(0.3, (cap - d) * 0.08))));
+    }, 150);
+    return () => clearInterval(id);
+  }, [done, errored, scanId, realPct]);
+  const pct = done ? 100 : Math.round(display);
 
   const findings = raw.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
   const counts = toUiCounts(scan, findings);
