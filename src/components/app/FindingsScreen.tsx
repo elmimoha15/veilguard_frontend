@@ -109,6 +109,10 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
     ...findings.map((f) => ({ f, isFixed: false })),
     ...fixed.map((f) => ({ f, isFixed: true })),
   ];
+  // Free plan previews the two worst findings; the rest are locked behind Guard.
+  const FREE_LIMIT = 2;
+  const visibleRows = paid ? rows : rows.slice(0, FREE_LIMIT);
+  const lockedRows = paid ? [] : rows.slice(FREE_LIMIT);
 
   return (
     <div className="vg-fade">
@@ -162,7 +166,7 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
             <span className="tnum text-[13px]" style={{ color: '#A3A3A3' }}>{totalShown}</span>
           </div>
           <div className="flex flex-col">
-            {rows.map(({ f, isFixed }, i) => (
+            {visibleRows.map(({ f, isFixed }, i) => (
               <FindingRow
                 key={isFixed ? `fixed-${f.id}` : f.id}
                 f={f}
@@ -172,7 +176,19 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
                 onClick={isFixed ? undefined : () => router.push(`/finding?scan=${scanId}&id=${f.id}${diffReady && diffOf(f) === 'new' ? '&new=1' : ''}`)}
               />
             ))}
+            {lockedRows.map(({ f }, i) => (
+              <LockedRow key={`lock-${f.id}`} f={f} first={visibleRows.length === 0 && i === 0} />
+            ))}
           </div>
+          {lockedRows.length > 0 && (
+            <div className="mt-5 pt-5 flex items-center justify-between gap-4 flex-wrap" style={{ borderTop: '1px solid var(--color-hairline)' }}>
+              <div className="min-w-0">
+                <div className="text-[15px] font-medium text-ink">Unlock the other {lockedRows.length} finding{lockedRows.length === 1 ? '' : 's'} + every fix</div>
+                <div className="text-[13px] mt-[1px]" style={{ color: '#737373' }}>Guard shows every finding, the exact fix and an AI prompt for each, plus monitoring.</div>
+              </div>
+              <PillButton onClick={() => router.push(billingHref())} className="shrink-0">Upgrade to Guard</PillButton>
+            </div>
+          )}
         </Card>
       )}
     </div>
@@ -184,6 +200,24 @@ const DIFF_BADGE: Record<Diff, { label: string; bg: string; fg: string } | null>
   open: null,
   fixed: { label: 'Fixed', bg: STATUS_META.fixed.bg, fg: STATUS_META.fixed.fg },
 };
+
+/** A locked finding for free users: severity is shown, the details are blurred
+ *  behind a Guard lock (the exact fix + full details need an upgrade). */
+function LockedRow({ f, first }: { f: UiFinding; first?: boolean }) {
+  return (
+    <div className="flex items-start gap-3 py-[14px]" style={{ borderTop: first ? undefined : '1px solid #F4F4F4' }}>
+      <span className="pt-[1px]"><SeverityChip sev={f.sev} /></span>
+      <div className="flex-1 min-w-0">
+        <div className="blur-[5px] select-none font-medium text-[14.5px]">{f.title}</div>
+        {f.what && <div className="blur-[4px] select-none text-[13px] mt-[3px]" style={{ color: '#737373' }}>{f.what}</div>}
+      </div>
+      <span className="shrink-0 self-center inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-ink">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.8" /></svg>
+        Guard
+      </span>
+    </div>
+  );
+}
 
 function FindingRow({ f, diff, showDiff, first, onClick }: { f: UiFinding; diff: Diff; showDiff: boolean; first?: boolean; onClick?: () => void }) {
   const isFixed = diff === 'fixed';
