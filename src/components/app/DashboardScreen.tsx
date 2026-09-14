@@ -9,6 +9,7 @@ import { toUiFinding, type UiSev, type UiFinding } from '@/lib/adapters';
 import { api } from '@/lib/api';
 import { SEV_COLOR, type Grade } from './data';
 import { Card, PageHeading, PillButton, Segmented, AreaTrend, Donut, Sparkline, ProgressBar, GradeSquare, SeverityChip, Heatmap } from './primitives';
+import { useAuth, isPaid } from '@/lib/auth';
 import ActionButton from '@/components/ui/ActionButton';
 import UpgradeReminder from './UpgradeReminder';
 import { EmptyState } from './EmptyState';
@@ -74,6 +75,8 @@ export default function DashboardScreen() {
   const router = useRouter();
   const reduce = useReducedMotion();
   const { setModal, setActiveSite, toast, setPendingScanId } = useApp();
+  const { profile } = useAuth();
+  const paid = isPaid(profile);
   const { apps, scans, loading } = useApps();
   const { events } = useMonitorEvents();
   const [range, setRange] = useState<Range>('12');
@@ -387,7 +390,7 @@ export default function DashboardScreen() {
                 </div>
               ) : (
                 <div className="flex flex-col">
-                  {analysis.top.slice(0, 5).map((it, i) => (
+                  {analysis.top.slice(0, paid ? 5 : 2).map((it, i) => (
                     <div key={`${it.scanId}:${it.id}`} className="flex items-start gap-3 py-[13px]" style={{ borderTop: i === 0 ? undefined : '1px solid #F4F4F4' }}>
                       <span className="pt-[1px]"><SeverityChip sev={it.sev} /></span>
                       <div className="flex-1 min-w-0">
@@ -395,6 +398,20 @@ export default function DashboardScreen() {
                         <div className="text-[12.5px] mt-[2px] truncate" style={{ color: '#A3A3A3' }}>{it.appName}</div>
                       </div>
                       <PillButton onClick={() => openFinding(it)} className="shrink-0 h-9 px-4" tooltip="See the exact fix" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>}>Fix</PillButton>
+                    </div>
+                  ))}
+                  {/* Free plan: the rest are locked behind Guard (mirrors the Findings page). */}
+                  {!paid && analysis.top.slice(2, 5).map((it) => (
+                    <div key={`lock-${it.scanId}:${it.id}`} className="flex items-start gap-3 py-[13px]" style={{ borderTop: '1px solid #F4F4F4' }}>
+                      <span className="pt-[1px]"><SeverityChip sev={it.sev} /></span>
+                      <div className="flex-1 min-w-0">
+                        <div className="blur-[5px] select-none text-[14px] font-medium">{it.title}</div>
+                        <div className="blur-[4px] select-none text-[12.5px] mt-[2px] truncate" style={{ color: '#A3A3A3' }}>{it.appName}</div>
+                      </div>
+                      <span className="shrink-0 self-center inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-ink">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.8" /></svg>
+                        Guard
+                      </span>
                     </div>
                   ))}
                 </div>
