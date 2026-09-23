@@ -12,6 +12,7 @@ import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/sc
 import { type Grade } from './data';
 import { Card, PillButton, SeverityChip, GradeSquare, SectionLabel, SeverityTiles } from './primitives';
 import DeepScanHints from './DeepScanHints';
+import PassedChecks from './PassedChecks';
 
 /**
  * The ONE-TIME, in-app result reveal shown immediately after a signed-in user
@@ -183,6 +184,9 @@ export default function ScanResultScreen() {
           </div>
         </Card>
       )}
+
+      {/* What's solid — checks this scan passed (shown to everyone). */}
+      <PassedChecks passed={scan.passed} />
     </div>
   );
 }

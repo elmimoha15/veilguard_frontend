@@ -92,6 +92,15 @@ export interface BackendFinding {
   mode?: string;
 }
 
+/** A security check the app PASSED (positive result). No severity or fix. */
+export interface PassedCheck {
+  id: string;
+  category: string;
+  title: string;
+  detail?: string;
+  mode?: 'blackbox' | 'whitebox';
+}
+
 export interface ScanDoc {
   id: string;
   target: { type: 'url' | 'repo'; value: string };
@@ -105,6 +114,8 @@ export interface ScanDoc {
   grade?: 'A' | 'B' | 'C' | 'D' | 'F';
   score?: number;
   counts?: { critical: number; high: number; medium: number; low: number; info: number; passed: number };
+  /** Security checks the app passed (positive results) — shown as "What's solid". */
+  passed?: PassedCheck[];
   error?: string;
   errorReason?: 'timeout' | 'unreachable' | 'empty-upload' | 'not-found' | 'needs-reconnect' | 'engine-error';
   stack?: { supabase?: boolean; firebase?: boolean; firebaseRulesInRepo?: boolean };

@@ -10,6 +10,7 @@ import { useApp } from './state';
 import { api } from '@/lib/api';
 import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
+import PassedChecks from './PassedChecks';
 import { EmptyState } from './EmptyState';
 import { SEV_COLOR, SEV_TINT, STATUS_META } from './data';
 import { SeverityChip, PillButton, Card, SeverityTiles } from './primitives';
@@ -191,6 +192,9 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
           )}
         </Card>
       )}
+
+      {/* What's solid — the checks this scan passed (shown to everyone, never gated). */}
+      {selected.status === 'done' && <PassedChecks passed={selected.passed} />}
     </div>
   );
 }
