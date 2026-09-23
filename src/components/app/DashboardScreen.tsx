@@ -7,6 +7,8 @@ import { useApps, useMonitorEvents, timeAgo, scanLabel, repoDisplay, type App } 
 import { getFindings, type ScanDoc } from '@/lib/scans';
 import { toUiFinding, type UiSev, type UiFinding } from '@/lib/adapters';
 import { api } from '@/lib/api';
+import { startFailure } from '@/lib/scanError';
+import { billingHref } from '@/lib/url';
 import { SEV_COLOR, type Grade } from './data';
 import { Card, PageHeading, PillButton, Segmented, AreaTrend, Donut, Sparkline, ProgressBar, GradeSquare, SeverityChip, Heatmap } from './primitives';
 import { useAuth, isPaid } from '@/lib/auth';
@@ -231,8 +233,11 @@ export default function DashboardScreen() {
         : null;
     setRescanning(false);
     if (!res) { setModal('addApp'); return; }
-    if (res.ok && res.data.scanId) { setPendingScanId(res.data.scanId); toast(`Scanning ${target.host}…`, '#0A0A0A'); }
-    else toast('Could not start the re-scan.', '#DC2626');
+    if (res.ok && res.data.scanId) { setPendingScanId(res.data.scanId); toast(`Scanning ${target.host}…`, '#0A0A0A'); return; }
+    if (res.data.error) console.error('[dashboard] re-scan start failed:', res.data.error);
+    const f = startFailure(res.status, res.data);
+    toast(f.message, f.quota ? '#D97706' : f.tone === 'user' && !f.upsell ? '#E0932F' : '#DC2626');
+    if (f.upsell && !paid) router.push(billingHref());
   };
 
   // recent fixes (real, from monitor events)

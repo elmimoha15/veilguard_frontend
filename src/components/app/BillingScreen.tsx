@@ -19,9 +19,9 @@ const XIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" 
  * starts checkout, reads Polar history/invoices, and asks Polar to cancel/resume.
  * Presentation follows the handoff (verbatim plan copy).
  */
-const FREE_FEATURES = ['One scan, any URL', 'Full A, F grade', 'Every issue in plain English'];
+const FREE_FEATURES = ['Unlimited URL scans', 'Full A, F grade', 'Every issue in plain English'];
 const GUARD_FEATURES = [
-  'Unlimited scans',
+  'Up to 30 scans a month',
   'Every fix, copy-paste ready',
   'Auto re-scan on deploy',
   'Email alerts when something breaks',
@@ -134,7 +134,7 @@ export default function BillingScreen() {
               <span className="rounded-full px-[10px] py-[3px] text-[12.5px] font-medium tnum" style={{ background: '#F5F5F5', color: '#0A0A0A' }}>{isGuard ? '$19/mo' : '$0'}</span>
             </div>
             <p className="text-[14px] mt-[10px] max-w-[52ch]" style={{ color: '#737373' }}>
-              {isGuard ? 'Unlimited scans, every fix, auto re-scan on deploy, alerts.' : 'URL scans only, upgrade for code scans, connections, monitoring and every fix.'}
+              {isGuard ? 'Up to 30 scans a month, every fix, auto re-scan on deploy, alerts.' : 'Unlimited URL scans, upgrade for code scans, connections, monitoring and every fix.'}
             </p>
             {renewLine && <div className="font-mono text-[12px] mt-3" style={{ color: '#A3A3A3' }}>{renewLine}</div>}
           </div>

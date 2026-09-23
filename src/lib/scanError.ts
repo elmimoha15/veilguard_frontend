@@ -65,7 +65,7 @@ export function scanFailure(scan: Pick<ScanDoc, 'type' | 'error' | 'errorReason'
   }
 }
 
-export interface StartFailure { message: string; tone: 'user' | 'ours'; upsell?: boolean; showSupport?: boolean }
+export interface StartFailure { message: string; tone: 'user' | 'ours'; upsell?: boolean; quota?: boolean; showSupport?: boolean }
 
 /** Friendly copy for a scan-START API result (createScan/createDeepScan/createUploadScan). */
 export function startFailure(status: number, data: { error?: string; code?: string }): StartFailure {
@@ -78,7 +78,9 @@ export function startFailure(status: number, data: { error?: string; code?: stri
       : { message: 'We couldn’t reach our servers just now. Please try again in a moment.', tone: 'ours', showSupport: true };
   }
   if (status >= 500) return { message: 'Something went wrong on our end, not yours. Please try again in a moment.', tone: 'ours', showSupport: true };
-  if (data.code === 'E_SCAN_LIMIT') return { message: data.error || 'You’ve used all your scans this month.', tone: 'user', upsell: true };
+  // Monthly scan cap. Free is unlimited, so only a Guard user can hit this — it's a
+  // warning (they've used their month's scans), NOT an upsell, so don't push them to billing.
+  if (data.code === 'E_SCAN_LIMIT') return { message: data.error || 'You’ve used all your scans this month.', tone: 'user', quota: true };
   if (status === 402) return { message: data.error || 'That’s a Guard feature, upgrade to use it.', tone: 'user', upsell: true };
   // 400 / 409 etc., the backend already returns short, human strings here.
   return { message: data.error || 'Couldn’t start the scan. Please try again.', tone: 'user' };

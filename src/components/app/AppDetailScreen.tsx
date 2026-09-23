@@ -85,7 +85,8 @@ export default function AppDetailScreen() {
   const startToast = (status: number, data: { error?: string; code?: string }) => {
     if (data.error) console.error('[app detail] scan start failed:', data.error);
     const f = startFailure(status, data);
-    toast(f.message, f.tone === 'user' && !f.upsell ? '#E0932F' : '#C23B3F');
+    const color = f.quota ? '#D97706' : f.tone === 'user' && !f.upsell ? '#E0932F' : '#C23B3F';
+    toast(f.message, color);
     if (f.upsell && !paid) router.push(billingHref());
   };
 
