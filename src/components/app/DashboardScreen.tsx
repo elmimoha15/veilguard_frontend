@@ -149,8 +149,8 @@ export default function DashboardScreen() {
   const sev = apps.reduce(
     (acc, a) => {
       const c = a.latest?.status === 'done' ? a.latest.counts : undefined;
-      acc.critical += (c?.critical ?? 0) + (c?.high ?? 0);
-      acc.warning += (c?.medium ?? 0) + (c?.low ?? 0);
+      acc.critical += (c?.critical ?? 0);
+      acc.warning += (c?.high ?? 0) + (c?.medium ?? 0) + (c?.low ?? 0);
       acc.passing += c?.passed ?? 0;
       return acc;
     },
@@ -201,7 +201,7 @@ export default function DashboardScreen() {
   );
   const fixMostUrgent = () => { if (selTop[0]) openFinding(selTop[0]); else if (selApp) openApp(selApp.key, selApp.host); else seeAll(); };
 
-  const criticals = selCurrent ? (selCurrent.counts?.critical ?? 0) + (selCurrent.counts?.high ?? 0) : 0;
+  const criticals = selCurrent ? (selCurrent.counts?.critical ?? 0) : 0;
   const stakesLine =
     criticals === 0
       ? 'A few things to tighten up, none are urgent, but they make you an easier target.'

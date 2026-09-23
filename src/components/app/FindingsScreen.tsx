@@ -111,7 +111,7 @@ export default function FindingsScreen({ app, initialScanId, onWhatToDo }: { app
         <SeverityTiles
           critical={findings.filter((f) => f.sev === 'CRITICAL').length}
           warnings={findings.filter((f) => f.sev === 'WARNING').length}
-          passed={findings.filter((f) => f.sev === 'PASSED').length}
+          passed={selected.counts?.passed ?? selected.passed?.length ?? 0}
         />
         {diffReady && (newCount > 0 || fixed.length > 0) && (
           <div className="flex items-center gap-3 mt-4 text-[13.5px] font-medium">

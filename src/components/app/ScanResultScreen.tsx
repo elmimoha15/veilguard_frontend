@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GradeHelp } from './GradeHelp';
-import { subscribeScan, subscribeFindings, aiUsageLabel, type ScanDoc, type BackendFinding } from '@/lib/scans';
+import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
 import { toUiFinding, toUiCounts } from '@/lib/adapters';
 import { scanLabel, repoDisplay, useApps } from '@/lib/hooks';
 import { api } from '@/lib/api';
@@ -161,7 +161,6 @@ export default function ScanResultScreen() {
           </div>
         </div>
         <SeverityTiles critical={counts.critical} warnings={counts.warnings} passed={counts.passed} className="mt-5" />
-        {aiUsageLabel(scan?.aiUsage) && <div className="font-mono text-[11.5px] mt-[14px]" style={{ color: '#A3A3A3' }}>{aiUsageLabel(scan?.aiUsage)}</div>}
       </Card>
 
       {/* stack-aware nudges (connect Supabase / Firebase-rules note) */}

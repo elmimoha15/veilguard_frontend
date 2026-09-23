@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
 import { useApps, findActiveApp, timeAgo, repoDisplay, type App } from '@/lib/hooks';
-import { saveApps, upsertApp, aiUsageLabel, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
+import { saveApps, upsertApp, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
 import { toUiFinding, type UiFinding } from '@/lib/adapters';
 import { scanFailure, startFailure } from '@/lib/scanError';
 import { api } from '@/lib/api';
@@ -283,7 +283,6 @@ export default function AppDetailScreen() {
             )}
           </div>
           {summary && <p className="text-[13.5px] mt-[7px] leading-[1.55] max-w-[62ch]" style={{ color: '#737373' }}>{summary}</p>}
-          {aiUsageLabel(latest.aiUsage) && <p className="font-mono text-[11.5px] mt-[6px]" style={{ color: '#A3A3A3' }}>{aiUsageLabel(latest.aiUsage)}</p>}
           <div className="flex items-center gap-[10px] mt-5 flex-wrap">
             {latest.status === 'error' ? (
               <PillButton onClick={() => openResult(latest.id)}>See what happened</PillButton>
