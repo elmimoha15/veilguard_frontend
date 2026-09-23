@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from './state';
 import { useApps, useMonitorEvents, timeAgo, scanLabel, repoDisplay, type App } from '@/lib/hooks';
 import { getFindings, type ScanDoc } from '@/lib/scans';
-import { toUiFinding, type UiSev, type UiFinding } from '@/lib/adapters';
+import { toUiFinding, isConfirmed, type UiSev, type UiFinding } from '@/lib/adapters';
 import { api } from '@/lib/api';
 import { startFailure } from '@/lib/scanError';
 import { billingHref } from '@/lib/url';
@@ -172,6 +172,7 @@ export default function DashboardScreen() {
           const fs = (await getFindings(a.latest!.id)).map(toUiFinding);
           for (const f of fs) {
             if (f.sev === 'PASSED') continue;
+            if (!isConfirmed(f)) continue; // low-confidence "possible — verify" stays out of top priorities
             const b = impactBucket(f);
             buckets[b] += 1;
             issues.push({ id: f.id, scanId: a.latest!.id, sev: f.sev, title: f.title, what: f.what, appName: a.name, appKey: a.key, host: a.host, bucket: b });

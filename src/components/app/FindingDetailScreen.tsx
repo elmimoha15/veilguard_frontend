@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from './state';
-import { SEV_META, SEV_COLOR, SEV_TINT } from './data';
+import { SEV_META, SEV_COLOR, SEV_TINT, CONF_META, CONF_TINT } from './data';
 import { subscribeFinding, type BackendFinding } from '@/lib/scans';
 import { toUiFinding } from '@/lib/adapters';
 import { api } from '@/lib/api';
@@ -84,10 +84,18 @@ export default function FindingDetailScreen() {
         </span>
         <Chip>{f.cat}</Chip>
         {f.cwe && <Chip mono>{f.cwe}</Chip>}
+        {CONF_META[f.confidence] && (
+          <span className="inline-flex items-center rounded-full px-[10px] py-[5px] text-[12.5px] font-semibold" style={{ background: CONF_TINT.bg, color: CONF_TINT.fg }}>{CONF_META[f.confidence]!.label}</span>
+        )}
         {isNew && <NewBadge />}
       </div>
       <h1 className="text-[30px] font-semibold tracking-[-0.025em] leading-[1.1] max-w-[64ch]">{f.title}</h1>
       <p className="text-[15px] text-muted leading-[1.55] mt-[7px] max-w-[68ch]">{meta.sevHint}</p>
+      {CONF_META[f.confidence] && (
+        <div className="mt-4 rounded-[10px] px-4 py-3 text-[13.5px] leading-[1.5]" style={{ background: CONF_TINT.bg, color: '#57534E' }}>
+          {CONF_META[f.confidence]!.note}
+        </div>
+      )}
 
       {/* why it matters + where we found it (one section) */}
       <div className="grid sm:grid-cols-2 mt-6 divide-y sm:divide-y-0 sm:divide-x divide-border">

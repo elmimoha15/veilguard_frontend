@@ -7,11 +7,14 @@ import type { BackendFinding, ScanDoc } from './scans';
  */
 export type UiSev = 'CRITICAL' | 'WARNING' | 'PASSED';
 
+export type UiConfidence = 'high' | 'medium' | 'low';
+
 export interface UiFinding {
   id: string; // Firestore finding doc id (stable, used for detail route)
   ruleId: string;
   sev: UiSev;
   severity: BackendFinding['severity'];
+  confidence: UiConfidence; // 'low' = "possible — verify" (a downgraded/uncertain finding)
   color: string;
   cat: string;
   title: string;
@@ -20,6 +23,11 @@ export interface UiFinding {
   evidence?: string;
   cwe?: string;
   status: 'open';
+}
+
+/** A finding is "confirmed" unless it's low-confidence (a possible/verify note). */
+export function isConfirmed(f: UiFinding): boolean {
+  return f.confidence !== 'low';
 }
 
 export const SEV_COLOR: Record<UiSev, string> = {
@@ -56,6 +64,10 @@ function locationString(loc?: BackendFinding['location']): string {
   return loc.url ?? '';
 }
 
+function toUiConfidence(c?: string): UiConfidence {
+  return c === 'low' || c === 'medium' || c === 'high' ? c : 'high';
+}
+
 export function toUiFinding(f: BackendFinding & { id: string }): UiFinding {
   const sev = toUiSev(f.severity);
   return {
@@ -63,6 +75,7 @@ export function toUiFinding(f: BackendFinding & { id: string }): UiFinding {
     ruleId: f.ruleId,
     sev,
     severity: f.severity,
+    confidence: toUiConfidence(f.confidence),
     color: SEV_COLOR[sev],
     cat: humanizeCategory(f.category),
     title: f.title,

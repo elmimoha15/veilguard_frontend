@@ -88,7 +88,7 @@ export interface BackendFinding {
   whyItMatters: string;
   evidence?: string;
   location?: { file?: string; line?: number; url?: string };
-  confidence?: string;
+  confidence?: 'high' | 'medium' | 'low';
   mode?: string;
 }
 

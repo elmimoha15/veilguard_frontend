@@ -10,7 +10,7 @@ import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
 import PassedChecks from './PassedChecks';
 import { EmptyState } from './EmptyState';
-import { SEV_COLOR, SEV_TINT, STATUS_META } from './data';
+import { SEV_COLOR, SEV_TINT, STATUS_META, CONF_META, CONF_TINT } from './data';
 import { SeverityChip, PillButton, Card, SeverityTiles } from './primitives';
 
 /** Small line-SVG chevron used on list rows and the scan picker. */
@@ -206,7 +206,12 @@ function FindingRow({ f, diff, showDiff, first, onClick }: { f: UiFinding; diff:
     <button type="button" onClick={onClick} disabled={!onClick} className={`flex items-start gap-3 w-full py-[14px] text-left transition-opacity ${onClick ? 'cursor-pointer hover:opacity-80' : 'cursor-default'} ${isFixed ? 'opacity-60' : ''}`} style={{ borderTop: first ? undefined : '1px solid #F4F4F4' }}>
       <span className="pt-[1px]"><SeverityChip sev={f.sev} /></span>
       <div className="flex-1 min-w-0">
-        <div className={`font-medium text-[14.5px] ${isFixed ? 'line-through' : ''}`} style={isFixed ? { color: '#737373' } : undefined}>{f.title}</div>
+        <div className={`font-medium text-[14.5px] flex items-center gap-2 ${isFixed ? 'line-through' : ''}`} style={isFixed ? { color: '#737373' } : undefined}>
+          <span className="truncate">{f.title}</span>
+          {!isFixed && CONF_META[f.confidence] && (
+            <span className="shrink-0 text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full" style={{ background: CONF_TINT.bg, color: CONF_TINT.fg }}>{CONF_META[f.confidence]!.label}</span>
+          )}
+        </div>
         {!isFixed && <p className="text-[13px] leading-[1.55] mt-[3px]" style={{ color: '#737373' }}>{f.what}</p>}
         <div className="font-mono text-[11.5px] mt-[4px] truncate" style={{ color: '#A3A3A3' }}>{f.cat}{f.where ? ` · ${f.where}` : ''}</div>
       </div>
