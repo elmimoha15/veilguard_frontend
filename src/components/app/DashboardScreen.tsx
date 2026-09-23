@@ -265,8 +265,7 @@ export default function DashboardScreen() {
             {/* 1, progress hero — scoped to the selected app (selector shown with 2+ apps) */}
             <Card flat className="py-6">
               {apps.length > 1 && (
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <span className="text-[12.5px] font-medium shrink-0" style={{ color: '#A3A3A3' }}>Showing</span>
+                <div className="flex items-center justify-end gap-3 mb-4">
                   <AppSelect apps={apps} activeKey={selApp?.key ?? ''} onSelect={(a) => setScopeKey(a.key)} />
                 </div>
               )}
@@ -286,7 +285,7 @@ export default function DashboardScreen() {
                     </>
                   ) : (
                     <>
-                      <h2 className="text-[24px] font-semibold tracking-[-0.02em] leading-[1.15]">You’re all clear 🎉</h2>
+                      <h2 className="text-[24px] font-semibold tracking-[-0.02em] leading-[1.15]">You’re all clear</h2>
                       <p className="text-[14px] mt-[6px] max-w-[52ch] leading-[1.5]" style={{ color: '#737373' }}>No open issues right now. Keep monitoring on so it stays that way.</p>
                     </>
                   )}
@@ -391,7 +390,7 @@ export default function DashboardScreen() {
               ) : analysis.top.length === 0 ? (
                 <div className="flex items-center gap-3 py-4">
                   <span className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: '#F0FDF4' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 12.5l4 4 10-10" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
-                  <div><div className="text-[14.5px] font-medium">Nothing urgent to fix 🎉</div><div className="text-[13px] mt-[1px]" style={{ color: '#737373' }}>No open critical or warning issues right now.</div></div>
+                  <div><div className="text-[14.5px] font-medium">Nothing urgent to fix</div><div className="text-[13px] mt-[1px]" style={{ color: '#737373' }}>No open critical or warning issues right now.</div></div>
                 </div>
               ) : (
                 <div className="flex flex-col">
