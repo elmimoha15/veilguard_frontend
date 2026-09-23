@@ -12,7 +12,7 @@ import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/sc
 import { type Grade } from './data';
 import { Card, PillButton, SeverityChip, GradeSquare, SectionLabel, SeverityTiles } from './primitives';
 import DeepScanHints from './DeepScanHints';
-import PassedChecks from './PassedChecks';
+import GradeExplainer from './GradeExplainer';
 
 /**
  * The ONE-TIME, in-app result reveal shown immediately after a signed-in user
@@ -163,30 +163,16 @@ export default function ScanResultScreen() {
       {/* stack-aware nudges (connect Supabase / Firebase-rules note) */}
       <DeepScanHints scan={scan} />
 
-      {/* top findings preview */}
-      {top.length > 0 && (
-        <Card flat className="py-7 border-t border-border">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-[16px] font-medium">Top issues</h2>
-            <button onClick={openFindings} className="text-[13px] font-medium text-muted hover:text-ink transition-colors cursor-pointer">See all issues</button>
-          </div>
-          <div className="flex flex-col">
-            {top.map((f, i) => (
-              <div key={f.id} className="flex items-start gap-3 py-[13px]" style={{ borderTop: i === 0 ? undefined : '1px solid #F4F4F4' }}>
-                <span className="pt-[1px]"><SeverityChip sev={f.sev} /></span>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[14px] font-medium">{f.title}</div>
-                  <div className="font-mono text-[11.5px] mt-[3px] truncate" style={{ color: '#A3A3A3' }}>{f.cat}{f.where ? ` · ${f.where}` : ''}</div>
-                </div>
-                <PillButton onClick={() => router.push(`/finding?scan=${scanId}&id=${f.id}`)} className="shrink-0 h-9 px-4" tooltip="See the exact fix" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" /></svg>}>Fix</PillButton>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* What's solid — checks this scan passed (shown to everyone). */}
-      <PassedChecks passed={scan.passed} />
+      {/* Why you got this grade: what's protecting you + what needs attention. */}
+      <GradeExplainer
+        grade={grade as Grade | undefined}
+        critical={counts.critical}
+        warnings={counts.warnings}
+        passed={scan.passed}
+        attention={top}
+        onViewFix={(f) => router.push(`/finding?scan=${scanId}&id=${f.id}`)}
+        onSeeAll={openFindings}
+      />
     </div>
   );
 }

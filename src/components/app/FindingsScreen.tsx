@@ -1,13 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type App } from '@/lib/hooks';
 import { subscribeFindings, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
 import { toUiFinding, type UiFinding } from '@/lib/adapters';
 import { useAuth, isPaid } from '@/lib/auth';
-import { useApp } from './state';
-import { api } from '@/lib/api';
 import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
 import PassedChecks from './PassedChecks';
@@ -31,14 +29,10 @@ const keyOf = (f: UiFinding) => `${f.ruleId}@${f.where}`;
  * The app is passed in (no global app-switcher); the per-app ScanPicker chooses
  * which scan's findings to view, with a diff vs the previous same-lens scan.
  */
-export default function FindingsScreen({ app, initialScanId }: { app: App; initialScanId?: string | null }) {
+export default function FindingsScreen({ app, initialScanId, onWhatToDo }: { app: App; initialScanId?: string | null; onWhatToDo?: () => void }) {
   const router = useRouter();
   const { profile } = useAuth();
-  const { toast } = useApp();
   const paid = isPaid(profile);
-  const [copyBusy, setCopyBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const promptCache = useRef<Map<string, string>>(new Map()); // per-scan copy-all cache → repeat clicks are instant
   const site = app;
 
   // Which scan within the app: a picked historical one, else the latest.
@@ -88,24 +82,6 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
   const errored = selected.status === 'error';
   const totalShown = findings.length + fixed.length;
 
-  // Guard-only: gather every fix into one organized AI prompt and copy it.
-  const copyAllFixes = async () => {
-    if (!scanId) return;
-    if (!paid) { toast('Copy-all-fixes is a Guard feature, upgrade to unlock.', '#E0932F'); router.push(billingHref()); return; }
-    const flash = async (prompt: string) => {
-      try { await navigator.clipboard.writeText(prompt); setCopied(true); setTimeout(() => setCopied(false), 1500); }
-      catch { toast('Could not copy, try again', '#DC2626'); }
-    };
-    const cached = promptCache.current.get(scanId);
-    if (cached) { await flash(cached); return; } // instant on repeat clicks
-    setCopyBusy(true);
-    const res = await api.allFixesPrompt(scanId);
-    setCopyBusy(false);
-    if (!res.ok || !res.data.prompt) { toast(res.data.error || 'Could not build the prompt', '#DC2626'); return; }
-    promptCache.current.set(scanId, res.data.prompt);
-    await flash(res.data.prompt);
-  };
-
   const rows: { f: UiFinding; isFixed: boolean }[] = [
     ...findings.map((f) => ({ f, isFixed: false })),
     ...fixed.map((f) => ({ f, isFixed: true })),
@@ -126,9 +102,9 @@ export default function FindingsScreen({ app, initialScanId }: { app: App; initi
       <Card flat className="py-7 border-t border-border">
         <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
           <h2 className="text-[16px] font-medium">Findings summary</h2>
-          {selected.status === 'done' && findings.length > 0 && (
-            <PillButton onClick={copyAllFixes} disabled={copyBusy} tooltip="One prompt for your AI" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.7" /><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1" stroke="currentColor" strokeWidth="1.7" /></svg>}>
-              {copied ? 'Copied' : copyBusy ? 'Preparing…' : paid ? 'Copy all fixes' : 'Copy all fixes (Guard)'}
+          {selected.status === 'done' && findings.length > 0 && onWhatToDo && (
+            <PillButton onClick={onWhatToDo} tooltip="Your prioritized checklist" icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}>
+              What to do
             </PillButton>
           )}
         </div>

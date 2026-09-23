@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
 import { useApps, findActiveApp, timeAgo, repoDisplay, type App } from '@/lib/hooks';
-import { saveApps, upsertApp, aiUsageLabel, type ScanDoc } from '@/lib/scans';
+import { saveApps, upsertApp, aiUsageLabel, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
+import { toUiFinding, type UiFinding } from '@/lib/adapters';
 import { scanFailure, startFailure } from '@/lib/scanError';
 import { api } from '@/lib/api';
 import { GradeHelp } from './GradeHelp';
@@ -15,7 +16,14 @@ import { Card, SectionLabel, PageHeading, Segmented, PillButton, GradeSquare } f
 import type { Grade } from './data';
 import { RepoPicker } from './RepoPicker';
 import FindingsScreen from './FindingsScreen';
+import TodoScreen from './TodoScreen';
+import GradeExplainer from './GradeExplainer';
 import MonitoringScreen from './MonitoringScreen';
+
+/** Worst-first over the raw 5-level severity. */
+const sevRank = (s: BackendFinding['severity']) => ({ critical: 5, high: 4, medium: 3, low: 2, info: 1 }[s] ?? 0);
+
+type TabId = 'overview' | 'findings' | 'todo' | 'monitoring';
 
 /**
  * Per-app detail page (route: /app?key=<encoded app.key>). One project seen
@@ -54,6 +62,20 @@ export default function AppDetailScreen() {
   const [urlOpen, setUrlOpen] = useState(false);
   const [reportBusy, setReportBusy] = useState(false);
   const [starting, setStarting] = useState(false); // in-flight guard for scan starts (no duplicate scans)
+
+  // Top open findings for the latest done scan → feeds the Overview grade explainer.
+  // Keyed by scan id so a null/changed scan derives to [] without a sync setState.
+  const [ov, setOv] = useState<{ id: string; items: UiFinding[] }>({ id: '', items: [] });
+  const latestDoneId = app?.latest?.status === 'done' ? app.latest.id : null;
+  useEffect(() => {
+    if (!latestDoneId) return;
+    let cancelled = false;
+    getFindings(latestDoneId).then((items) => {
+      if (!cancelled) setOv({ id: latestDoneId, items: items.map(toUiFinding).sort((a, b) => sevRank(b.severity) - sevRank(a.severity)) });
+    });
+    return () => { cancelled = true; };
+  }, [latestDoneId]);
+  const ovFindings = ov.id === latestDoneId && latestDoneId ? ov.items : [];
 
   const openResult = (scanId: string) => { if (app) setActiveSite(app.host); router.push(`/scan?scan=${scanId}`); };
   const resume = (scanId: string) => { if (app) setActiveSite(app.host); router.push(`/scanning?scanId=${scanId}`); };
@@ -147,9 +169,10 @@ export default function AppDetailScreen() {
   // each deploy), a URL-only app has nothing to watch, so it gets no Monitoring
   // tab. MonitoringScreen handles the Pro upsell for free users.
   const showMonitoring = !!app?.githubRepo;
-  const tab = ((): 'overview' | 'findings' | 'monitoring' => {
+  const tab = ((): TabId => {
     const t = params.get('tab');
     if (t === 'monitoring') return showMonitoring ? 'monitoring' : 'overview';
+    if (t === 'todo') return latest?.status === 'done' ? 'todo' : 'overview';
     return t === 'findings' ? 'findings' : 'overview';
   })();
   const goTab = (t: string, scanId?: string) =>
@@ -194,7 +217,7 @@ export default function AppDetailScreen() {
         ? `No criticals, ${warnings} warning${warnings === 1 ? '' : 's'} to tidy up when you can.`
         : 'Clean scan, nothing urgent right now.';
 
-  const tabOptions: { id: 'overview' | 'findings' | 'monitoring'; label: React.ReactNode }[] = [
+  const tabOptions: { id: TabId; label: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'findings', label: <span className="inline-flex items-center gap-[7px]">Findings{critN > 0 && <span className="tnum text-[11px] font-medium px-[7px] py-[1px] rounded-[6px]" style={{ background: '#FEF2F2', color: '#DC2626' }}>{critN}</span>}</span> },
     ...(showMonitoring ? [{ id: 'monitoring' as const, label: 'Monitoring' }] : []),
@@ -219,9 +242,20 @@ export default function AppDetailScreen() {
         }
       />
 
-      {/* Segmented tabs */}
-      <div className="mb-6">
+      {/* Segmented tabs, with "What to do" as a separate button beside them. */}
+      <div className="mb-6 flex items-center gap-3 flex-wrap">
         <Segmented options={tabOptions} value={tab} onChange={(t) => goTab(t)} />
+        {latest?.status === 'done' && (
+          <PillButton
+            variant={tab === 'todo' ? 'primary' : 'outline'}
+            onClick={() => goTab('todo', latest.id)}
+            aria-pressed={tab === 'todo'}
+            tooltip="Your prioritized checklist"
+            icon={<svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 6h11M9 12h11M9 18h11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+          >
+            What to do
+          </PillButton>
+        )}
       </div>
 
       {tab === 'overview' && (
@@ -265,6 +299,19 @@ export default function AppDetailScreen() {
         </Card>
       )}
 
+      {/* Why you got this grade (real passes + what needs attention). */}
+      {latest?.status === 'done' && (
+        <GradeExplainer
+          grade={grade as Grade | undefined}
+          critical={critN}
+          warnings={warnings}
+          passed={latest.passed}
+          attention={ovFindings.slice(0, 4)}
+          onViewFix={(f) => router.push(`/finding?scan=${latest.id}&id=${f.id}`)}
+          onSeeAll={() => goTab('todo', latest.id)}
+        />
+      )}
+
       {/* Scan history */}
       <Card flat className="py-7 border-t border-border">
         <h2 className="text-[16px] font-medium pb-3" style={{ borderBottom: '1px solid var(--color-border)' }}>Scan history</h2>
@@ -296,7 +343,8 @@ export default function AppDetailScreen() {
       </>
       )}
 
-      {tab === 'findings' && <FindingsScreen app={app} initialScanId={params.get('scan')} />}
+      {tab === 'findings' && <FindingsScreen app={app} initialScanId={params.get('scan')} onWhatToDo={() => goTab('todo', params.get('scan') ?? latest?.id)} />}
+      {tab === 'todo' && <TodoScreen app={app} initialScanId={params.get('scan')} />}
       {tab === 'monitoring' && <MonitoringScreen app={app} records={records} />}
 
       {repoOpen && (

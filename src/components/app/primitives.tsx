@@ -201,6 +201,15 @@ export function SeverityChip({ sev, className }: { sev: Sev; className?: string 
   );
 }
 
+/* ---- Severity as plain colored text (no background tint) ------------------ */
+export function SeverityText({ sev, className }: { sev: Sev; className?: string }) {
+  return (
+    <span className={cn('text-[11px] font-semibold tracking-[0.06em]', className)} style={{ color: SEV_COLOR[sev] }}>
+      {sev}
+    </span>
+  );
+}
+
 /* ---- "NEW" badge (freshly-introduced finding) ---------------------------- */
 // Same red tint as a critical severity, so "new" reads as attention-grabbing and
 // looks identical across the Monitoring card, Alerts feed, and finding detail.

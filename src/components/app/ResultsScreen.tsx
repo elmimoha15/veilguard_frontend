@@ -12,7 +12,8 @@ import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } f
 import { toUiFinding, toUiCounts, GRADE_COLOR } from '@/lib/adapters';
 import { scanLabel, repoDisplay } from '@/lib/hooks';
 import { scanFailure, SUPPORT_LINK, type ScanKind } from '@/lib/scanError';
-import { SEV_TINT, SEV_COLOR } from './data';
+import GradeExplainer from './GradeExplainer';
+import { SEV_TINT, SEV_COLOR, type Grade } from './data';
 
 const HERO: Record<string, { label: string; labelColor: string; headline: string }> = {
   A: { label: 'LOOKING GOOD', labelColor: '#1F9D57', headline: 'Your app looks safe to charge money.' },
@@ -155,6 +156,13 @@ export default function ResultsScreen() {
             )}
           </div>
         </div>
+
+        {/* why you got this grade + what's protecting you (fixes stay locked below) */}
+        {!running && grade && (
+          <div className="mt-8">
+            <GradeExplainer grade={grade as Grade} critical={counts.critical} warnings={counts.warnings} passed={scan?.passed} />
+          </div>
+        )}
 
         {/* findings with locked fixes */}
         <div className="mt-6 flex flex-col divide-y divide-border border-y border-border">
