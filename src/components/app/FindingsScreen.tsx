@@ -9,7 +9,6 @@ import { useAuth, isPaid } from '@/lib/auth';
 import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
 import PassedChecks from './PassedChecks';
-import ScanUsage from './ScanUsage';
 import { EmptyState } from './EmptyState';
 import { SEV_COLOR, SEV_TINT, STATUS_META } from './data';
 import { SeverityChip, PillButton, Card, SeverityTiles } from './primitives';
@@ -98,9 +97,6 @@ export default function FindingsScreen({ app, initialScanId, onWhatToDo }: { app
       <div className="mb-4">
         <ScanPicker scans={site.scans} selectedId={selected.id} onSelect={setViewScanId} />
       </div>
-
-      {/* scans-this-month usage (account-wide) */}
-      {profile?.usage && <Card flat className="py-5 border-t border-border"><ScanUsage /></Card>}
 
       {/* summary card: counts (critical + warnings first) + copy all fixes */}
       <Card flat className="py-7 border-t border-border">

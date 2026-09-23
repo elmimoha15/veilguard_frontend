@@ -16,6 +16,7 @@ import { BrandLogo } from '@/components/ui/BrandLogo';
 import Logo from '@/components/ui/Logo';
 import ActionButton, { ActionInner } from '@/components/ui/ActionButton';
 import { GradeChip } from './primitives';
+import ScanUsage from './ScanUsage';
 import type { Grade } from './data';
 
 const ScanGlyph = () => (
@@ -250,7 +251,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <span className="text-[14px] shrink-0" style={{ color: '#A3A3A3' }}>
             Veilguard <span className="mx-1">/</span> <span className="text-ink font-medium">{crumb}</span>
           </span>
-
+          <div className="ml-auto flex items-center shrink-0"><ScanUsage /></div>
         </header>
 
         <main className="flex-1 px-[18px] min-[900px]:px-[34px] pt-[26px] min-[900px]:pt-[44px] pb-[60px] min-[900px]:pb-[80px]">

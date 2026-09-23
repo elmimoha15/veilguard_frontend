@@ -7,7 +7,6 @@ import { useApp } from './state';
 import { useAuth } from '@/lib/auth';
 import { api, type Txn } from '@/lib/api';
 import { Card, SectionLabel, PageHeading, PillButton } from './primitives';
-import ScanUsage from './ScanUsage';
 import ActionButton from '@/components/ui/ActionButton';
 
 const BoltIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" /></svg>;
@@ -138,7 +137,6 @@ export default function BillingScreen() {
               {isGuard ? 'Up to 30 scans a month, every fix, auto re-scan on deploy, alerts.' : 'Unlimited URL scans, upgrade for code scans, connections, monitoring and every fix.'}
             </p>
             {renewLine && <div className="font-mono text-[12px] mt-3" style={{ color: '#A3A3A3' }}>{renewLine}</div>}
-            <ScanUsage className="mt-5 max-w-[320px]" />
           </div>
           {isGuard && (
             <div className="flex flex-col gap-[9px] shrink-0">
