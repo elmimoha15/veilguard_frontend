@@ -307,9 +307,11 @@ export default function AppDetailScreen() {
           critical={critN}
           warnings={warnings}
           passed={latest.passed}
-          attention={ovFindings.slice(0, 4)}
+          attention={ovFindings.slice(0, 5)}
+          paid={paid}
           onViewFix={(f) => router.push(`/finding?scan=${latest.id}&id=${f.id}`)}
           onSeeAll={() => goTab('todo', latest.id)}
+          onUpgrade={() => router.push(billingHref())}
         />
       )}
 

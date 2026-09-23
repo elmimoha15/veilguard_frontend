@@ -49,14 +49,19 @@ function CheckIcon() {
   );
 }
 
+/** Free plan previews the two worst findings; the rest are locked behind Guard. */
+const FREE_LIMIT = 2;
+
 export default function GradeExplainer({
   grade,
   critical,
   warnings,
   passed = [],
   attention = [],
+  paid = false,
   onViewFix,
   onSeeAll,
+  onUpgrade,
 }: {
   grade?: Grade;
   critical: number;
@@ -64,10 +69,14 @@ export default function GradeExplainer({
   passed?: PassedCheck[];
   /** Top open findings, worst-first (already sliced by the caller). */
   attention?: UiFinding[];
+  /** Guard unlocks the full attention list; free sees the two worst + locked rows. */
+  paid?: boolean;
   /** Route to a finding's fix (omit to hide "View fix", e.g. on the locked reveal). */
   onViewFix?: (f: UiFinding) => void;
   /** "See what to do" affordance under the attention list. */
   onSeeAll?: () => void;
+  /** Upgrade CTA shown under the locked rows for free users. */
+  onUpgrade?: () => void;
 }) {
   if (!grade) return null;
   const passFirst = grade === 'A' || grade === 'B';
@@ -97,11 +106,16 @@ export default function GradeExplainer({
     </div>
   );
 
+  // Free users preview the two worst; the rest are locked behind Guard, mirroring
+  // the findings list and the dashboard's "Fix these first".
+  const visibleAttn = paid ? attention : attention.slice(0, FREE_LIMIT);
+  const lockedAttn = paid ? [] : attention.slice(FREE_LIMIT);
+
   const attnBlock = attention.length > 0 && (
     <div>
       <h3 className="text-[13px] font-semibold tracking-[0.02em]" style={{ color: '#B45309' }}>What needs attention</h3>
       <div className="flex flex-col mt-1">
-        {attention.map((f, i) => (
+        {visibleAttn.map((f, i) => (
           <div key={f.id} className="flex items-start gap-3 py-[11px]" style={{ borderTop: i === 0 ? undefined : '1px solid #F4F4F4' }}>
             <div className="flex-1 min-w-0">
               <SeverityText sev={f.sev} />
@@ -116,8 +130,24 @@ export default function GradeExplainer({
             )}
           </div>
         ))}
+        {lockedAttn.map((f, i) => (
+          <div key={`lock-${f.id}`} className="flex items-start gap-3 py-[11px]" style={{ borderTop: (visibleAttn.length === 0 && i === 0) ? undefined : '1px solid #F4F4F4' }}>
+            <div className="flex-1 min-w-0">
+              <SeverityText sev={f.sev} />
+              <div className="blur-[5px] select-none text-[14px] font-medium mt-[3px]">{f.title}</div>
+            </div>
+            <span className="shrink-0 self-center inline-flex items-center gap-[6px] text-[12.5px] font-semibold text-ink">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="1.8" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="1.8" /></svg>
+              Guard
+            </span>
+          </div>
+        ))}
       </div>
-      {onSeeAll && (
+      {lockedAttn.length > 0 ? (
+        <button onClick={onUpgrade} className="mt-[10px] vg-press cursor-pointer text-[13px] font-medium text-ink hover:opacity-70 transition-opacity">
+          Unlock the other {lockedAttn.length} with Guard
+        </button>
+      ) : onSeeAll && (
         <button onClick={onSeeAll} className="mt-[10px] vg-press cursor-pointer text-[13px] font-medium text-muted hover:text-ink transition-colors">See what to do</button>
       )}
     </div>

@@ -7,6 +7,8 @@ import { subscribeScan, subscribeFindings, aiUsageLabel, type ScanDoc, type Back
 import { toUiFinding, toUiCounts } from '@/lib/adapters';
 import { scanLabel, repoDisplay, useApps } from '@/lib/hooks';
 import { api } from '@/lib/api';
+import { useAuth, isPaid } from '@/lib/auth';
+import { billingHref } from '@/lib/url';
 import { useApp } from './state';
 import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/scanError';
 import { type Grade } from './data';
@@ -45,6 +47,8 @@ export default function ScanResultScreen() {
   };
 
   const { toast, setModal, setNewAppUrl } = useApp();
+  const { profile } = useAuth();
+  const paid = isPaid(profile);
   const [scan, setScan] = useState<ScanDoc | null>(null);
   const [raw, setRaw] = useState<(BackendFinding & { id: string })[]>([]);
   const [scanMissing, setScanMissing] = useState(false);
@@ -170,8 +174,10 @@ export default function ScanResultScreen() {
         warnings={counts.warnings}
         passed={scan.passed}
         attention={top}
+        paid={paid}
         onViewFix={(f) => router.push(`/finding?scan=${scanId}&id=${f.id}`)}
         onSeeAll={openFindings}
+        onUpgrade={() => router.push(billingHref())}
       />
     </div>
   );
