@@ -14,6 +14,7 @@ import { Card, PageHeading, PillButton, Segmented, AreaTrend, Donut, Sparkline, 
 import { useAuth, isPaid } from '@/lib/auth';
 import ActionButton from '@/components/ui/ActionButton';
 import UpgradeReminder from './UpgradeReminder';
+import ScanUsage from './ScanUsage';
 import { EmptyState } from './EmptyState';
 import { AppSelect } from './AppSelect';
 import { Spinner } from './ui';
@@ -250,6 +251,7 @@ export default function DashboardScreen() {
       <UpgradeReminder />
       <PageHeading title="Overview" subtitle="Your progress and what to do next." />
       <OverviewScanCard />
+      {profile?.usage && <Card className="p-6 mb-5"><ScanUsage /></Card>}
 
       {loading ? (
         <div className="grid gap-5 min-[1080px]:grid-cols-[minmax(0,1fr)_316px]">
