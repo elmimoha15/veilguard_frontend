@@ -11,6 +11,8 @@ import {
   linkWithPopup,
   linkWithCredential,
   fetchSignInMethodsForEmail,
+  reauthenticateWithPopup,
+  reauthenticateWithRedirect,
   GoogleAuthProvider,
   GithubAuthProvider,
   OAuthCredential,
@@ -21,6 +23,7 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { api } from './api';
+import IdleMonitor from '@/components/auth/IdleMonitor';
 
 /** OAuth clients where redirect is safe: NOT localhost/emulator. `signInWithRedirect`
  *  returns to `authDomain` (veilguard.dev), great in prod, broken on localhost,  *  so we use redirect in prod and keep the popup locally. */
@@ -58,32 +61,106 @@ export function consumeAuthError(): string {
   return '';
 }
 
-/** Max session age from the last real sign-in before we force re-login. Tunable
- *  security knob, 7 days balances safety with not nagging users to re-log-in. */
+/* ── Session security constants (tunable) ─────────────────────────────────── */
+/** Max session age from the last real sign-in before we force re-login. 7 days
+ *  balances safety with not nagging users. */
 export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+/** Idle (no-activity) timeout: sign out after this long with no interaction. */
+export const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+/** How long before the idle cutoff to warn the user ("stay signed in?"). */
+export const IDLE_WARN_MS = 2 * 60 * 1000; // 2 minutes
+/** A sensitive action requires a sign-in no older than this (step-up reauth). */
+export const REAUTH_MAX_AGE_MS = 10 * 60 * 1000; // 10 minutes
 /** Hard cap on how long an OAuth popup may run before we stop waiting (anti-hang). */
 const POPUP_TIMEOUT_MS = 180_000;
-const SESSION_EXPIRED_KEY = 'vg_session_expired';
 
-/** Mark the session expired (for the login banner) and sign out. Signing out
- *  drives onAuthStateChanged(null) → AuthGate routes to /login. */
-export async function expireSession(): Promise<void> {
-  try { window.localStorage.setItem(SESSION_EXPIRED_KEY, '1'); } catch { /* storage off */ }
+const SIGNOUT_REASON_KEY = 'vg_signout_reason'; // 'expired' | 'inactivity'
+const REAUTH_PENDING_KEY = 'vg_reauth_pending'; // set before a reauth redirect
+export type SignoutReason = 'expired' | 'inactivity';
+
+/** Keys this app writes to Web Storage, cleared on sign-out so nothing leaks
+ *  between accounts on a shared machine. (Firebase clears its own token store.) */
+const CLEAR_ON_LOGOUT = [
+  'vg_profile', 'vg_last_provider', 'vg_auth_which', 'vg_pending_link',
+  'vg_pending_scan', 'vg_auth_error', 'vg_last_activity',
+];
+function clearStoredAuthState(): void {
+  for (const k of CLEAR_ON_LOGOUT) {
+    try { window.localStorage.removeItem(k); } catch { /* storage off */ }
+    try { window.sessionStorage.removeItem(k); } catch { /* storage off */ }
+  }
+}
+
+/** Mark why we're signing out (for the login banner) and sign out. Signing out
+ *  drives onAuthStateChanged(null) → AuthGate routes to /login. Clears our own
+ *  stored keys too. */
+export async function expireSession(reason: SignoutReason = 'expired'): Promise<void> {
+  try { window.localStorage.setItem(SIGNOUT_REASON_KEY, reason); } catch { /* storage off */ }
+  clearStoredAuthState();
   try { await signOut(auth()); } catch { /* already gone */ }
 }
-/** Read-and-clear the "session expired" flag (login page shows the message once). */
-export function consumeSessionExpired(): boolean {
+/** Read-and-clear the sign-out reason (login page shows the right message once). */
+export function consumeSignoutReason(): SignoutReason | null {
   try {
-    if (window.localStorage.getItem(SESSION_EXPIRED_KEY) === '1') {
-      window.localStorage.removeItem(SESSION_EXPIRED_KEY);
-      return true;
+    const v = window.localStorage.getItem(SIGNOUT_REASON_KEY);
+    if (v === 'expired' || v === 'inactivity') {
+      window.localStorage.removeItem(SIGNOUT_REASON_KEY);
+      return v;
     }
   } catch { /* storage off */ }
-  return false;
+  return null;
+}
+/** Back-compat: true when the last sign-out was a session expiry. */
+export function consumeSessionExpired(): boolean {
+  return consumeSignoutReason() === 'expired';
 }
 function sessionTooOld(u: User): boolean {
   const t = u.metadata?.lastSignInTime ? Date.parse(u.metadata.lastSignInTime) : NaN;
   return Number.isFinite(t) && Date.now() - t > SESSION_MAX_AGE_MS;
+}
+
+/**
+ * Ensure the user signed in within REAUTH_MAX_AGE_MS; otherwise force a fresh
+ * sign-in (step-up reauth) before a sensitive action. Mirrors our sign-in:
+ * popup on localhost, full-page redirect in prod.
+ * Returns true when the caller may proceed NOW (already fresh, or popup reauth
+ * succeeded); false when a redirect was started (the page navigates away and the
+ * user re-confirms on return) or reauth failed.
+ */
+export async function ensureFreshLogin(maxAgeMs: number = REAUTH_MAX_AGE_MS): Promise<boolean> {
+  const u = auth().currentUser;
+  if (!u) return false;
+  try {
+    const res = await u.getIdTokenResult();
+    const authMs = Date.parse(res.authTime);
+    if (Number.isFinite(authMs) && Date.now() - authMs <= maxAgeMs) return true; // already fresh
+  } catch { /* fall through to reauth */ }
+
+  const which = getLastProvider() ?? 'google';
+  const provider = newProvider(which);
+  if (isRedirectEnv()) {
+    try { window.sessionStorage.setItem(REAUTH_PENDING_KEY, '1'); } catch { /* storage off */ }
+    await reauthenticateWithRedirect(u, provider); // navigates away
+    return false;
+  }
+  try {
+    await withPopupTimeout(reauthenticateWithPopup(u, provider));
+    await u.getIdToken(true); // force-refresh so the new auth_time reaches the backend
+    return true;
+  } catch {
+    return false;
+  }
+}
+/** Read-and-clear the "just reauthenticated via redirect" flag (so the UI can
+ *  prompt the user to re-confirm the action they started). */
+export function consumeReauthDone(): boolean {
+  try {
+    if (window.sessionStorage.getItem(REAUTH_PENDING_KEY) === '1') {
+      window.sessionStorage.removeItem(REAUTH_PENDING_KEY);
+      return true;
+    }
+  } catch { /* storage off */ }
+  return false;
 }
 
 /** Race a promise against a timeout so a hung/closed OAuth popup can't spin forever. */
@@ -412,12 +489,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await refreshProfile();
   }, [refreshProfile]);
   const logout = useCallback(async () => {
+    clearStoredAuthState();
     await signOut(auth());
   }, []);
 
   return (
     <Ctx.Provider value={{ user, profile, loading, refreshProfile, google, github, link, logout }}>
       {children}
+      {user && <IdleMonitor />}
     </Ctx.Provider>
   );
 }

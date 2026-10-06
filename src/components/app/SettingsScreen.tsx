@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from './state';
-import { useAuth, isPaid, getLastProvider } from '@/lib/auth';
+import { useAuth, isPaid, getLastProvider, ensureFreshLogin, consumeReauthDone } from '@/lib/auth';
 import { billingHref } from '@/lib/url';
 import { SUPPORT_MAILTO } from '@/content/site';
 import { api } from '@/lib/api';
@@ -57,6 +57,13 @@ export default function SettingsScreen() {
   const [confirmText, setConfirmText] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [reportBusy, setReportBusy] = useState(false);
+  const [disconnectTarget, setDisconnectTarget] = useState<Provider | null>(null);
+  const [revoking, setRevoking] = useState(false);
+
+  // Returning from a step-up reauth redirect: prompt the user to re-confirm.
+  useEffect(() => {
+    if (consumeReauthDone()) toast('You’re verified — please confirm that action again.', '#16A34A');
+  }, [toast]);
 
   const [notif, setNotif] = useState<Record<NotifKey, boolean>>({ ...DEFAULT_NOTIF, ...(profile?.notifications ?? {}) });
   useEffect(() => { if (profile?.notifications) setNotif((n) => ({ ...n, ...profile.notifications })); }, [profile?.notifications]);
@@ -78,14 +85,26 @@ export default function SettingsScreen() {
   };
 
   const doDelete = async () => {
+    // Step-up reauth: a destructive action needs a fresh sign-in. On localhost this
+    // reauths in a popup and proceeds; in prod it redirects and the user re-confirms.
+    if (!(await ensureFreshLogin())) { setConfirmOpen(false); return; }
     setDeleting(true);
     const res = await api.deleteAccount();
     if (res.ok) { await logout().catch(() => {}); router.replace('/'); return; }
     setDeleting(false);
+    if (res.data?.code === 'reauth_required') { await ensureFreshLogin(); return; }
     toast(res.data?.error || 'Could not delete account, try again', '#DC2626');
   };
 
   const doLogout = async () => { await logout().catch(() => {}); router.replace('/login'); };
+  const doRevokeAll = async () => {
+    setRevoking(true);
+    const res = await api.revokeSessions();
+    setRevoking(false);
+    if (!res.ok) { toast(res.data?.error || 'Could not sign out other devices, try again', '#DC2626'); return; }
+    await logout().catch(() => {});
+    router.replace('/login');
+  };
   const provider = getLastProvider();
   const providerLabel = provider === 'github' ? 'GitHub' : provider === 'google' ? 'Google' : 'Google or GitHub';
 
@@ -143,9 +162,12 @@ export default function SettingsScreen() {
   };
 
   const disconnect = async (p: Provider) => {
+    setDisconnectTarget(null);
+    if (!(await ensureFreshLogin())) return; // step-up reauth before disconnecting
     setBusy(p);
     const res = await api.disconnect(p);
     if (res.ok) { await refreshProfile(); toast(`${p === 'github' ? 'GitHub' : 'Supabase'} disconnected`, '#D97706'); }
+    else if (res.data?.code === 'reauth_required') { setBusy(null); await ensureFreshLogin(); return; }
     else toast(res.data?.error || 'Could not disconnect', '#DC2626');
     setBusy(null);
   };
@@ -187,7 +209,8 @@ export default function SettingsScreen() {
           <p className="text-[12.5px] mt-4 leading-[1.55]" style={{ color: '#A3A3A3' }}>
             To use a different email, sign in with that Google or GitHub account. Need a hand? <a href={SUPPORT_MAILTO} className="underline hover:text-ink transition-colors">Contact support</a>.
           </p>
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end gap-[10px]">
+            <PillButton variant="outline" onClick={doRevokeAll} disabled={revoking}>{revoking ? 'Signing out…' : 'Sign out of all devices'}</PillButton>
             <PillButton variant="outline" onClick={doLogout} icon={<LogoutIcon />}>Sign out</PillButton>
           </div>
         </Card>
@@ -210,7 +233,7 @@ export default function SettingsScreen() {
                     </div>
                   </div>
                   {connected ? (
-                    <PillButton variant="outline" onClick={() => (stale ? connect(c.key) : disconnect(c.key))} disabled={busy === c.key}>
+                    <PillButton variant="outline" onClick={() => (stale ? connect(c.key) : setDisconnectTarget(c.key))} disabled={busy === c.key}>
                       {busy === c.key ? '…' : stale ? 'Reconnect' : 'Disconnect'}
                     </PillButton>
                   ) : paid ? (
@@ -246,6 +269,22 @@ export default function SettingsScreen() {
           </div>
         </div>
       </div>
+
+      {disconnectTarget && typeof document !== 'undefined' && createPortal(
+        <div onClick={() => setDisconnectTarget(null)} className="fixed inset-0 z-[300] flex items-center justify-center p-6 vg-fade" style={{ background: 'rgba(10,10,10,.4)' }}>
+          <div role="dialog" aria-label="Disconnect provider" onClick={(e) => e.stopPropagation()} className="w-full max-w-[420px] bg-card rounded-[16px] p-7 vg-pop" style={{ boxShadow: 'var(--shadow-modal)' }}>
+            <h2 className="font-medium text-[19px] tracking-[-0.02em]">Disconnect {disconnectTarget === 'github' ? 'GitHub' : 'Supabase'}?</h2>
+            <p className="text-[14.5px] mt-2 leading-[1.55]" style={{ color: '#737373' }}>
+              Veilguard will remove its {disconnectTarget === 'github' ? 'read-only repo access' : 'read-only project access'} and delete the stored connection. Scans that rely on it won’t run until you reconnect.
+            </p>
+            <div className="flex gap-[10px] mt-5">
+              <PillButton variant="cancel" onClick={() => setDisconnectTarget(null)} className="flex-1 h-[44px]">Cancel</PillButton>
+              <ActionButton variant="danger-solid" onClick={() => disconnect(disconnectTarget)} className="flex-1 h-[44px]">Disconnect</ActionButton>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
 
       {confirmOpen && typeof document !== 'undefined' && createPortal(
         <div onClick={() => !deleting && setConfirmOpen(false)} className="fixed inset-0 z-[300] flex items-center justify-center p-6 vg-fade" style={{ background: 'rgba(10,10,10,.4)' }}>

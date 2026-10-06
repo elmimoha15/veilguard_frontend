@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSessionExpired, consumeAuthError, pendingRedirect, isRedirectEnv, type LastProvider } from '@/lib/auth';
+import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSignoutReason, consumeAuthError, pendingRedirect, isRedirectEnv, type LastProvider } from '@/lib/auth';
 import GoogleOneTap from '@/components/auth/GoogleOneTap';
 import FullScreenLoader from '@/components/auth/FullScreenLoader';
 import { api } from '@/lib/api';
@@ -42,7 +42,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   // Gentle notice when the user landed here because their session expired, and
   // surface any error returned from a redirect sign-in (getRedirectResult).
   useEffect(() => {
-    if (consumeSessionExpired()) setNotice('Your session expired, please sign in again.');
+    const reason = consumeSignoutReason();
+    if (reason === 'inactivity') setNotice('Signed out due to inactivity.');
+    else if (reason === 'expired') setNotice('Your session expired, please sign in again.');
     const redirErr = consumeAuthError();
     if (redirErr) setError(redirErr);
   }, []);

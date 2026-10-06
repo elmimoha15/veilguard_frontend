@@ -257,16 +257,20 @@ export const api = {
   connectSupabase: (policiesPath: string, projectRef?: string) =>
     call<{ connected?: string; error?: string }>('POST', '/connectSupabase', { body: { policiesPath, projectRef }, auth: 'required' }),
   disconnect: (provider: 'github' | 'supabase') =>
-    call<{ error?: string }>('POST', '/disconnect', { body: { provider }, auth: 'required' }),
+    call<{ error?: string; code?: string }>('POST', '/disconnect', { body: { provider }, auth: 'required' }),
 
   /** Permanently delete the signed-in account + all its data. Irreversible. */
   deleteAccount: () =>
-    call<{ ok?: boolean; error?: string }>('POST', '/account/delete', { auth: 'required' }),
+    call<{ ok?: boolean; error?: string; code?: string }>('POST', '/account/delete', { auth: 'required' }),
+
+  /** Revoke all of this account's sessions ("sign out of all devices"). */
+  revokeSessions: () =>
+    call<{ ok?: boolean; error?: string }>('POST', '/auth/revokeSessions', { auth: 'required' }),
 
   /** Permanently delete ONE app + all its scans/findings/fixes/monitoring. Irreversible.
    *  Identify the app by any of appId / githubRepo / url. Connections are kept. */
   deleteApp: (target: { appId?: string; githubRepo?: string; url?: string }) =>
-    call<{ ok?: boolean; error?: string }>('POST', '/app/delete', { body: target, auth: 'required' }),
+    call<{ ok?: boolean; error?: string; code?: string }>('POST', '/app/delete', { body: target, auth: 'required' }),
 
   /** Download a branded PDF security report for one scan (owner-only, entitlement-gated). */
   downloadReport: (scanId: string) => downloadPdf('/scanReport', { scanId }, 'veilguard-report.pdf'),
@@ -292,7 +296,7 @@ export const api = {
 
   /** Schedule cancellation at period end (keeps Guard until currentPeriodEnd). */
   billingCancel: () =>
-    call<{ ok?: boolean; error?: string }>('POST', '/billingCancel', { auth: 'required' }),
+    call<{ ok?: boolean; error?: string; code?: string }>('POST', '/billingCancel', { auth: 'required' }),
 
   /** Reverse a scheduled cancellation. */
   billingReactivate: () =>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useApp } from './state';
 import { useApps, timeAgo, repoDisplay, type App } from '@/lib/hooks';
 import { api } from '@/lib/api';
+import { ensureFreshLogin } from '@/lib/auth';
 import type { ScanDoc } from '@/lib/scans';
 import { PageHeading, GradeSquare, PillButton } from './primitives';
 import ActionButton from '@/components/ui/ActionButton';
@@ -54,6 +55,7 @@ export default function AppsScreen() {
 
   const doDelete = async () => {
     if (!toDelete || confirmText.trim() !== confirmName) return;
+    if (!(await ensureFreshLogin())) { setToDelete(null); return; } // step-up reauth
     setDeleting(true);
     const res = await api.deleteApp({
       appId: toDelete.derived ? undefined : toDelete.key,
@@ -61,6 +63,7 @@ export default function AppsScreen() {
       url: toDelete.url || (toDelete.githubRepo ? undefined : toDelete.host),
     });
     setDeleting(false);
+    if (!res.ok && res.data?.code === 'reauth_required') { await ensureFreshLogin(); return; }
     if (!res.ok) { toast(res.data.error || 'Could not delete the app', '#DC2626'); return; }
     setToDelete(null); setConfirmText('');
     toast('App deleted', '#0A0A0A');

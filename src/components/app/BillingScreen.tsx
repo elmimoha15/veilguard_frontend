@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'next/navigation';
 import { useApp } from './state';
-import { useAuth } from '@/lib/auth';
+import { useAuth, ensureFreshLogin } from '@/lib/auth';
 import { api, type Txn } from '@/lib/api';
 import { Card, SectionLabel, PageHeading, PillButton } from './primitives';
 import ActionButton from '@/components/ui/ActionButton';
@@ -90,8 +90,11 @@ export default function BillingScreen() {
   }, [refreshProfile]);
 
   const scheduleCancel = async (msg: string) => {
-    setBusy('cancel'); setConfirmOpen(false); setDowngradeOpen(false);
+    setConfirmOpen(false); setDowngradeOpen(false);
+    if (!(await ensureFreshLogin())) return; // step-up reauth before cancelling
+    setBusy('cancel');
     const res = await api.billingCancel();
+    if (!res.ok && res.data?.code === 'reauth_required') { setBusy(null); await ensureFreshLogin(); return; }
     if (!res.ok) { setBusy(null); toast(res.data.error || 'Could not update your plan, try again', '#DC2626'); return; }
     await pollUntil(true); setBusy(null); toast(msg, '#16A34A');
   };
