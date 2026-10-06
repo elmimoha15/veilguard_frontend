@@ -9,6 +9,7 @@ import { useAuth, isPaid } from '@/lib/auth';
 import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
 import PassedChecks from './PassedChecks';
+import ScanNotes from './ScanNotes';
 import { EmptyState } from './EmptyState';
 import { SEV_COLOR, SEV_TINT, STATUS_META, CONF_META, CONF_TINT } from './data';
 import { SeverityChip, PillButton, Card, SeverityTiles } from './primitives';
@@ -171,6 +172,9 @@ export default function FindingsScreen({ app, initialScanId, onWhatToDo }: { app
 
       {/* What's solid — the checks this scan passed (shown to everyone, never gated). */}
       {selected.status === 'done' && <PassedChecks passed={selected.passed} />}
+
+      {/* Informational notes about how the scan ran (e.g. history truncated). */}
+      {selected.status === 'done' && <ScanNotes notes={selected.notes} />}
     </div>
   );
 }

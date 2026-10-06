@@ -14,6 +14,7 @@ import { scanFailure, startFailure, SUPPORT_LINK, type ScanKind } from '@/lib/sc
 import { type Grade } from './data';
 import { Card, PillButton, SeverityChip, GradeSquare, SectionLabel, SeverityTiles } from './primitives';
 import DeepScanHints from './DeepScanHints';
+import ScanNotes from './ScanNotes';
 import GradeExplainer from './GradeExplainer';
 
 /**
@@ -165,6 +166,9 @@ export default function ScanResultScreen() {
 
       {/* stack-aware nudges (connect Supabase / Firebase-rules note) */}
       <DeepScanHints scan={scan} />
+
+      {/* informational notes about how the scan ran (e.g. history truncated) */}
+      <ScanNotes notes={scan.notes} />
 
       {/* Why you got this grade: what's protecting you + what needs attention. */}
       <GradeExplainer

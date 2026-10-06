@@ -116,6 +116,8 @@ export interface ScanDoc {
   counts?: { critical: number; high: number; medium: number; low: number; info: number; passed: number };
   /** Security checks the app passed (positive results) — shown as "What's solid". */
   passed?: PassedCheck[];
+  /** Informational notes about how the scan ran (e.g. "History too large…"). */
+  notes?: string[];
   error?: string;
   errorReason?: 'timeout' | 'unreachable' | 'empty-upload' | 'not-found' | 'needs-reconnect' | 'engine-error';
   stack?: { supabase?: boolean; firebase?: boolean; firebaseRulesInRepo?: boolean };
