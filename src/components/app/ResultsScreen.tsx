@@ -196,20 +196,27 @@ export default function ResultsScreen() {
             {preview.length === 0 ? (
               <p className="py-5 text-center text-[15px] text-muted">No issues found. Nice work.</p>
             ) : (
-              preview.map((f) => (
+              preview.map((f, i) => {
+                // Only the top issue is readable; the next ones tease (blurred).
+                const hidden = i > 0;
+                return (
                 <Link key={f.id} href={user ? '#' : signupHref}
                   onClick={(e) => { if (user) { e.preventDefault(); void handoff(); } }}
                   className="group flex items-start gap-3 sm:gap-4 py-[11px] border-b border-border">
                   <div className="flex-1 min-w-0">
                     <SeverityText sev={f.sev} />
-                    <div className="font-medium text-[15.5px] text-ink mt-[3px] truncate">{f.title}</div>
-                    <div className="hidden sm:block text-[13.5px] text-muted mt-[2px] truncate">{f.what}</div>
+                    <div aria-hidden={hidden} className={hidden ? 'select-none blur-[5px]' : undefined}>
+                      <div className="font-medium text-[15.5px] text-ink mt-[3px] truncate">{f.title}</div>
+                      <div className="hidden sm:block text-[13.5px] text-muted mt-[2px] truncate">{f.what}</div>
+                    </div>
+                    {hidden && <span className="sr-only">Hidden issue, sign up to see it</span>}
                   </div>
                   <span className="shrink-0 mt-[9px] sm:mt-[18px] inline-flex items-center gap-[6px] text-[13.5px] font-medium text-ink group-hover:underline">
                     <LockIcon /><span className="hidden sm:inline">View fix</span>
                   </span>
                 </Link>
-              ))
+                );
+              })
             )}
             {more > 0 && (
               <p className="pt-3 text-center text-[14px] text-muted">
