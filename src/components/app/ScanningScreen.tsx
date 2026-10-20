@@ -90,44 +90,67 @@ export default function ScanningScreen() {
   //    reveal with the "go to dashboard" hand-off into the app).
   //  - a signed-in in-app scan → the ONE-TIME in-shell result page, and make the
   //    scanned host the active site so the whole app follows it.
+  // Wait a beat after done so the number visibly lands on 100 before we leave.
   useEffect(() => {
     if (loading || scan?.status !== 'done' || !scanId || !scan) return;
-    if (user && flow !== 'onboarding') {
-      setActiveSite(scanLabel(scan));
-      router.replace(`/scan?scan=${scanId}`);
-    } else {
-      router.replace(`/results?scanId=${scanId}`);
-    }
+    const t = setTimeout(() => {
+      if (user && flow !== 'onboarding') {
+        setActiveSite(scanLabel(scan));
+        router.replace(`/scan?scan=${scanId}`);
+      } else {
+        router.replace(`/results?scanId=${scanId}`);
+      }
+    }, 650);
+    return () => clearTimeout(t);
   }, [scan?.status, scanId, scan, user, loading, flow, setActiveSite, router]);
 
-  // Real progress from the worker. A deep scan clones the repo first (several
-  // seconds) before it emits ANY progress. During that window we hold the number
-  // modestly (soft cap ~14%) so it reads "just started, fetching" rather than
-  // faking near-completion; once real progress arrives it jumps forward (never
-  // backwards) toward 96%, then snaps to 100 on done. Phase lighting is driven by
-  // REAL progress (below), so the steps stay honest.
+  // Smooth, always-moving progress. The worker's real progress arrives in bursts
+  // (often nothing for the first seconds of a URL scan), so on its own the number
+  // stalls and leaps, which reads as broken. Instead we show a time-based estimate
+  // (fast at first, easing toward 92%) blended with real progress, eased every
+  // frame so the number keeps ticking up and never goes backwards. It snaps
+  // through to 100 on done.
   const realPct = scan?.progress ? Math.min(100, Math.round((scan.progress.done / Math.max(1, scan.progress.total)) * 100)) : 0;
   const finished = scan?.status === 'done';
   const isUpload = scan?.type === 'upload';
   // Deep + upload are both white-box "code" scans (same phase feel + routing).
   const isDeep = scan?.type === 'deep' || isUpload;
+  const failed = scan?.status === 'error';
+  const createdAt = scan?.createdAt;
   useEffect(() => {
-    if (finished) { setDisplay(100); return; }
-    if (!scanId || scan?.status === 'error') return;
-    const id = setInterval(() => {
-      const softCap = realPct > 0 ? 96 : 14; // pre-progress (cloning) stays low
+    if (!scanId || failed) return;
+    const mountedAt = performance.now();
+    const startedMs = createdAt ? Date.parse(createdAt) : NaN;
+    // A slow URL site still reaches ~90% by ~30s; code scans take minutes.
+    const tau = isDeep ? 90_000 : 10_000;
+    let raf = 0;
+    let last = performance.now();
+    // This effect restarts whenever real progress changes, so "now" here is when
+    // the worker last reported. From there keep creeping toward 97 so a long
+    // final step never parks the number.
+    const realAt = performance.now();
+    const realBase = realPct * 0.97;
+    const tick = (now: number) => {
+      const dt = Math.min(100, now - last);
+      last = now;
+      const elapsed = Number.isFinite(startedMs) ? Math.max(0, Date.now() - startedMs) : now - mountedAt;
+      const estimate = 92 * (1 - Math.exp(-elapsed / tau));
+      const fromReal = realBase > 0 ? realBase + (97 - realBase) * (1 - Math.exp(-(now - realAt) / (tau * 0.35))) : 0;
+      const target = finished ? 100 : Math.min(97, Math.max(estimate, fromReal));
       setDisplay((d) => {
-        const next = d + Math.max(0.3, (softCap - d) * 0.08);
-        return Math.max(d, realPct, Math.min(softCap, next));
+        if (d >= target) return d;
+        // Ease toward the target with a floor speed (never looks frozen) and a
+        // ceiling speed (a burst of real progress glides instead of leaping).
+        const ease = (target - d) * (finished ? 0.12 : 0.05);
+        const floor = (finished ? 0.08 : 0.004) * dt; // %/ms
+        const ceiling = (finished ? 0.25 : 0.04) * dt; // 40%/s while running
+        return Math.min(target, d + Math.min(ceiling, Math.max(ease, floor)));
       });
-    }, 150);
-    return () => clearInterval(id);
-  }, [finished, realPct, scanId, scan?.status]);
-  // Resuming a scan that's already partway (e.g. reopened from the Deep Scan card
-  // at 50%): jump the display straight to the real percent so it never flashes 0.
-  useEffect(() => {
-    if (realPct > 0) setDisplay((d) => Math.max(d, realPct));
-  }, [realPct]);
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [scanId, failed, finished, realPct, createdAt, isDeep]);
 
   // Stuck-running watchdog. A scan that never resolves would spin the ring
   // forever. If it's still queued/running past a generous budget (URL ~2.5 min,
@@ -150,9 +173,6 @@ export default function ScanningScreen() {
 
   const pct = Math.round(display);
   const phases = isUpload ? UPLOAD_PHASES : isDeep ? DEEP_PHASES : URL_PHASES;
-  // Which step is "active": before any real progress, step 0 (fetch/first check)
-  // is the live one; after that, light steps by real progress in 20% bands.
-  const cloning = realPct === 0 && !finished;
 
   // One calm, specific failure card, reused by the error state and the
   // stuck-running watchdog. Never shows a raw error string; always offers a
@@ -238,10 +258,10 @@ export default function ScanningScreen() {
   }
 
   const line = (i: number) => {
-    const bandPct = finished ? 100 : realPct;
+    // Steps advance with the number the user sees, so they move together.
+    const bandPct = finished ? 100 : display;
     const isDone = bandPct > (i + 1) * 20;
-    // Step 0 is live during the clone window even though real progress is still 0.
-    const active = !isDone && (bandPct > i * 20 || (cloning && i === 0));
+    const active = !isDone && (bandPct >= i * 20);
     return {
       text: phases[i] + (isDone ? '' : '…'),
       color: isDone ? '#1F9D57' : active ? '#0A0A0A' : '#B0B0AC',
@@ -259,16 +279,18 @@ export default function ScanningScreen() {
           You’re offline, the scan keeps running and we’ll pick back up the moment you’re reconnected.
         </div>
       )}
-      {/* Let the user leave, the scan keeps running server-side; they can reopen
-          it from the My Apps list and resume at the live progress. */}
-      <button
-        onClick={() => router.push(isDeep ? '/apps' : '/dashboard')}
-        className="vg-press fixed top-5 left-5 z-10 flex items-center gap-2 text-muted hover:text-ink text-[14.5px] font-semibold rounded-[10px] px-3 py-2 bg-bg-soft border border-border transition-colors"
-      >
-        Run in background
-      </button>
+      {/* Code scans take minutes, so let the user leave (it keeps running
+          server-side). URL scans finish in seconds: no exit button. */}
+      {isDeep && (
+        <button
+          onClick={() => router.push('/apps')}
+          className="vg-press fixed top-5 left-5 z-10 flex items-center gap-2 text-muted hover:text-ink text-[14.5px] font-semibold rounded-[10px] px-3 py-2 bg-bg-soft border border-border transition-colors"
+        >
+          Run in background
+        </button>
+      )}
       <div className="relative flex flex-col items-center">
-        <GradeRing size={200} pct={pct} color="#0A0A0A" strokeWidth={8} animate>
+        <GradeRing size={200} pct={display} color="#0A0A0A" strokeWidth={8}>
           <span className="font-semibold text-[46px] text-ink leading-none">{pct}</span>
           <span className="text-[12px] text-faint font-semibold tracking-[0.05em]">SCANNING</span>
         </GradeRing>

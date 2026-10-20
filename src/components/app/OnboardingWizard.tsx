@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from './state';
 import { useAuth } from '@/lib/auth';
@@ -15,6 +16,8 @@ import {
 import Logo from '@/components/ui/Logo';
 import { BrandLogo, type BrandLogoName } from '@/components/ui/BrandLogo';
 import { PillButton } from './primitives';
+import { GRADE_COLOR } from '@/lib/adapters';
+import { scanLabel, repoDisplay } from '@/lib/hooks';
 import SignInButtons from '@/components/auth/SignInButtons';
 import FullScreenLoader from '@/components/auth/FullScreenLoader';
 
@@ -38,6 +41,13 @@ const HEARD_FROM: Opt[] = [
   { label: 'TikTok' }, { label: 'Instagram' }, { label: 'X' }, { label: 'Reddit' },
   { label: 'YouTube' }, { label: 'Google' }, { label: 'A friend' }, { label: 'Other' },
 ];
+
+/** Issues on a finished scan (critical + warnings, as the results page counts them). */
+function issueCount(scan: ScanDoc): number {
+  const c = scan.counts;
+  if (!c) return 0;
+  return (c.critical ?? 0) + (c.high ?? 0) + (c.medium ?? 0) + (c.low ?? 0);
+}
 
 /** How long to wait for the profile before showing the questions anyway. */
 const PROFILE_WAIT_MS = 8000;
@@ -217,6 +227,14 @@ export default function OnboardingWizard() {
         <div key={at} className="w-full max-w-[620px] vg-fade">
           {at === 'signup' && (
             <>
+              {scan?.status === 'done' && scan.grade && (
+                <div className="mx-auto mb-6 w-fit flex items-center gap-3 rounded-[12px] border border-border bg-card px-4 py-[10px]">
+                  <span className="font-semibold text-[22px] leading-none tnum" style={{ color: GRADE_COLOR[scan.grade] }}>{scan.grade}</span>
+                  <span className="text-[14px] text-muted">
+                    <span className="tnum font-medium text-ink">{issueCount(scan)}</span> {issueCount(scan) === 1 ? 'issue' : 'issues'} found on <span className="font-mono text-ink">{repoDisplay(scanLabel(scan))}</span>
+                  </span>
+                </div>
+              )}
               <StepHead
                 q={scanId ? 'Sign up free to see how to fix these' : 'Create your free account'}
                 hint={scanId
@@ -227,6 +245,11 @@ export default function OnboardingWizard() {
                 onSuccess={() => { /* the signed-in user moves straight to the questions */ }}
                 onBeforeStart={() => { if (scanId) setPendingScan(scanId); }}
               />
+              {scanId && (
+                <div className="mt-6 text-center">
+                  <Link href={`/results?scanId=${encodeURIComponent(scanId)}`} className="text-[14px] text-muted hover:text-ink underline underline-offset-2">Back to your results</Link>
+                </div>
+              )}
             </>
           )}
 
