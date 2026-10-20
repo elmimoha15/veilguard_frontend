@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type App } from '@/lib/hooks';
 import { subscribeFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
-import { toUiFinding, type UiFinding } from '@/lib/adapters';
+import { toUiFinding, type UiFinding, activeFindings } from '@/lib/adapters';
 import { useAuth, isPaid } from '@/lib/auth';
 import { useApp } from './state';
 import { api } from '@/lib/api';
@@ -89,7 +89,7 @@ export default function TodoScreen({ app, initialScanId }: { app: App; initialSc
     return <Card flat className="text-center border-t border-border"><div className="py-10 text-[15px]" style={{ color: '#737373' }}>Scanning… your action list will appear here.</div></Card>;
   }
 
-  const open = rawItems.map(toUiFinding).sort((a, b) => sevRank(b.severity) - sevRank(a.severity));
+  const open = activeFindings(rawItems.map(toUiFinding)).sort((a, b) => sevRank(b.severity) - sevRank(a.severity));
 
   // Clean app (nothing open): a positive state, never an empty page.
   if (open.length === 0) {

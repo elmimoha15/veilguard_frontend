@@ -7,7 +7,7 @@ import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
 import { useApps, findActiveApp, timeAgo, repoDisplay, type App } from '@/lib/hooks';
 import { saveApps, upsertApp, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
-import { toUiFinding, type UiFinding } from '@/lib/adapters';
+import { toUiFinding, type UiFinding, activeFindings } from '@/lib/adapters';
 import { scanFailure, startFailure } from '@/lib/scanError';
 import { api } from '@/lib/api';
 import { GradeHelp } from './GradeHelp';
@@ -71,7 +71,7 @@ export default function AppDetailScreen() {
     if (!latestDoneId) return;
     let cancelled = false;
     getFindings(latestDoneId).then((items) => {
-      if (!cancelled) setOv({ id: latestDoneId, items: items.map(toUiFinding).sort((a, b) => sevRank(b.severity) - sevRank(a.severity)) });
+      if (!cancelled) setOv({ id: latestDoneId, items: activeFindings(items.map(toUiFinding)).sort((a, b) => sevRank(b.severity) - sevRank(a.severity)) });
     });
     return () => { cancelled = true; };
   }, [latestDoneId]);

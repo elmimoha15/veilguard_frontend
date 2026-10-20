@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { GradeHelp } from './GradeHelp';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
-import { toUiFinding, toUiCounts } from '@/lib/adapters';
+import { toUiFinding, toUiCounts, activeFindings } from '@/lib/adapters';
 import { scanLabel, repoDisplay, useApps } from '@/lib/hooks';
 import { api } from '@/lib/api';
 import { useAuth, isPaid } from '@/lib/auth';
@@ -66,7 +66,7 @@ export default function ScanResultScreen() {
     return <div className="vg-fade text-center text-muted py-20">Scan not found. <button onClick={() => router.push('/dashboard')} className="cursor-pointer text-ink font-semibold hover:underline">Back to overview</button></div>;
   }
 
-  const findings = raw.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
+  const findings = activeFindings(raw.map(toUiFinding)).sort((a, b) => rank(b.sev) - rank(a.sev));
   const counts = toUiCounts(scan, findings);
   const grade = scan?.grade;
   const hero = grade ? HERO[grade] : null;

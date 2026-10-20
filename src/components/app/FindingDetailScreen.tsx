@@ -84,16 +84,23 @@ export default function FindingDetailScreen() {
         </span>
         <Chip>{f.cat}</Chip>
         {f.cwe && <Chip mono>{f.cwe}</Chip>}
-        {CONF_META[f.confidence] && (
-          <span className="inline-flex items-center rounded-full px-[10px] py-[5px] text-[12.5px] font-semibold" style={{ background: CONF_TINT.bg, color: CONF_TINT.fg }}>{CONF_META[f.confidence]!.label}</span>
+        {CONF_META[f.confidence].inList && (
+          <span className="inline-flex items-center rounded-full px-[10px] py-[5px] text-[12.5px] font-semibold" style={{ background: CONF_TINT.bg, color: CONF_TINT.fg }}>{CONF_META[f.confidence].label}</span>
         )}
+        {f.dismissed && <Chip>Marked not an issue</Chip>}
         {isNew && <NewBadge />}
       </div>
       <h1 className="text-[30px] font-semibold tracking-[-0.025em] leading-[1.1] max-w-[64ch]">{f.title}</h1>
       <p className="text-[15px] text-muted leading-[1.55] mt-[7px] max-w-[68ch]">{meta.sevHint}</p>
-      {CONF_META[f.confidence] && (
-        <div className="mt-4 rounded-[10px] px-4 py-3 text-[13.5px] leading-[1.5]" style={{ background: CONF_TINT.bg, color: '#57534E' }}>
-          {CONF_META[f.confidence]!.note}
+      {CONF_META[f.confidence].note && (
+        <div className="mt-4 rounded-[10px] px-4 py-3 text-[13.5px] leading-[1.55]" style={{ background: CONF_TINT.bg, color: '#57534E' }}>
+          <div className="font-semibold text-ink">{CONF_META[f.confidence].note}</div>
+          {f.confidence === 'low' && (
+            <p className="m-0 mt-1">{f.verifyHint ?? 'Open the location below and check whether this is real code that runs in production.'}</p>
+          )}
+          {f.potentialSeverity && f.potentialSeverity !== f.severity && (
+            <p className="m-0 mt-1 text-faint">If it turns out to be real, treat it as {f.potentialSeverity}.</p>
+          )}
         </div>
       )}
 
@@ -105,14 +112,22 @@ export default function FindingDetailScreen() {
         </div>
         <div className="py-5 sm:py-0 sm:pl-7">
           <div className="flex items-start justify-between gap-2">
-            <SectionLabel className="mb-3">Where we found it</SectionLabel>
+            <SectionLabel className="mb-3">Why we flagged it</SectionLabel>
             <button onClick={() => copy(where, 'where')} aria-label="Copy location" className="vg-press shrink-0 -mt-1 -mr-1 p-[6px] rounded-[8px] text-tertiary hover:text-ink hover:bg-[#F2F2EF] transition-colors cursor-pointer">
               {copied === 'where' ? <CheckIcon /> : <CopyIcon />}
             </button>
           </div>
-          <p className="m-0 text-[14px] leading-[1.6] text-[#3b3a37] font-mono break-words">{where}</p>
+          <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-[14px] leading-[1.55]">
+            <dt className="text-faint">Found in</dt>
+            <dd className="m-0 font-mono break-words text-[#3b3a37]">{where}</dd>
+            <dt className="text-faint">Confidence</dt>
+            <dd className="m-0 text-[#3b3a37]">{CONF_META[f.confidence].label}</dd>
+          </dl>
           {f.evidence && (
-            <pre className="m-0 mt-3 p-3 bg-bg-soft border border-border rounded-lg font-mono text-[13px] leading-[1.6] text-faint overflow-x-auto whitespace-pre-wrap break-words">{f.evidence}</pre>
+            <>
+              <div className="text-faint text-[13px] mt-3 mb-1">Evidence{/secret|key|token/i.test(f.cat + f.title) ? ' (redacted)' : ''}</div>
+              <pre className="m-0 p-3 bg-bg-soft border border-border rounded-lg font-mono text-[13px] leading-[1.6] text-faint overflow-x-auto whitespace-pre-wrap break-words">{f.evidence}</pre>
+            </>
           )}
         </div>
       </div>
@@ -177,6 +192,64 @@ export default function FindingDetailScreen() {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.6" /><path d="M12 11v5M12 8h.01" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" /></svg>
           Once it&apos;s deployed, re-scan and this issue clears itself.
         </p>
+      )}
+
+      <FalsePositive scanId={scanId} findingId={findingId} dismissed={f.dismissed} reason={f.dismissReason} />
+    </div>
+  );
+}
+
+/**
+ * "Not an issue? Mark as false positive". The server checks ownership, hides the
+ * finding for this app on future scans, re-grades, and files it for review.
+ */
+function FalsePositive({ scanId, findingId, dismissed, reason }: { scanId: string; findingId: string; dismissed: boolean; reason?: string }) {
+  const { toast } = useApp();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (dismiss: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    const r = dismiss ? await api.dismissFinding(scanId, findingId, text.trim() || undefined) : await api.undismissFinding(scanId, findingId);
+    setBusy(false);
+    if (!r.ok) { toast(r.data.error === 'not your scan' ? 'Only the owner of this scan can do that.' : 'Could not save that, try again.', '#DC2626'); return; }
+    setOpen(false);
+    setText('');
+    toast(dismiss ? 'Marked as not an issue. Your grade is updated.' : 'Restored. It counts toward your grade again.');
+  };
+
+  if (dismissed) {
+    return (
+      <div className="mt-10 rounded-[12px] border border-border px-4 py-4 flex items-start justify-between gap-4 flex-wrap">
+        <div className="text-[14px] leading-[1.55]">
+          <div className="font-medium text-ink">You marked this as not an issue</div>
+          <div className="text-muted">It no longer affects your grade, and future scans of this app hide it too.{reason ? ` Your note: “${reason}”` : ''}</div>
+        </div>
+        <PillButton variant="outline" onClick={() => submit(false)} disabled={busy}>{busy ? 'Restoring…' : 'Undo'}</PillButton>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-10 pt-6 border-t border-border">
+      {!open ? (
+        <button onClick={() => setOpen(true)} className="bg-transparent border-0 p-0 text-[14px] text-muted hover:text-ink underline underline-offset-2 cursor-pointer">
+          Not an issue? Mark as false positive
+        </button>
+      ) : (
+        <div className="max-w-[560px]">
+          <label htmlFor="fp-reason" className="block text-[14px] font-medium text-ink">Why isn&apos;t this an issue? <span className="text-faint font-normal">(optional)</span></label>
+          <textarea id="fp-reason" value={text} onChange={(e) => setText(e.target.value)} maxLength={500} rows={3}
+            placeholder="For example: this is sample text in a blog post, or the header is set by our CDN."
+            className="mt-2 w-full rounded-[10px] border border-border bg-white px-3 py-2 text-[14px] leading-[1.5]" />
+          <p className="text-[12.5px] text-faint mt-1">It stays listed under Dismissed, so nothing is lost. We review these to make the scanner smarter.</p>
+          <div className="mt-3 flex gap-2">
+            <PillButton onClick={() => submit(true)} disabled={busy}>{busy ? 'Saving…' : 'Mark as false positive'}</PillButton>
+            <PillButton variant="outline" onClick={() => { setOpen(false); setText(''); }} disabled={busy}>Cancel</PillButton>
+          </div>
+        </div>
       )}
     </div>
   );

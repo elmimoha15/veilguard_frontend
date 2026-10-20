@@ -23,6 +23,16 @@ export interface UiFinding {
   evidence?: string;
   cwe?: string;
   status: 'open';
+  /** Marked "not an issue" by the owner: shown only in the collapsed Dismissed list. */
+  dismissed: boolean;
+  dismissReason?: string;
+  potentialSeverity?: BackendFinding['severity'];
+  verifyHint?: string;
+}
+
+/** Findings that count: everything the owner hasn't dismissed as a false positive. */
+export function activeFindings<T extends { dismissed?: boolean }>(list: T[]): T[] {
+  return list.filter((f) => !f.dismissed);
 }
 
 /** A finding is "confirmed" unless it's low-confidence (a possible/verify note). */
@@ -84,6 +94,10 @@ export function toUiFinding(f: BackendFinding & { id: string }): UiFinding {
     evidence: f.evidence,
     cwe: f.cwe,
     status: 'open',
+    dismissed: !!f.dismissed,
+    dismissReason: f.dismissReason,
+    potentialSeverity: f.potentialSeverity,
+    verifyHint: f.verifyHint,
   };
 }
 

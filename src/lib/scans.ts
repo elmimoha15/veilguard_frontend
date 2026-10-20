@@ -98,6 +98,15 @@ export interface BackendFinding {
   location?: { file?: string; line?: number; url?: string };
   confidence?: 'high' | 'medium' | 'low';
   mode?: string;
+  /** Severity it would have if confirmed (set on low/medium-confidence findings). */
+  potentialSeverity?: 'critical' | 'high' | 'medium' | 'low' | 'info';
+  /** For low-confidence findings: a concrete step to check whether it's real. */
+  verifyHint?: string;
+  /** Line-independent identity used for "mark as false positive". */
+  fpKey?: string;
+  /** The owner marked it "not an issue" for this app (excluded from the grade). */
+  dismissed?: boolean;
+  dismissReason?: string;
 }
 
 /** A security check the app PASSED (positive result). No severity or fix. */

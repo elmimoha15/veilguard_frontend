@@ -33,7 +33,13 @@ export const MOCK_GITHUB_REPO = '../veilguard-scanner/test-fixtures/vulnerable/q
 export const MOCK_SUPABASE_POLICIES = 'test-fixtures/supabase-broken-rls';
 
 export async function getIdToken(): Promise<string | null> {
-  const u = auth().currentUser;
+  // Wait for Firebase to restore a saved session first. Right after a page load
+  // (e.g. the landing page) currentUser is still null for a moment, which made a
+  // signed-in visitor's scan anonymous: unowned, so they couldn't dismiss or
+  // unlock its findings.
+  const a = auth();
+  if (!a.currentUser) await Promise.race([a.authStateReady(), new Promise((r) => setTimeout(r, 3000))]);
+  const u = a.currentUser;
   return u ? u.getIdToken() : null;
 }
 
@@ -306,6 +312,11 @@ export const api = {
   /** Fetch fix content for a finding. Guard → any (Claude-tailored, generated on
    *  demand); free → the teaser only (else 402). `explanation` is present only for
    *  Claude-tailored fixes. */
+  // "Not an issue? Mark as false positive": owner only; the server re-grades the scan.
+  dismissFinding: (scanId: string, findingId: string, reason?: string) =>
+    call<{ ok?: boolean; grade?: string; score?: number; error?: string }>('POST', '/findings/dismiss', { body: { scanId, findingId, ...(reason ? { reason } : {}) }, auth: 'required' }),
+  undismissFinding: (scanId: string, findingId: string) =>
+    call<{ ok?: boolean; grade?: string; score?: number; error?: string }>('POST', '/findings/undismiss', { body: { scanId, findingId }, auth: 'required' }),
   findingFix: (scanId: string, findingId: string) =>
     call<{ fix?: string; fixPrompt?: string; explanation?: string; error?: string }>('POST', '/findingFix', { body: { scanId, findingId }, auth: 'required', retry: true }),
 

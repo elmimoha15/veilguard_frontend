@@ -12,7 +12,7 @@ import { claimScanForUser } from '@/lib/claim';
 import { postAuthDestination } from '@/lib/onboardingFlow';
 import { useApp } from './state';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
-import { toUiFinding, toUiCounts, GRADE_COLOR } from '@/lib/adapters';
+import { toUiFinding, toUiCounts, GRADE_COLOR, activeFindings, isConfirmed } from '@/lib/adapters';
 import { scanLabel, repoDisplay } from '@/lib/hooks';
 import { scanFailure, SUPPORT_LINK, type ScanKind } from '@/lib/scanError';
 import { SeverityTiles, SeverityText } from './primitives';
@@ -80,7 +80,7 @@ export default function ResultsScreen() {
     );
   }
 
-  const findings = raw.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
+  const findings = activeFindings(raw.map(toUiFinding)).sort((a, b) => rank(b.sev) - rank(a.sev));
   const counts = toUiCounts(scan, findings);
   const grade = scan?.grade;
   const hero = grade ? HERO[grade] : null;
@@ -153,7 +153,8 @@ export default function ResultsScreen() {
   }
 
   const issues = findings.filter((f) => f.sev !== 'PASSED');
-  const preview = issues.slice(0, PREVIEW);
+  // The preview leads with confirmed findings; "possible: verify" ones never headline.
+  const preview = issues.filter(isConfirmed).slice(0, PREVIEW);
   const more = issues.length - preview.length;
   const host = scan ? repoDisplay(scanLabel(scan)) : '…';
 

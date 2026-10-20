@@ -4,7 +4,9 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { type App } from '@/lib/hooks';
 import { subscribeFindings, getFindings, type BackendFinding, type ScanDoc } from '@/lib/scans';
-import { toUiFinding, type UiFinding } from '@/lib/adapters';
+import { toUiFinding, activeFindings, type UiFinding } from '@/lib/adapters';
+import { api } from '@/lib/api';
+import { useApp } from './state';
 import { useAuth, isPaid } from '@/lib/auth';
 import { billingHref } from '@/lib/url';
 import DeepScanHints from './DeepScanHints';
@@ -70,10 +72,14 @@ export default function FindingsScreen({ app, initialScanId, onWhatToDo }: { app
     return <EmptyState title="No findings yet" subtitle="Run a scan to see findings for this app." />;
   }
 
-  const findings = rawItems.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
-  const prevFindings = diffReady ? prev.items.map(toUiFinding) : [];
+  const all = rawItems.map(toUiFinding).sort((a, b) => rank(b.sev) - rank(a.sev));
+  // Findings marked "not an issue" don't count anywhere; they live in a collapsed list.
+  const findings = activeFindings(all);
+  const dismissedList = all.filter((f) => f.dismissed);
+  const prevFindings = diffReady ? activeFindings(prev.items.map(toUiFinding)) : [];
   const prevKeys = new Set(prevFindings.map(keyOf));
-  const currentKeys = new Set(findings.map(keyOf));
+  // A finding dismissed since the last scan wasn't "fixed", so match against all of them.
+  const currentKeys = new Set(all.map(keyOf));
 
   const diffOf = (f: UiFinding): Diff => (!diffReady ? 'open' : prevKeys.has(keyOf(f)) ? 'open' : 'new');
   const fixed = diffReady ? prevFindings.filter((f) => !currentKeys.has(keyOf(f))) : [];
@@ -170,12 +176,48 @@ export default function FindingsScreen({ app, initialScanId, onWhatToDo }: { app
         </Card>
       )}
 
+      {/* Marked "not an issue": hidden from the grade, never silently lost. */}
+      {dismissedList.length > 0 && <DismissedList scanId={selected.id} items={dismissedList} />}
+
       {/* What's solid — the checks this scan passed (shown to everyone, never gated). */}
       {selected.status === 'done' && <PassedChecks passed={selected.passed} />}
 
       {/* Informational notes about how the scan ran (e.g. history truncated). */}
       {selected.status === 'done' && <ScanNotes notes={selected.notes} />}
     </div>
+  );
+}
+
+/** Collapsed list of findings the owner marked "not an issue", each with Undo. */
+function DismissedList({ scanId, items }: { scanId: string; items: UiFinding[] }) {
+  const { toast } = useApp();
+  const [busy, setBusy] = useState<string | null>(null);
+  const undo = async (id: string) => {
+    setBusy(id);
+    const r = await api.undismissFinding(scanId, id);
+    setBusy(null);
+    toast(r.ok ? 'Restored. It counts toward your grade again.' : 'Could not restore it, try again.', r.ok ? undefined : '#DC2626');
+  };
+  return (
+    <details className="mt-2 border-t border-border py-5 group">
+      <summary className="cursor-pointer list-none flex items-center gap-2 text-[14.5px] font-medium text-ink">
+        <span className="transition-transform group-open:rotate-90" aria-hidden>›</span>
+        Dismissed ({items.length})
+        <span className="text-[13px] font-normal text-faint">Marked not an issue, not counted in your grade</span>
+      </summary>
+      <div className="mt-3">
+        {items.map((f, i) => (
+          <div key={f.id} className="flex items-start gap-3 py-[12px]" style={{ borderTop: i === 0 ? undefined : '1px solid #F4F4F4' }}>
+            <div className="flex-1 min-w-0">
+              <div className="text-[14px] text-muted line-through truncate">{f.title}</div>
+              <div className="font-mono text-[11.5px] mt-[3px] truncate" style={{ color: '#A3A3A3' }}>{f.cat}{f.where ? ` · ${f.where}` : ''}</div>
+              {f.dismissReason && <div className="text-[12.5px] text-faint mt-[3px]">Your note: {f.dismissReason}</div>}
+            </div>
+            <PillButton variant="outline" onClick={() => undo(f.id)} disabled={busy === f.id}>{busy === f.id ? 'Restoring…' : 'Undo'}</PillButton>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }
 
@@ -212,8 +254,8 @@ function FindingRow({ f, diff, showDiff, first, onClick }: { f: UiFinding; diff:
       <div className="flex-1 min-w-0">
         <div className={`font-medium text-[14.5px] flex items-center gap-2 ${isFixed ? 'line-through' : ''}`} style={isFixed ? { color: '#737373' } : undefined}>
           <span className="truncate">{f.title}</span>
-          {!isFixed && CONF_META[f.confidence] && (
-            <span className="shrink-0 text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full" style={{ background: CONF_TINT.bg, color: CONF_TINT.fg }}>{CONF_META[f.confidence]!.label}</span>
+          {!isFixed && CONF_META[f.confidence].inList && (
+            <span className="shrink-0 text-[10.5px] font-semibold px-[7px] py-[2px] rounded-full" style={{ background: CONF_TINT.bg, color: CONF_TINT.fg }}>{CONF_META[f.confidence].label}</span>
           )}
         </div>
         {!isFixed && <p className="text-[13px] leading-[1.55] mt-[3px]" style={{ color: '#737373' }}>{f.what}</p>}

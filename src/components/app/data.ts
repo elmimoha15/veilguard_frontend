@@ -42,17 +42,18 @@ export const SEV_META: Record<Sev, { sevPlain: string; sevHint: string }> = {
 };
 
 /**
- * Confidence display. Only LOW gets a visible "Possible — verify" chip (neutral
- * grey, not an alarming color) — high/medium confidence findings show nothing,
- * so the report reads as confident by default and only flags the uncertain ones.
+ * Confidence display. Every finding has a level: high is shown plainly on the
+ * detail page, "Likely" and "Possible: verify" get a neutral chip in lists too,
+ * so the report reads as confident by default and flags only the uncertain ones.
  */
 export type Confidence = 'high' | 'medium' | 'low';
-export const CONF_META: Record<Confidence, { label: string; note: string } | null> = {
-  high: null,
-  medium: null,
+export const CONF_META: Record<Confidence, { label: string; note: string | null; inList: boolean }> = {
+  high: { label: 'High confidence', note: null, inList: false },
+  medium: { label: 'Likely', note: 'We found strong signs of this, but one detail could not be confirmed from here.', inList: true },
   low: {
-    label: 'Possible — verify',
-    note: 'This looks like it could be an example in a documentation, content or example file rather than live code. Verify it’s not a real issue before acting.',
+    label: 'Possible: verify',
+    note: 'This might be safe. Here’s how to check:',
+    inList: true,
   },
 };
 export const CONF_TINT = { bg: '#F5F5F4', fg: '#6E6E6A' };
