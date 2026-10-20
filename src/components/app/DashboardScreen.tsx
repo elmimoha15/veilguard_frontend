@@ -258,7 +258,7 @@ export default function DashboardScreen() {
           <div className="flex flex-col gap-5"><div className="vg-skel h-[180px]" /><div className="vg-skel h-[240px]" /></div>
         </div>
       ) : !recent ? (
-        <EmptyState title="No scans yet" subtitle="Paste your app’s URL and get a plain-English security grade in about 60 seconds." action={{ label: 'Run your first scan', onClick: () => setModal('addApp') }} />
+        <EmptyState title="Add your first app" subtitle="Paste your app’s URL and get a plain-English security grade in about 60 seconds." action={{ label: 'Add your first app', onClick: () => setModal('addApp') }} />
       ) : (
         <div className="grid gap-0 items-start min-[1080px]:grid-cols-[minmax(0,1fr)_316px]">
           {/* ===== main column ===== */}

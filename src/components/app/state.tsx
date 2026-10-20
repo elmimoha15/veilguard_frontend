@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { Sev, Status } from './data';
+import { OB_DRAFT_VERSION, type ObStep } from '@/lib/onboardingFlow';
 
 export type Toast = { id: number; msg: string; color: string };
 export type Modal = null | 'addApp' | 'cancel';
@@ -16,6 +17,11 @@ export const OB_KEY = 'vg_onboarding';
 export const ALERTS_SEEN_KEY = 'vg_alerts_seen_at';
 
 export interface OnboardingState {
+  /** Draft schema version; drafts from the old 9-step wizard have none. */
+  v: number;
+  /** Current screen of the short onboarding (see lib/onboardingFlow). */
+  at: ObStep | undefined;
+  /** Legacy numeric step of the old 9-step wizard. Unused by the short flow. */
   step: number;
   /** What the user wants to check, drives the target step. */
   scanTarget: 'url' | 'repo' | 'upload' | '';
@@ -35,11 +41,13 @@ export interface OnboardingState {
   plan: string;
   gh: boolean;
   sb: boolean;
-  /** The scan kicked off inside onboarding (shown inline before the dashboard). */
+  /** The anonymous scan being claimed onto the account (from /results). */
   scanId: string | null;
 }
 
 const INITIAL_OB: OnboardingState = {
+  v: OB_DRAFT_VERSION,
+  at: undefined,
   step: 1,
   scanTarget: 'url',
   builtWith: [],
@@ -49,7 +57,7 @@ const INITIAL_OB: OnboardingState = {
   url: '',
   fromMarketing: false,
   email: '',
-  plan: 'free', // Free is the default; Guard is chosen explicitly (opens checkout).
+  plan: 'free', // Everyone starts on Free; 'guard' only means "finish on billing".
   gh: false,
   sb: false,
   scanId: null,
@@ -127,7 +135,13 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     restored.current = true;
     try {
       const rawOb = window.sessionStorage.getItem(OB_KEY);
-      if (rawOb) setObState((prev) => ({ ...prev, ...(JSON.parse(rawOb) as Partial<OnboardingState>) }));
+      if (rawOb) {
+        const draft = JSON.parse(rawOb) as Partial<OnboardingState>;
+        // A draft from the old 9-step wizard (no version) can't be resumed in the
+        // short flow; keep only the scan it was working on.
+        if (draft.v === OB_DRAFT_VERSION) setObState((prev) => ({ ...prev, ...draft }));
+        else if (draft.scanId) setObState((prev) => ({ ...prev, scanId: draft.scanId ?? null }));
+      }
       const ps = window.sessionStorage.getItem(PENDING_SCAN_KEY);
       if (ps) setPendingScanIdState(ps);
       const seen = window.localStorage.getItem(ALERTS_SEEN_KEY);

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ActionInner } from '@/components/ui/ActionButton';
 import { checkUrl, probeReachable } from '@/lib/url';
+import { startUrlScan } from '@/lib/startScan';
 
 /** Big vibecoding-host URLs the placeholder types through, one after another. */
 const SAMPLES = [
@@ -73,8 +74,10 @@ export default function ScanInput() {
       setError('We couldn’t reach that URL. Enter a live, working app that’s deployed and loading.');
       return;
     }
-    // Hand the URL to onboarding so it skips the URL step and scans it after signup.
-    router.push(`/onboarding?url=${encodeURIComponent(c.url!)}`);
+    // 3) Scan it now, anonymously, and show the result before any signup.
+    const started = await startUrlScan(c.url!);
+    if (!started.ok) { setChecking(false); setError(started.message); return; }
+    router.push(`/scanning?scanId=${encodeURIComponent(started.scanId)}`);
   };
 
   return (

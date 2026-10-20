@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import ActionButton from '@/components/ui/ActionButton';
 import { cn } from '@/lib/utils';
 import { checkUrl, probeReachable } from '@/lib/url';
+import { startUrlScan } from '@/lib/startScan';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 
 const EXAMPLES = ['myapp.lovable.app', 'dashboard.bolt.new', 'app.replit.dev', 'store.supabase.co'];
@@ -41,10 +42,9 @@ function useTypingPlaceholder(paused: boolean) {
 
 /**
  * The primary CTA everywhere: an "https://" prefix + URL input + "Run free scan".
- * Validates the URL client-side (the "is it a real URL?" check), then hands the
- * URL to onboarding (`/onboarding?url=…`). Onboarding skips its own URL step,
- * signs the user up, and runs the scan on their account (gated result). Marketing
- * pages can't reach the app's AppStateProvider, so the URL travels as a query param.
+ * Validates the URL client-side (the "is it a real URL?" check) and that it's
+ * live, then starts an anonymous scan right away and goes to /scanning. The
+ * public result comes first; signup (and claiming this scan) happens from there.
  */
 export default function ScanForm({
   className,
@@ -75,7 +75,10 @@ export default function ScanForm({
       setError('We couldn’t reach that URL. Enter a live, working app that’s deployed and loading.');
       return;
     }
-    router.push(`/onboarding?url=${encodeURIComponent(check.url!)}`);
+    // Scan it now, anonymously, and show the result before any signup.
+    const started = await startUrlScan(check.url!);
+    if (!started.ok) { setBusy(false); setError(started.message); return; }
+    router.push(`/scanning?scanId=${encodeURIComponent(started.scanId)}`);
   };
 
   return (

@@ -38,6 +38,11 @@ export async function saveNotifications(
   await writeUserDoc(uid, { notifications });
 }
 
+/** Where security alerts go (defaults server-side to the account email). */
+export async function saveAlertEmail(uid: string, alertEmail: string): Promise<void> {
+  await writeUserDoc(uid, { alertEmail });
+}
+
 /** Flip the user's own onboarded flag after the wizard. */
 export async function markOnboarded(uid: string): Promise<void> {
   await writeUserDoc(uid, { onboarded: true });
@@ -47,6 +52,9 @@ export async function markOnboarded(uid: string): Promise<void> {
 export interface OnboardingAnswers {
   builtWith?: string[];
   backend?: string[];
+  /** True when `backend` came from the scan's detected stack, not the user's answer. */
+  backendDetected?: boolean;
+  /** No longer asked (short onboarding); kept so older users' answers still read. */
   handles?: string[];
   codeComfort?: string;
   scanTarget?: 'url' | 'repo' | 'upload' | '';

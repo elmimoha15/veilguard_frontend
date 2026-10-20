@@ -1,39 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth, isRedirectEnv, authErrorMessage, rememberProvider, getLastProvider, type LastProvider } from '@/lib/auth';
-import { api } from '@/lib/api';
+import { useEffect, useRef, useState } from 'react';
+import { useAuth, authErrorMessage, rememberProvider, getLastProvider, type LastProvider } from '@/lib/auth';
+import { claimPendingScan } from '@/lib/claim';
 
 /**
- * Google / GitHub sign-in buttons for use INSIDE the onboarding wizard's signup
- * step. Popup / One-Tap-less flow: on an in-place credential it calls `onSuccess`
- * (the wizard advances to the result step, where the scan runs on the account). In
- * redirect mode (prod) it calls `onBeforeRedirect` first so the wizard can persist
- * "resume at result" before the page navigates away; the return is handled by
- * completeRedirect(). Deliberately NO One Tap here — One Tap auto-routes to
- * /dashboard, which would skip the rest of onboarding. (Also claims any leftover
- * anonymous scan from the old /results flow, a harmless no-op otherwise.)
+ * Google / GitHub sign-in buttons, used on the public /results page and in
+ * onboarding's signup step. `onBeforeStart` runs before EITHER flow (e.g. to
+ * remember which anonymous scan to claim). In popup mode (local) it claims that
+ * scan, then calls `onSuccess`. In redirect mode (prod) the page navigates away and
+ * comes back to the SAME url, where completeRedirect() claims it; a cancelled
+ * sign-in therefore returns here too. Deliberately NO One Tap (it auto-routes to
+ * /dashboard).
  */
-export default function SignInButtons({ onSuccess, onBeforeRedirect }: { onSuccess: () => void; onBeforeRedirect?: () => void }) {
+export default function SignInButtons({ onSuccess, onBeforeStart }: { onSuccess: () => void; onBeforeStart?: () => void }) {
   const { google, github } = useAuth();
   const [busy, setBusy] = useState<'google' | 'github' | null>(null);
   const [error, setError] = useState('');
   const [last, setLast] = useState<LastProvider | null>(null);
 
   useEffect(() => { setLast(getLastProvider()); }, []);
+  // Back from the provider without signing in. A bfcache restore brings the page
+  // back frozen mid-redirect, with its live Firestore listeners dead (the results
+  // page would sit on "Grading your app…"), so reload it fresh. Otherwise just
+  // un-stick the button.
+  const started = useRef(false);
+  useEffect(() => {
+    const onShow = (e: PageTransitionEvent) => {
+      if (e.persisted && started.current) { window.location.reload(); return; }
+      setBusy(null);
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => window.removeEventListener('pageshow', onShow);
+  }, []);
 
   const start = async (which: 'google' | 'github') => {
     setBusy(which);
     setError('');
+    started.current = true;
     try {
-      // In redirect mode the next call navigates away, persist resume state first.
-      if (isRedirectEnv()) onBeforeRedirect?.();
+      // Persist anything the return needs BEFORE a redirect navigates away.
+      onBeforeStart?.();
       const cred = await (which === 'google' ? google() : github());
       if (!cred) return; // redirect navigated away; keep busy through the hop
       rememberProvider(which);
-      // Claim a leftover anonymous scan (old /results flow) onto the new account.
-      const pending = typeof window !== 'undefined' ? localStorage.getItem('vg_pending_scan') : null;
-      if (pending) { await api.claimScan(pending).catch(() => {}); localStorage.removeItem('vg_pending_scan'); }
+      // Claim the anonymous scan this visitor signed up for (no-op if none).
+      await claimPendingScan();
       onSuccess();
     } catch (e) {
       console.error('[onboarding auth] sign-in failed:', e);

@@ -1,13 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Logo from '@/components/ui/Logo';
 import { GradeLetter } from './ui';
 import { GradeHelp } from './GradeHelp';
-import { useAuth } from '@/lib/auth';
+import { useAuth, consumeAuthError } from '@/lib/auth';
 import { api } from '@/lib/api';
+import { claimScanForUser } from '@/lib/claim';
+import { setPendingScan, setHandoff, getHandoff, clearHandoff, postAuthDestination } from '@/lib/onboardingFlow';
+import SignInButtons from '@/components/auth/SignInButtons';
+import { useApp } from './state';
 import { subscribeScan, subscribeFindings, type ScanDoc, type BackendFinding } from '@/lib/scans';
 import { toUiFinding, toUiCounts, GRADE_COLOR } from '@/lib/adapters';
 import { scanLabel, repoDisplay } from '@/lib/hooks';
@@ -27,11 +31,16 @@ export default function ResultsScreen() {
   const router = useRouter();
   const params = useSearchParams();
   const scanId = params.get('scanId');
-  const { user } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
+  const { toast } = useApp();
 
   const [scan, setScan] = useState<ScanDoc | null>(null);
   const [raw, setRaw] = useState<(BackendFinding & { id: string })[]>([]);
   const [scanMissing, setScanMissing] = useState(false);
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [handingOff, setHandingOff] = useState(false);
+  const handoffRan = useRef(false);
   const notFound = !scanId || scanMissing;
 
   useEffect(() => {
@@ -39,7 +48,47 @@ export default function ResultsScreen() {
     const u1 = subscribeScan(scanId, (s) => { setScan(s); if (s === null) setScanMissing(true); });
     const u2 = subscribeFindings(scanId, setRaw);
     return () => { u1(); u2(); };
-  }, [scanId]);
+  }, [scanId, user]);
+
+  // Signed in from this page: claim the scan onto the account (idempotent, so it's
+  // fine that the auth layer may have claimed it already), then go to onboarding
+  // (new account) or the dashboard (existing account). Never re-scans.
+  const handoff = useCallback(async () => {
+    if (!scanId || handoffRan.current) return;
+    handoffRan.current = true;
+    setHandingOff(true);
+    const c = await claimScanForUser(scanId).catch(() => null);
+    clearHandoff();
+    if (c?.status === 409) {
+      setHandingOff(false);
+      toast('This scan is saved on another account. Sign in with that account to see it.', '#E5484D');
+      return;
+    }
+    if (!c || !c.ok) {
+      // Transient (offline / 5xx): onboarding claims it again on finish.
+      if (c?.status !== 404) toast('We’ll finish saving your scan in a moment.', '#E0932F');
+    }
+    const p = profile ?? (await refreshProfile());
+    router.replace(postAuthDestination({ onboarded: !!p?.onboarded, scanId }));
+  }, [scanId, profile, refreshProfile, router, toast]);
+
+  // Back from the provider (redirect mode): finish the handoff once signed in.
+  // A cancelled sign-in simply lands back here, still signed out, scan intact.
+  useEffect(() => {
+    if (!user || !scanId || getHandoff() !== scanId) return;
+    queueMicrotask(() => void handoff());
+  }, [user, scanId, handoff]);
+
+  // Show why a redirect sign-in failed (stashed by the auth layer on return).
+  useEffect(() => {
+    if (user) return;
+    const msg = consumeAuthError();
+    if (msg) queueMicrotask(() => { setAuthError(msg); setSignupOpen(true); });
+  }, [user]);
+
+  const openSignup = () => { setAuthError(''); setSignupOpen(true); };
+  // Remember the scan BEFORE sign-in starts, the redirect navigates away.
+  const beforeSignIn = () => { if (scanId) { setPendingScan(scanId); setHandoff(scanId); } };
 
   if (notFound) {
     return (
@@ -192,13 +241,13 @@ export default function ResultsScreen() {
                       # unlock to reveal the copy-paste code + AI prompt
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="inline-flex items-center gap-[7px] bg-ink text-white font-semibold text-[13.5px] px-[14px] py-2 rounded-full">
+                      <button type="button" onClick={user ? () => void handoff() : openSignup} className="vg-press cursor-pointer inline-flex items-center gap-[7px] bg-ink text-white font-semibold text-[13.5px] px-[14px] py-2 rounded-full border-0">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden>
                           <rect x="5" y="11" width="14" height="9" rx="2" stroke="#fff" strokeWidth="1.8" />
                           <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="#fff" strokeWidth="1.8" />
                         </svg>
                         Fix locked
-                      </span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -208,23 +257,47 @@ export default function ResultsScreen() {
         </div>
       </div>
 
-      {/* sticky upgrade / save bar */}
-      {!running && findings.length > 0 && (
+      {/* sticky sign-up / save bar */}
+      {!running && scan?.status === 'done' && (
         <div className="fixed bottom-0 inset-x-0 z-50 bg-card border-t border-border px-6 py-[14px]">
           <div className="max-w-[960px] mx-auto flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[180px]">
-              <div className="font-semibold text-[16.5px] text-ink">Unlock all <span className="tnum">{findings.length}</span> fixes + monitoring</div>
-              <div className="text-[14px] text-muted">Copy-paste code, AI prompts, and auto re-scans.</div>
+              {findings.length > 0 ? (
+                <>
+                  <div className="font-semibold text-[16.5px] text-ink">See how to fix all <span className="tnum">{findings.length}</span> issues</div>
+                  <div className="text-[14px] text-muted">Your scan is saved to your account, no re-scan.</div>
+                </>
+              ) : (
+                <>
+                  <div className="font-semibold text-[16.5px] text-ink">Keep it this way</div>
+                  <div className="text-[14px] text-muted">Save this scan and get alerted if something breaks.</div>
+                </>
+              )}
             </div>
             {user ? (
-              scan && scan.ownerUid == null ? (
-                <button onClick={async () => { await api.claimScan(scanId!); router.push('/dashboard'); }} className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Save to my account</button>
+              scan.ownerUid == null ? (
+                <button onClick={() => void handoff()} disabled={handingOff} className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px] disabled:opacity-70">{handingOff ? 'Saving…' : 'Save to my account'}</button>
               ) : (
                 <Link href="/dashboard" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Go to dashboard</Link>
               )
             ) : (
-              <Link href="/onboarding" className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">Unlock fixes</Link>
+              <button onClick={openSignup} className="vg-press cursor-pointer bg-ink text-white font-medium text-[15.5px] rounded-[10px] px-[24px] py-[13px]">
+                {findings.length > 0 ? 'Sign up free to see how to fix these' : 'Sign up free'}
+              </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* sign-up sheet: sign-in starts HERE, so a cancelled sign-in returns here */}
+      {signupOpen && !user && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/40 px-4 pb-4 sm:pb-0" onClick={() => setSignupOpen(false)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="vg-signup-title" className="relative w-full max-w-[460px] bg-card rounded-[18px] p-6 sm:p-7 vg-fade" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setSignupOpen(false)} aria-label="Close" className="absolute right-4 top-4 bg-transparent border-0 text-muted hover:text-ink cursor-pointer text-[20px] leading-none">×</button>
+            <h2 id="vg-signup-title" className="font-semibold text-[21px] tracking-[-0.02em] text-center">Sign up free to see how to fix these</h2>
+            <p className="text-[14.5px] text-muted text-center mt-2 mb-6 leading-[1.5]">This scan goes straight to your dashboard. Free includes one full fix, Guard unlocks the rest.</p>
+            {authError && <p role="alert" className="mb-4 text-[14px] text-red font-semibold text-center">{authError}</p>}
+            <SignInButtons onBeforeStart={beforeSignIn} onSuccess={() => void handoff()} />
           </div>
         </div>
       )}

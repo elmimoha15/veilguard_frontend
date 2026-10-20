@@ -8,7 +8,7 @@ import { useAuth, isPaid, getLastProvider, ensureFreshLogin, consumeReauthDone }
 import { billingHref } from '@/lib/url';
 import { SUPPORT_MAILTO } from '@/content/site';
 import { api } from '@/lib/api';
-import { saveNotifications } from '@/lib/scans';
+import { saveNotifications, saveAlertEmail } from '@/lib/scans';
 import { Toggle } from './ui';
 import { PageHeading, Card, PillButton } from './primitives';
 import ActionButton from '@/components/ui/ActionButton';
@@ -43,6 +43,52 @@ function CardTitle({ children, sub }: { children: React.ReactNode; sub?: string 
     </div>
   );
 }
+/** Where security alerts go. Defaults to the sign-in email (set server-side at signup). */
+function AlertEmailRow() {
+  const { toast } = useApp();
+  const { user, profile, refreshProfile } = useAuth();
+  const current = profile?.alertEmail || user?.email || '';
+  // null = not editing; shows the saved value.
+  const [draft, setDraft] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const value = draft ?? current;
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  const dirty = draft !== null && draft.trim() !== current;
+
+  const save = async () => {
+    if (!user || !dirty || !valid || saving) return;
+    setSaving(true);
+    try {
+      await saveAlertEmail(user.uid, value.trim());
+      await refreshProfile();
+      setDraft(null);
+      toast('Alert email saved');
+    } catch {
+      toast('Could not save your alert email, try again', '#DC2626');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Row first>
+      <label htmlFor="vg-alert-email" className="text-[14px]">Send alerts to</label>
+      <div className="flex items-center gap-2 min-w-0">
+        <input
+          id="vg-alert-email"
+          type="email"
+          value={value}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') void save(); }}
+          aria-invalid={dirty && !valid}
+          className="min-w-0 w-[240px] max-w-full font-mono text-[13.5px] bg-white border border-border rounded-[8px] px-3 py-[7px]"
+        />
+        {dirty && <PillButton onClick={save} disabled={!valid || saving}>{saving ? 'Saving…' : 'Save'}</PillButton>}
+      </div>
+    </Row>
+  );
+}
+
 function Row({ children, first }: { children: React.ReactNode; first?: boolean }) {
   return <div className="flex items-center justify-between gap-4 py-[16px]" style={{ borderTop: first ? undefined : '1px solid #F4F4F4' }}>{children}</div>;
 }
@@ -251,8 +297,9 @@ export default function SettingsScreen() {
         <Card flat className="py-7">
           <CardTitle>Notifications</CardTitle>
           <div className="mt-2">
-            {TOGGLE_ROWS.map((t, i) => (
-              <Row key={t.key} first={i === 0}>
+            <AlertEmailRow />
+            {TOGGLE_ROWS.map((t) => (
+              <Row key={t.key}>
                 <span className="text-[14px]">{t.label}</span>
                 <Toggle on={!!notif[t.key]} onClick={() => toggleNotif(t.key)} label={t.label} />
               </Row>

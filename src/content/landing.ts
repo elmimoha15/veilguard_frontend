@@ -238,7 +238,8 @@ export const PLANS: Plan[] = [
       'Deep Supabase & Firebase audit',
     ],
     cta: 'Start monitoring',
-    ctaHref: '/onboarding',
+    // Sign up + the short questions, then straight to billing (Guard checkout).
+    ctaHref: '/onboarding?plan=guard',
     featured: true,
     badge: 'Most popular',
   },

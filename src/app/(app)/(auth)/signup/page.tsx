@@ -6,5 +6,5 @@ import RedirectTo from '@/components/app/RedirectTo';
 export const metadata: Metadata = { title: 'Get set up', robots: { index: false } };
 
 export default function SignupPage() {
-  return <RedirectTo to="/onboarding" />;
+  return <RedirectTo to="/onboarding" keepQuery />;
 }

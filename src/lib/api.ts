@@ -237,7 +237,8 @@ export const api = {
   githubRepos: () =>
     call<{ repos?: GitHubRepo[]; error?: string }>('POST', '/github/repos', { auth: 'required', retry: true }),
 
-  claimScan: (scanId: string) => call<{ error?: string }>('POST', '/claimScan', { body: { scanId }, auth: 'required' }),
+  // Idempotent server-side (a re-claim by the owner is a 200), so safe to retry.
+  claimScan: (scanId: string) => call<{ error?: string }>('POST', '/claimScan', { body: { scanId }, auth: 'required', retry: true }),
 
   /** Send the branded email-verification message (Resend, via backend). */
   sendVerification: () => call<{ ok?: boolean; error?: string }>('POST', '/auth/sendVerification', { auth: 'required' }),

@@ -23,12 +23,15 @@ import {
 } from 'firebase/auth';
 import { auth } from './firebase';
 import { api } from './api';
+import { claimPendingScan } from './claim';
 import IdleMonitor from '@/components/auth/IdleMonitor';
 
 /** OAuth clients where redirect is safe: NOT localhost/emulator. `signInWithRedirect`
  *  returns to `authDomain` (veilguard.dev), great in prod, broken on localhost,  *  so we use redirect in prod and keep the popup locally. */
 export function isRedirectEnv(): boolean {
   if (typeof window === 'undefined') return false;
+  // Opt-in: exercise the production redirect path locally / against the emulator.
+  if (process.env.NEXT_PUBLIC_AUTH_FORCE_REDIRECT === 'true') return true;
   const h = window.location.hostname;
   const local = h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
   return !local && process.env.NEXT_PUBLIC_USE_EMULATOR !== 'true';
@@ -42,7 +45,6 @@ export function oneTapEnabled(): boolean {
 const WHICH_KEY = 'vg_auth_which';        // provider we redirected with
 const PENDING_LINK_KEY = 'vg_pending_link'; // cross-provider credential to link on return
 const AUTH_ERROR_KEY = 'vg_auth_error';   // redirect-return error message for the login page
-const PENDING_SCAN_KEY = 'vg_pending_scan';
 
 /** True while a `signInWithRedirect` is in progress: `WHICH_KEY` is set right
  *  before we redirect and cleared at the end of `completeRedirect()` (and stays
@@ -82,7 +84,7 @@ export type SignoutReason = 'expired' | 'inactivity';
  *  between accounts on a shared machine. (Firebase clears its own token store.) */
 const CLEAR_ON_LOGOUT = [
   'vg_profile', 'vg_last_provider', 'vg_auth_which', 'vg_pending_link',
-  'vg_pending_scan', 'vg_auth_error', 'vg_last_activity',
+  'vg_pending_scan', 'vg_results_handoff', 'vg_auth_error', 'vg_last_activity',
 ];
 function clearStoredAuthState(): void {
   for (const k of CLEAR_ON_LOGOUT) {
@@ -265,12 +267,6 @@ async function startSignIn(which: Which): Promise<UserCredential | void> {
   return signInWithLinking(which);
 }
 
-async function claimPendingScan(): Promise<void> {
-  try {
-    const scan = window.localStorage.getItem(PENDING_SCAN_KEY);
-    if (scan) { await api.claimScan(scan).catch(() => {}); window.localStorage.removeItem(PENDING_SCAN_KEY); }
-  } catch { /* storage off */ }
-}
 
 /**
  * Process a `signInWithRedirect` return, once on load. Handles the happy path,
@@ -318,6 +314,26 @@ export async function completeRedirect(): Promise<void> {
   await claimPendingScan();
 }
 
+const BACK_RELOAD_KEY = 'vg_auth_back_reload';
+/**
+ * Pressing Back on the provider's page (a cancelled redirect sign-in) can load
+ * this page in a state where Firebase's pending-redirect check never resolves, so
+ * auth, and every Firestore read waiting on it, hangs (seen as /results stuck on
+ * "Grading your app…"). A plain reload resolves it. Reload ONCE, only when we
+ * started a redirect and arrived via Back. Returns true when reloading.
+ */
+function reloadIfBackedOutOfRedirect(): boolean {
+  try {
+    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+    const backed = nav?.type === 'back_forward' && !!window.sessionStorage.getItem(WHICH_KEY);
+    if (!backed) { window.sessionStorage.removeItem(BACK_RELOAD_KEY); return false; }
+    if (window.sessionStorage.getItem(BACK_RELOAD_KEY)) return false; // already reloaded once
+    window.sessionStorage.setItem(BACK_RELOAD_KEY, '1');
+    window.location.reload();
+    return true;
+  } catch { return false; }
+}
+
 function safeGet(k: string): string | null { try { return window.sessionStorage.getItem(k); } catch { return null; } }
 function clearRedirectStash(): void {
   try { window.sessionStorage.removeItem(PENDING_LINK_KEY); window.sessionStorage.removeItem(WHICH_KEY); } catch { /* */ }
@@ -354,7 +370,7 @@ export interface Profile {
   usage?: { scansThisMonth: number };
   caps?: { maxScansPerMonth: number };
   // Onboarding answers (client-written to the user's own doc), for segmentation.
-  onboarding?: { builtWith?: string[]; backend?: string; handles?: string[]; codeComfort?: string; scanTarget?: string; shipFrequency?: string };
+  onboarding?: { builtWith?: string[]; backend?: string[]; backendDetected?: boolean; handles?: string[]; codeComfort?: string; scanTarget?: string; shipFrequency?: string; heardFrom?: string[] };
   alertEmail?: string;
   onboardedAt?: string;
   // Account-wide notification defaults (client-written to the user's own doc).
@@ -447,7 +463,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Process a signInWithRedirect return once on load (links, provider memory,
   // scan claim, or stashes an error for the login page).
-  useEffect(() => { void completeRedirect(); }, []);
+  useEffect(() => {
+    if (reloadIfBackedOutOfRedirect()) return;
+    void completeRedirect();
+  }, []);
 
   useEffect(() => {
     return onAuthStateChanged(auth(), async (u) => {
