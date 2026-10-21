@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth, isNewUser, rememberProvider, getLastProvider, authErrorMessage, consumeSignoutReason, consumeAuthError, pendingRedirect, isRedirectEnv, type LastProvider } from '@/lib/auth';
 import GoogleOneTap from '@/components/auth/GoogleOneTap';
@@ -10,6 +10,11 @@ import { LEGAL } from '@/content/site';
 import Logo from '@/components/ui/Logo';
 
 type Mode = 'signup' | 'login';
+
+// The redirect flag never changes while this page is open (it's set before the
+// provider redirect and cleared once the result is processed), so no subscription.
+const noopSubscribe = () => () => {};
+const serverNotRedirecting = () => false;
 
 const COPY: Record<Mode, { title: string; sub: string; switch: string; to: Mode }> = {
   signup: { title: 'Create your account', sub: 'Grade your app and unlock every fix.', switch: 'Have an account? Log in', to: 'login' },
@@ -23,11 +28,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [last, setLast] = useState<LastProvider | null>(null);
-  // True if we landed here mid `signInWithRedirect` (snapshot at mount), drives
-  // the branded loader while the session + profile restore, instead of flashing
-  // the form. Cleared implicitly: on success `user` takes over; on error the
-  // redirect handler flips `loading` false with no user, so the form returns.
-  const [redirecting] = useState(() => pendingRedirect());
+  // True if we landed here mid `signInWithRedirect`, drives the branded loader
+  // while the session + profile restore, instead of flashing the form. Cleared
+  // implicitly: on success `user` takes over; on error the redirect handler flips
+  // `loading` false with no user, so the form returns.
+  // Read via useSyncExternalStore with a server value of `false`: the prerendered
+  // HTML (no sessionStorage) is the form, so hydration must start from the form
+  // too and only then switch. Reading sessionStorage in the first render made the
+  // redirect return mismatch the HTML (React error #418).
+  const redirecting = useSyncExternalStore(noopSubscribe, pendingRedirect, serverNotRedirecting);
   const routed = useRef(false);
 
   // Read the last-used provider after mount (avoids SSR/hydration mismatch).
